@@ -6,8 +6,8 @@ import { useEffect, useState }
  from 'react';
 import { createClient }
  from '@/lib/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription }
- from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import Image from 'next/image';
 import { toPersianNumber, truncateText } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -78,7 +78,7 @@ export function ProductList() {
 
             <div className="relative w-full h-48 ">
               {product.image_urls && product.image_urls.length > 0 && (
-                <img src={product.image_urls[0]} alt={product.name} className="absolute w-100 h-100  object-cover rounded-t-md" />
+                <Image src={product.image_urls[0]} alt={product.name} className="absolute w-full h-full object-cover rounded-t-md" width={500} height={500} />
               )}
 
             </div>

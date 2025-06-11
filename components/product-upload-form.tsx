@@ -198,30 +198,37 @@ export function ProductUploadForm() {
             />
           </div>
           <div>
-            <Label>Görsel URL'leri</Label>
-            {imageUrls.map((url, index) => (
-              <div key={index} className="flex space-x-2 mb-2">
-                <Input
-                  type="text"
-                  value={url}
-                  onChange={(e) => handleImageUrlChange(index, e.target.value)}
-                  placeholder="https://example.com/image.jpg"
-                />
-                {imageUrls.length > 1 && (
-                  <Button type="button" variant="destructive" onClick={() => handleRemoveImageUrl(index)}>
-                    Kaldır
-                  </Button>
-                )}
-              </div>
-            ))}
-            <Button type="button" onClick={handleAddImageUrl}>
-              + URL Ekle
-            </Button>
+            <Label htmlFor="image-url-0">Görsel URL'si (Opsiyonel)</Label>
+            <Input
+              id="image-url-0"
+              type="url"
+              value={imageUrls[0]}
+              onChange={(e) => handleImageUrlChange(0, e.target.value)}
+            />
           </div>
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Yükleniyor...' : 'Ürünü Yükle'}
+          {imageUrls.slice(1).map((url, index) => (
+            <div key={index + 1} className="flex items-end gap-2">
+              <div className="flex-1">
+                <Label htmlFor={`image-url-${index + 1}`}>Görsel URL'si {index + 2}</Label>
+                <Input
+                  id={`image-url-${index + 1}`}
+                  type="url"
+                  value={url}
+                  onChange={(e) => handleImageUrlChange(index + 1, e.target.value)}
+                />
+              </div>
+              <Button type="button" variant="destructive" onClick={() => handleRemoveImageUrl(index + 1)}>
+                Kaldır
+              </Button>
+            </div>
+          ))}
+          <Button type="button" variant="outline" onClick={handleAddImageUrl}>
+            Başka Görsel URL'si Ekle
           </Button>
-          {message && <p className="text-sm mt-2">{message}</p>}
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? 'Yükleniyor...' : 'Ürün Yükle'}
+          </Button>
+          {message && <p className="text-center text-sm text-green-500">{message}</p>}
         </form>
       </CardContent>
     </Card>

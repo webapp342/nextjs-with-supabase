@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { toPersianNumber, truncateText } from '@/lib/utils';
 
@@ -44,7 +45,7 @@ export default function DeleteProductsPage() {
 
   useEffect(() => {
     fetchProducts();
-  }, [supabase]);
+  }, [supabase, fetchProducts]);
 
   const handleDelete = async (productId: string) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
@@ -109,7 +110,7 @@ export default function DeleteProductsPage() {
           <Card key={product.id} className="flex flex-col">
             <div className="relative w-full h-48">
               {product.image_urls && product.image_urls.length > 0 && (
-                <img src={product.image_urls[0]} alt={product.name} className="absolute w-full h-full object-cover rounded-t-md" />
+                <Image src={product.image_urls[0]} alt={product.name} className="absolute w-full h-full object-cover rounded-t-md" width={500} height={500} />
               )}
             </div>
             <CardContent className="px-3 pt-2 pb-0">
