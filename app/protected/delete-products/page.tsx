@@ -110,7 +110,7 @@ export default function DeleteProductsPage() {
           <Card key={product.id} className="flex flex-col">
             <div className="relative w-full h-48">
               {product.image_urls && product.image_urls.length > 0 && (
-                <Image src={product.image_urls[0]} alt={product.name} className="absolute w-full h-full object-cover rounded-t-md" width={500} height={500} />
+                <Image src={product.image_urls[0]} alt={product.name} className="absolute w-full h-full object-cover rounded-t-md" width={500} height={500} unoptimized />
               )}
             </div>
             <CardContent className="px-3 pt-2 pb-0">

@@ -78,7 +78,7 @@ export default function ProductDetailsPage() {
         <CardContent>
           <div className="h-96 w-full mb-4">
             {product.image_urls && product.image_urls.length > 0 ? (
-              <Image src={product.image_urls[0]} alt={`${product.name} - 1`} className="object-cover w-full h-full rounded-md" width={500} height={500} />
+              <Image src={product.image_urls[0]} alt={`${product.name} - 1`} className="object-cover w-full h-full rounded-md" width={500} height={500} unoptimized />
             ) : (
               <div className="w-full h-full bg-gray-200 flex items-center justify-center rounded-md">
                 <p className="text-gray-500">Resim yok</p>
