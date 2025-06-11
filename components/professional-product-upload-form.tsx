@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from './ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { X, Upload, Plus, Trash2 } from 'lucide-react';
+import { X, Upload, Plus } from 'lucide-react';
 import Image from 'next/image';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -133,13 +133,13 @@ export function ProfessionalProductUploadForm() {
   }, [supabase]);
 
   // Handle form input changes
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | boolean | number) => {
     if (field.includes('.')) {
       const [parent, child] = field.split('.');
       setFormData(prev => ({
         ...prev,
         [parent]: {
-          ...prev[parent as keyof typeof prev] as any,
+          ...prev[parent as keyof typeof prev] as Record<string, unknown>,
           [child]: value
         }
       }));
@@ -173,15 +173,7 @@ export function ProfessionalProductUploadForm() {
     }
   };
 
-  // Remove image
-  const removeImage = (index: number, type: 'file' | 'url') => {
-    if (type === 'file') {
-      setImages(prev => prev.filter((_, i) => i !== index));
-      setImagePreviews(prev => prev.filter((_, i) => i !== index));
-    } else {
-      setImageUrls(prev => prev.filter((_, i) => i !== index));
-    }
-  };
+
 
   // Handle tags
   const addTag = () => {
@@ -347,7 +339,7 @@ export function ProfessionalProductUploadForm() {
 
       // Insert product attributes
       const attributeInserts = [];
-      for (const [categoryId, valueIds] of Object.entries(selectedAttributes)) {
+      for (const [, valueIds] of Object.entries(selectedAttributes)) {
         for (const valueId of valueIds) {
           attributeInserts.push({
             product_id: product.id,

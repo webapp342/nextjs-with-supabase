@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+
 import Image from 'next/image';
 import { toPersianNumber } from '@/lib/utils';
 import Link from 'next/link';
@@ -28,7 +28,7 @@ export function ProductList() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState('newest');
+  const [sortBy] = useState('newest');
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -71,11 +71,7 @@ export function ProductList() {
     return Math.round(((originalPrice - salePrice) / originalPrice) * 100);
   };
 
-  // Get random color count for demo
-  const getRandomColorCount = () => {
-    const counts = [6, 8, 12, 15];
-    return counts[Math.floor(Math.random() * counts.length)];
-  };
+
 
   if (loading) {
     return (
@@ -152,7 +148,7 @@ export function ProductList() {
           const discountPercentage = hasDiscount 
             ? getDiscountPercentage(product.compare_price!, product.price)
             : 0;
-          const colorCount = getRandomColorCount();
+
 
           return (
             <div key={product.id} className="relative">

@@ -18,7 +18,7 @@ interface Banner {
 }
 
 interface CategoryBannersProps {
-  categoryId?: string; // Hangi kategorinin banner'larını göstereceğiz
+  categoryId?: string | null; // Hangi kategorinin banner'larını göstereceğiz
   limit?: number;
 }
 

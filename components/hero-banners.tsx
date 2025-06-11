@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -26,11 +26,7 @@ export default function HeroBanners() {
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
-  useEffect(() => {
-    fetchBanners()
-  }, [])
-
-  const fetchBanners = async () => {
+  const fetchBanners = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('hero_banners')
@@ -49,7 +45,11 @@ export default function HeroBanners() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [supabase])
+
+  useEffect(() => {
+    fetchBanners()
+  }, [fetchBanners])
 
   if (loading) {
     return (
@@ -73,8 +73,7 @@ export default function HeroBanners() {
         className="flex gap-4 px-4 overflow-x-auto"
         style={{
           scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          WebkitScrollbar: { display: 'none' }
+          msOverflowStyle: 'none'
         }}
       >
         <style jsx>{`
