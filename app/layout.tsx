@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { TopBanner } from "@/components/top-banner";
+import { Navbar } from "@/components/navbar";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -9,8 +11,8 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Next.js and Supabase Starter Kit",
-  description: "The fastest way to build apps with Next.js and Supabase",
+  title: "E-Ticaret Platformu",
+  description: "Modern e-ticaret platformu - Next.js ve Supabase ile",
 };
 
 const geistSans = Geist({
@@ -25,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="tr" suppressHydrationWarning>
       <body className={`${geistSans.className} antialiased`}>
         <ThemeProvider
           attribute="class"
@@ -33,7 +35,18 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <div className="min-h-screen flex flex-col">
+            {/* Top Banner */}
+            <TopBanner />
+            
+            {/* Sticky Navbar */}
+            <Navbar />
+
+            {/* Main Content */}
+            <main className="flex-1">
+              {children}
+            </main>
+          </div>
         </ThemeProvider>
       </body>
     </html>

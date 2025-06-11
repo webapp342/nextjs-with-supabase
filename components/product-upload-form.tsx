@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from './ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { categories } from '@/lib/categories';
 
 import { v4 as uuidv4 } from 'uuid';
 
@@ -170,13 +171,20 @@ export function ProductUploadForm() {
           </div>
           <div>
             <Label htmlFor="category">Kategori</Label>
-            <Input
+            <select
               id="category"
-              type="text"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               required
-            />
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="">Kategori seçin</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.slug}>
+                  {cat.icon} {cat.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <Label htmlFor="brand">Marka</Label>
