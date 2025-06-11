@@ -45,7 +45,7 @@ export default function DeleteProductsPage() {
 
   useEffect(() => {
     fetchProducts();
-  }, [supabase, fetchProducts]);
+  }, [supabase]);
 
   const handleDelete = async (productId: string) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
