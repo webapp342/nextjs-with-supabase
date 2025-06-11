@@ -1,105 +1,408 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# Next.js + Supabase E-Ticaret Projesi - Detaylı Analiz
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
+## 📋 İçindekiler
+- [Proje Genel Bakış](#proje-genel-bakış)
+- [Teknoloji Stack](#teknoloji-stack)
+- [Proje Yapısı](#proje-yapısı)
+- [Dosya ve Klasör Detayları](#dosya-ve-klasör-detayları)
+- [Bileşenler ve İşlevleri](#bileşenler-ve-işlevleri)
+- [Veritabanı Yapısı](#veritabanı-yapısı)
+- [Kimlik Doğrulama Sistemi](#kimlik-doğrulama-sistemi)
+- [Yönlendirme ve Middleware](#yönlendirme-ve-middleware)
+- [UI/UX Bileşenleri](#uiux-bileşenleri)
+- [Kurulum ve Çalıştırma](#kurulum-ve-çalıştırma)
+- [Sorun Giderme](#sorun-giderme)
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+## 🎯 Proje Genel Bakış
 
-## Features
+Bu proje, **Next.js 15** ve **Supabase** kullanılarak geliştirilmiş modern bir e-ticaret platformudur. İki ana kullanıcı türü vardır:
+- **Buyer (Alıcı)**: Ürünleri görüntüleyebilir ve satın alabilir
+- **Seller (Satıcı)**: Ürün ekleyebilir, düzenleyebilir ve satış yapabilir
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Middleware
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+### Ana Özellikler:
+- ✅ Kullanıcı kayıt/giriş sistemi (Supabase Auth)
+- ✅ Rol tabanlı erişim kontrolü (Buyer/Seller)
+- ✅ Ürün listeleme ve detay görüntüleme
+- ✅ Ürün yükleme (sadece satıcılar için)
+- ✅ Görsel yükleme (dosya + URL desteği)
+- ✅ Responsive tasarım
+- ✅ Dark/Light theme desteği
+- ✅ Fars sayı formatlaması
+- ✅ Real-time veri senkronizasyonu
 
-## Demo
+## 🛠 Teknoloji Stack
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+### Frontend
+- **Next.js 15**: React framework (App Router)
+- **React 19**: UI kütüphanesi
+- **TypeScript**: Type safety
+- **Tailwind CSS**: Styling
+- **shadcn/ui**: UI bileşenleri
+- **Lucide React**: İkonlar
+- **next-themes**: Theme yönetimi
 
-## Deploy to Vercel
+### Backend & Database
+- **Supabase**: Backend-as-a-Service
+  - PostgreSQL veritabanı
+  - Real-time subscriptions
+  - Authentication
+  - File storage
+  - Row Level Security (RLS)
 
-Vercel deployment will guide you through creating a Supabase account and project.
+### Development Tools
+- **ESLint**: Code linting
+- **Autoprefixer**: CSS vendor prefixes
+- **PostCSS**: CSS processing
+- **uuid**: Unique ID generation
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+## 📁 Proje Yapısı
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+```
+with-supabase-app/
+├── 📁 app/                          # Next.js App Router
+│   ├── 📄 layout.tsx               # Ana layout (font, theme provider)
+│   ├── 📄 page.tsx                 # Ana sayfa (ürün listesi)
+│   ├── 📄 globals.css              # Global CSS stilleri
+│   ├── 📄 favicon.ico              # Site ikonu
+│   ├── 📁 auth/                    # Kimlik doğrulama sayfaları
+│   │   ├── 📁 login/               # Giriş sayfası
+│   │   ├── 📁 sign-up/             # Kayıt sayfası
+│   │   ├── 📁 sign-up-success/     # Kayıt başarı sayfası
+│   │   ├── 📁 forgot-password/     # Şifre sıfırlama
+│   │   ├── 📁 update-password/     # Şifre güncelleme
+│   │   ├── 📁 confirm/             # Email onayı
+│   │   └── 📁 error/               # Auth hata sayfası
+│   ├── 📁 protected/               # Korumalı alan (sadece satıcılar)
+│   │   ├── 📄 layout.tsx           # Protected layout
+│   │   ├── 📄 page.tsx             # Ürün yükleme formu
+│   │   └── 📁 delete-products/     # Ürün silme sayfası
+│   └── 📁 product-details/         # Ürün detay sayfası
+├── 📁 components/                   # UI bileşenleri
+│   ├── 📁 ui/                      # shadcn/ui bileşenleri
+│   │   ├── 📄 button.tsx           # Button bileşeni
+│   │   ├── 📄 card.tsx             # Card bileşeni
+│   │   ├── 📄 input.tsx            # Input bileşeni
+│   │   ├── 📄 label.tsx            # Label bileşeni
+│   │   ├── 📄 textarea.tsx         # Textarea bileşeni
+│   │   ├── 📄 checkbox.tsx         # Checkbox bileşeni
+│   │   ├── 📄 dropdown-menu.tsx    # Dropdown menu
+│   │   └── 📄 badge.tsx            # Badge bileşeni
+│   ├── 📄 product-list.tsx         # Ürün listesi bileşeni
+│   ├── 📄 product-upload-form.tsx  # Ürün yükleme formu
+│   ├── 📄 auth-button.tsx          # Giriş/Çıkış butonu
+│   ├── 📄 login-form.tsx           # Giriş formu
+│   ├── 📄 sign-up-form.tsx         # Kayıt formu
+│   ├── 📄 forgot-password-form.tsx # Şifre sıfırlama formu
+│   ├── 📄 update-password-form.tsx # Şifre güncelleme formu
+│   ├── 📄 logout-button.tsx        # Çıkış butonu
+│   ├── 📄 theme-switcher.tsx       # Theme değiştirici
+│   ├── 📄 hero.tsx                 # Hero bölümü
+│   ├── 📄 env-var-warning.tsx      # Environment değişken uyarısı
+│   └── 📁 tutorial/                # Tutorial bileşenleri
+├── 📁 lib/                         # Yardımcı kütüphaneler
+│   ├── 📄 utils.ts                 # Genel yardımcı fonksiyonlar
+│   └── 📁 supabase/                # Supabase konfigürasyonu
+│       ├── 📄 client.ts            # Browser client
+│       ├── 📄 server.ts            # Server client
+│       └── 📄 middleware.ts        # Middleware helper
+├── 📁 public/                      # Statik dosyalar
+│   └── 📁 fonts/                   # Font dosyaları
+├── 📄 middleware.ts                # Next.js middleware (auth kontrolü)
+├── 📄 package.json                 # Proje bağımlılıkları
+├── 📄 next.config.ts               # Next.js konfigürasyonu
+├── 📄 tailwind.config.ts           # Tailwind CSS konfigürasyonu
+├── 📄 tsconfig.json                # TypeScript konfigürasyonu
+├── 📄 components.json              # shadcn/ui konfigürasyonu
+├── 📄 eslint.config.mjs            # ESLint konfigürasyonu
+├── 📄 postcss.config.mjs           # PostCSS konfigürasyonu
+├── 📄 .gitignore                   # Git ignore dosyası
+└── 📄 README.md                    # Bu dosya
+```
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+## 🔍 Dosya ve Klasör Detayları
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+### 📁 app/ (Next.js App Router)
 
-## Clone and run locally
+#### 📄 app/layout.tsx
+- **İşlev**: Ana layout bileşeni, tüm sayfaları sarar
+- **İçerik**: 
+  - Geist font tanımlaması
+  - ThemeProvider (dark/light mode)
+  - Metadata tanımları
+  - HTML lang="en" ayarı
+- **Önemli**: Tüm sayfalarda ortak olan elemanlart (font, theme) burada tanımlı
 
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
+#### 📄 app/page.tsx  
+- **İşlev**: Ana sayfa (/) - ürün listesini gösterir
+- **İçerik**:
+  - Navigation bar (logo, auth button)
+  - ProductList bileşeni
+  - Footer (Supabase linki, theme switcher)
+- **Önemli**: hasEnvVars kontrolü ile environment değişkenlerinin varlığını kontrol eder
 
-2. Create a Next.js app using the Supabase Starter template npx command
+#### 📄 app/globals.css
+- **İşlev**: Global CSS stilleri ve CSS değişkenleri
+- **İçerik**:
+  - Tailwind CSS import'ları
+  - Dark/light theme CSS değişkenleri
+  - shadcn/ui renk paleti
+- **Önemli**: Theme sisteminin renk tanımları burada
 
-   ```bash
-   npx create-next-app --example with-supabase with-supabase-app
-   ```
+### 📁 app/auth/ (Kimlik Doğrulama)
 
-   ```bash
-   yarn create next-app --example with-supabase with-supabase-app
-   ```
+Her klasör bir route oluşturur:
+- `/auth/login` - Giriş sayfası
+- `/auth/sign-up` - Kayıt sayfası  
+- `/auth/sign-up-success` - Kayıt başarı mesajı
+- `/auth/forgot-password` - Şifre sıfırlama
+- `/auth/update-password` - Şifre güncelleme
+- `/auth/confirm` - Email onayı
+- `/auth/error` - Auth hataları
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
+### 📁 app/protected/ (Korumalı Alan)
 
-3. Use `cd` to change into the app's directory
+#### 📄 app/protected/layout.tsx
+- **İşlev**: Protected sayfalar için özel layout
+- **İçerik**: Auth kontrolü ve navigation
+- **Önemli**: Sadece seller kullanıcıları erişebilir
 
-   ```bash
-   cd with-supabase-app
-   ```
+#### 📄 app/protected/page.tsx
+- **İşlev**: Ürün yükleme sayfası
+- **İçerik**: ProductUploadForm bileşeni
+- **Önemli**: Kullanıcı oturum kontrolü yapar
 
-4. Rename `.env.example` to `.env.local` and update the following:
+### 📁 components/ (UI Bileşenleri)
 
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=[INSERT SUPABASE PROJECT API ANON KEY]
-   ```
+#### 📄 components/product-list.tsx
+- **İşlev**: Ürünleri grid layout'ta listeler
+- **Veri Kaynağı**: Supabase `products` tablosu
+- **Özellikler**:
+  - Loading state gösterimi
+  - Error handling
+  - Fars sayı formatlaması (toPersianNumber)
+  - Text truncation (truncateText)
+  - Responsive grid (2-4 columns)
+- **Önemli**: Real-time data fetch eder
 
-   Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
+#### 📄 components/product-upload-form.tsx
+- **İşlev**: Yeni ürün ekleme formu
+- **Özellikler**:
+  - Dosya yükleme (Supabase Storage)
+  - URL ile görsel ekleme
+  - Form validation
+  - Progress indicator
+  - UUID ile benzersiz dosya isimleri
+- **Önemli**: Sadece authenticated sellers erişebilir
 
-5. You can now run the Next.js local development server:
+#### 📄 components/auth-button.tsx
+- **İşlev**: Dinamik auth button (Login/Logout)
+- **Mantık**: User session'a göre farklı buton gösterir
 
-   ```bash
-   npm run dev
-   ```
+### 📁 components/ui/ (shadcn/ui Bileşenleri)
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+Tüm UI bileşenleri shadcn/ui standardında:
+- **Button**: Çeşitli variant'ları olan buton
+- **Card**: İçerik kartları için container
+- **Input**: Form input alanları
+- **Label**: Form labelları
+- **Textarea**: Çok satırlı text input
+- **Checkbox**: Onay kutuları
+- **Dropdown-menu**: Açılır menüler
+- **Badge**: Küçük etiketler
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+### 📁 lib/ (Yardımcı Kütüphaneler)
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+#### 📄 lib/utils.ts
+- **cn()**: Tailwind class'larını merge eden fonksiyon
+- **hasEnvVars**: Environment değişken kontrolü
+- **toPersianNumber()**: Sayıları Fars rakamlarına çevirir
+- **truncateText()**: Text'i belirtilen satır sayısına keser
 
-## Feedback and issues
+#### 📁 lib/supabase/
+- **client.ts**: Browser için Supabase client
+- **server.ts**: Server-side için Supabase client
+- **middleware.ts**: Middleware için auth helper'ları
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+### 📄 middleware.ts (Route Protection)
+- **İşlev**: Request'leri intercept eder, auth kontrolü yapar
+- **Mantık**:
+  - User session kontrolü
+  - User type kontrolü (buyer/seller)
+  - Protected route'lara erişim kontrolü
+  - Automatic redirect'ler
+- **Önemli**: Tüm request'ler buradan geçer
 
-## More Supabase examples
+## 🔐 Kimlik Doğrulama Sistemi
 
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+### Auth Flow:
+1. **Kayıt**: Email + şifre ile kayıt
+2. **Email Onayı**: Supabase otomatik email gönderir
+3. **Giriş**: Email + şifre ile giriş
+4. **Session**: Cookie-based session management
+5. **User Type**: Database'de `users` tablosunda `user_type` field'ı
+
+### User Types:
+- **buyer**: Normal kullanıcı, sadece ürün görüntüleyebilir
+- **seller**: Satıcı, ürün ekleyebilir ve yönetebilir
+
+### Route Protection:
+- `/protected/*`: Sadece `seller` kullanıcıları
+- `/auth/*`: Sadece anonymous kullanıcılar
+- `/`: Herkese açık
+
+## 🗄 Veritabanı Yapısı
+
+### Tablolar:
+
+#### `users` tablosu:
+```sql
+- id (uuid, primary key) - Supabase auth user id
+- user_type (varchar) - 'buyer' | 'seller'
+- created_at (timestamp)
+- updated_at (timestamp)
+```
+
+#### `products` tablosu:
+```sql
+- id (uuid, primary key)
+- name (varchar) - Ürün adı
+- description (text) - Ürün açıklaması
+- price (decimal) - Fiyat
+- category (varchar) - Kategori
+- brand (varchar) - Marka
+- image_urls (text[]) - Görsel URL'leri array
+- user_id (uuid) - Satıcı ID (foreign key)
+- created_at (timestamp)
+- updated_at (timestamp)
+```
+
+### Storage:
+- **Bucket**: `products`
+- **Path**: `product_images/{uuid}.{extension}`
+- **Public**: Evet (public URL'ler)
+
+## 🎨 UI/UX Bileşenleri
+
+### Theme System:
+- **Provider**: next-themes
+- **Modes**: light, dark, system
+- **Toggle**: ThemeSwitcher bileşeni
+- **CSS Variables**: globals.css'de tanımlı
+
+### Responsive Design:
+- **Mobile**: 2 column grid
+- **Tablet**: 3 column grid  
+- **Desktop**: 4 column grid
+- **Navigation**: Responsive header
+
+### Typography:
+- **Font**: Geist (Google Fonts)
+- **Sizes**: Tailwind utility classes
+- **Colors**: Theme-aware CSS variables
+
+## 🚀 Kurulum ve Çalıştırma
+
+### Ön Gereksinimler:
+- Node.js 18+
+- npm/yarn/pnpm
+- Supabase account
+
+### 1. Projeyi Klonlayın:
+```bash
+git clone [repository-url]
+cd with-supabase-app
+```
+
+### 2. Dependencies Kurun:
+```bash
+npm install
+# veya
+yarn install
+# veya  
+pnpm install
+```
+
+### 3. Environment Variables:
+`.env.local` dosyası oluşturun:
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+### 4. Supabase Setup:
+1. [Supabase Dashboard](https://database.new)'da yeni proje oluşturun
+2. SQL Editor'da tabloları oluşturun
+3. Storage'da `products` bucket'ını oluşturun
+4. RLS (Row Level Security) kurallarını ayarlayın
+
+### 5. Development Server:
+```bash
+npm run dev
+```
+http://localhost:3000 adresinde çalışacak
+
+### 6. Production Build:
+```bash
+npm run build
+npm start
+```
+
+## 🔧 Sorun Giderme
+
+### Yaygın Sorunlar:
+
+#### 1. Environment Variables Hatası:
+- **Problem**: "Missing environment variables" uyarısı
+- **Çözüm**: `.env.local` dosyasında SUPABASE değişkenlerini kontrol edin
+- **Test**: `hasEnvVars` fonksiyonu ile test edin
+
+#### 2. Authentication Sorunları:
+- **Problem**: Login işlemi çalışmıyor
+- **Çözüm**: Supabase Auth settings'i kontrol edin
+- **Debugging**: Browser Developer Tools > Network tab'da auth request'leri kontrol edin
+
+#### 3. Ürün Listeleme Hatası:
+- **Problem**: Ürünler görünmüyor
+- **Çözüm**: 
+  - Database bağlantısını kontrol edin
+  - RLS kurallarını kontrol edin
+  - Browser Console'da error loglarını kontrol edin
+
+#### 4. Görsel Yükleme Hatası:
+- **Problem**: Resim yüklenmiyor
+- **Çözüm**:
+  - Storage bucket'ının public olduğunu kontrol edin
+  - File size limitlerini kontrol edin
+  - Supported file formats: jpg, png, gif, webp
+
+#### 5. Middleware Redirect Loop:
+- **Problem**: Sürekli redirect oluyor
+- **Çözüm**: 
+  - `middleware.ts`'deki logic'i kontrol edin
+  - User type'ın doğru set edildiğini kontrol edin
+
+#### 6. Theme Switching Sorunu:
+- **Problem**: Dark/light mode çalışmıyor
+- **Çözüm**: 
+  - `next-themes` provider'ının layout'ta doğru wrap edildiğini kontrol edin
+  - CSS variables'ların globals.css'de tanımlı olduğunu kontrol edin
+
+### Debug Commands:
+```bash
+# Linting kontrolü
+npm run lint
+
+# Build test (production readiness)
+npm run build
+
+# Type checking
+npx tsc --noEmit
+```
+
+### Geliştirme Notları:
+- Hot reload aktif, değişiklikler otomatik yansır
+- TypeScript strict mode aktif
+- ESLint otomatik format yapar
+- Tailwind JIT mode aktif
+
+Bu README dosyası projenin her detayını içermektedir. Herhangi bir sorun yaşadığınızda buraya bakarak kaynağı bulabilirsiniz.
