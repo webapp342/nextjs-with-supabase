@@ -23,6 +23,7 @@ export function SignUpForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
+  const [userType, setUserType] = useState<"user" | "seller">("user"); // New state for user type
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -44,7 +45,8 @@ export function SignUpForm({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/protected`,
+          emailRedirectTo: `${window.location.origin}/auth/sign-up-success`,
+          data: { user_type: userType }, // Pass user type as metadata
         },
       });
       if (error) throw error;
@@ -100,6 +102,36 @@ export function SignUpForm({
                   value={repeatPassword}
                   onChange={(e) => setRepeatPassword(e.target.value)}
                 />
+              </div>
+              {/* New user type selection */}
+              <div className="grid gap-2">
+                <Label>Account Type</Label>
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      type="radio"
+                      id="user-type-user"
+                      name="userType"
+                      value="user"
+                      checked={userType === "user"}
+                      onChange={() => setUserType("user")}
+                      className="h-4 w-4"
+                    />
+                    <Label htmlFor="user-type-user">User</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      type="radio"
+                      id="user-type-seller"
+                      name="userType"
+                      value="seller"
+                      checked={userType === "seller"}
+                      onChange={() => setUserType("seller")}
+                      className="h-4 w-4"
+                    />
+                    <Label htmlFor="user-type-seller">Seller</Label>
+                  </div>
+                </div>
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>

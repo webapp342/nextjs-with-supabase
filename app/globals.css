@@ -1,6 +1,20 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+
+@font-face {
+  font-family: 'Dirooz';
+  src: url('/fonts/Dirooz.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Far Yekan';
+  src: url('/fonts/Lalezar-Regular.otf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
 @layer base {
   :root {
@@ -60,9 +74,16 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: var(--border);
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: 'Dirooz', sans-serif;
+  }
+
+  input,
+  textarea {
+    font-family: 'Far Yekan', sans-serif;
   }
 }
