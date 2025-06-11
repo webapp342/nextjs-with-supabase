@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -18,8 +18,7 @@ interface Product {
   user_id: string;
 }
 
-export default function ProductDetailsPage() {
-
+function ProductDetailsContent() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,8 +65,6 @@ export default function ProductDetailsPage() {
     return <p>Ürün bulunamadı.</p>;
   }
 
-
-
   return (
     <div className="w-[95%] mx-auto py-8">
       <Card className="flex flex-col">
@@ -89,7 +86,14 @@ export default function ProductDetailsPage() {
           <p className="text-gray-700 whitespace-pre-wrap">Açıklama: {product.description}</p>
         </CardContent>
       </Card>
-
     </div>
+  );
+}
+
+export default function ProductDetailsPage() {
+  return (
+    <Suspense fallback={<div>Sayfa yükleniyor...</div>}>
+      <ProductDetailsContent />
+    </Suspense>
   );
 }
