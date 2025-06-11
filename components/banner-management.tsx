@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import Image from 'next/image';
 
 interface Banner {
@@ -52,11 +52,7 @@ export function BannerManagement() {
     is_active: true
   });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const { data: bannerData, error: bannerError } = await supabase
         .from('category_banners')
@@ -91,7 +87,11 @@ export function BannerManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,13 +134,13 @@ export function BannerManagement() {
       
       await fetchData();
 
-    } catch (error: any) {
-      console.error('Banner kayıt hatası:', error.message);
+    } catch (error: unknown) {
+      console.error('Banner kayıt hatası:', error instanceof Error ? error.message : 'Bilinmeyen hata');
     }
   };
 
   if (loading) {
-    return <div className="p-8 text-center">Banner'lar yükleniyor...</div>;
+    return <div className="p-8 text-center">Banner&apos;lar yükleniyor...</div>;
   }
 
   return (

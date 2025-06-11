@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { CategoryBanners } from '@/components/category-banners';
-import { ProductList } from '@/components/product-list';
 import { Breadcrumb } from '@/components/breadcrumb';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -99,15 +98,15 @@ export default function DynamicCategoryPage() {
         if (productsError) throw productsError;
         setProducts(productsData || []);
 
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Bir hata oluştu');
       } finally {
         setLoading(false);
       }
     };
 
     fetchCategoryData();
-  }, [currentSlug, supabase]);
+  }, [currentSlug, parentSlug, supabase]);
 
   if (loading) {
     return (

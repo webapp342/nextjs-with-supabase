@@ -20,11 +20,7 @@ interface Category {
   level: number;
 }
 
-interface Product {
-  id: string;
-  name: string;
-  category_id: string;
-}
+
 
 export function Breadcrumb() {
   const pathname = usePathname();

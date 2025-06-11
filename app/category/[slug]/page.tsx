@@ -105,8 +105,8 @@ export default function CategoryPage() {
         
         setTotalProductCount(totalCount);
 
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Bir hata oluştu');
       } finally {
         setLoading(false);
       }

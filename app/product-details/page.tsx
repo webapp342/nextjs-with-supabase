@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+
 import { toPersianNumber } from '@/lib/utils';
 import { Breadcrumb } from '@/components/breadcrumb';
 
