@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
 import Image from 'next/image';
@@ -23,7 +23,7 @@ export default function DeleteProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
     console.log('Attempting to fetch products...');
     const { data, error } = await supabase
@@ -41,11 +41,11 @@ export default function DeleteProductsPage() {
 
     setProducts(data as Product[]);
     setLoading(false);
-  };
+  }, [supabase]);
 
   useEffect(() => {
     fetchProducts();
-  }, [supabase]);
+  }, [fetchProducts]);
 
   const handleDelete = async (productId: string) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
@@ -83,8 +83,9 @@ export default function DeleteProductsPage() {
 
         alert('Product and associated data deleted successfully!');
         fetchProducts(); // Re-fetch products after deletion
-      } catch (error: any) {
-        alert(`Error deleting product: ${error.message}`);
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        alert(`Error deleting product: ${errorMessage}`);
         console.error('Deletion error:', error);
       }
     }

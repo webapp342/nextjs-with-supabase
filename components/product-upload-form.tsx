@@ -50,7 +50,7 @@ export function ProductUploadForm() {
     setMessage('');
 
     if ((!images || images.length === 0) && imageUrls.every(url => url.trim() === '')) {
-      setMessage('Lütfen en az bir görsel seçin veya görsel URL\'si girin.');
+      setMessage('Lütfen en az bir görsel seçin veya görsel URL&apos;si girin.');
       setLoading(false);
       return;
     }
@@ -63,7 +63,7 @@ export function ProductUploadForm() {
         const fileName = `${uuidv4()}.${fileExtension}`;
         const filePath = `product_images/${fileName}`;
 
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('products')
           .upload(filePath, image);
 
@@ -98,7 +98,7 @@ export function ProductUploadForm() {
         throw new Error('Kullanıcı bilgileri alınamadı.');
       }
 
-      const { data, error } = await supabase.from('products').insert([
+      const { error } = await supabase.from('products').insert([
 
         {
           name,
@@ -123,8 +123,9 @@ export function ProductUploadForm() {
       setBrand('');
       setImages(null);
       setImageUrls(['']);
-    } catch (error: any) {
-      setMessage(`Ürün yüklenirken hata oluştu: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen bir hata oluştu';
+      setMessage(`Ürün yüklenirken hata oluştu: ${errorMessage}`);
       console.error('Product upload error:', error);
     } finally {
       setLoading(false);
@@ -198,7 +199,7 @@ export function ProductUploadForm() {
             />
           </div>
           <div>
-            <Label htmlFor="image-url-0">Görsel URL'si (Opsiyonel)</Label>
+            <Label htmlFor="image-url-0">Görsel URL&apos;si (Opsiyonel)</Label>
             <Input
               id="image-url-0"
               type="url"
@@ -209,7 +210,7 @@ export function ProductUploadForm() {
           {imageUrls.slice(1).map((url, index) => (
             <div key={index + 1} className="flex items-end gap-2">
               <div className="flex-1">
-                <Label htmlFor={`image-url-${index + 1}`}>Görsel URL'si {index + 2}</Label>
+                <Label htmlFor={`image-url-${index + 1}`}>Görsel URL&apos;si {index + 2}</Label>
                 <Input
                   id={`image-url-${index + 1}`}
                   type="url"
@@ -223,7 +224,7 @@ export function ProductUploadForm() {
             </div>
           ))}
           <Button type="button" variant="outline" onClick={handleAddImageUrl}>
-            Başka Görsel URL'si Ekle
+            Başka Görsel URL&apos;si Ekle
           </Button>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Yükleniyor...' : 'Ürün Yükle'}
