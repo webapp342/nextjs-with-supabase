@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from './ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { v4 as uuidv4 } from 'uuid';
 
 export function ProductUploadForm() {
