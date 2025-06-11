@@ -23,7 +23,10 @@ export function SignUpForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
+<<<<<<< HEAD
   const [userType, setUserType] = useState<"user" | "seller">("user"); // New state for user type
+=======
+>>>>>>> e088990fd9212444f9fa4755cbf92cb4bcbc3031
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -45,8 +48,12 @@ export function SignUpForm({
         email,
         password,
         options: {
+<<<<<<< HEAD
           emailRedirectTo: `${window.location.origin}/auth/sign-up-success`,
           data: { user_type: userType }, // Pass user type as metadata
+=======
+          emailRedirectTo: `${window.location.origin}/protected`,
+>>>>>>> e088990fd9212444f9fa4755cbf92cb4bcbc3031
         },
       });
       if (error) throw error;
@@ -103,6 +110,7 @@ export function SignUpForm({
                   onChange={(e) => setRepeatPassword(e.target.value)}
                 />
               </div>
+<<<<<<< HEAD
               {/* New user type selection */}
               <div className="grid gap-2">
                 <Label>Account Type</Label>
@@ -133,6 +141,8 @@ export function SignUpForm({
                   </div>
                 </div>
               </div>
+=======
+>>>>>>> e088990fd9212444f9fa4755cbf92cb4bcbc3031
               {error && <p className="text-sm text-red-500">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Creating an account..." : "Sign up"}

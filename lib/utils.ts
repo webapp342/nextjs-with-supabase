@@ -9,6 +9,7 @@ export function cn(...inputs: ClassValue[]) {
 export const hasEnvVars =
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+<<<<<<< HEAD
 
 export function toPersianNumber(num: number | string): string {
   const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
@@ -36,3 +37,5 @@ export function truncateText(text: string, maxLines: number): string {
 
   return lines.join('\n');
 }
+=======
+>>>>>>> e088990fd9212444f9fa4755cbf92cb4bcbc3031
