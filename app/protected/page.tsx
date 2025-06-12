@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation";
-
 import { createClient } from "@/lib/supabase/server";
-import { Breadcrumb } from "@/components/breadcrumb";
-import { ProfessionalProductUploadForm } from "@/components/professional-product-upload-form";
+import { AdminDashboard } from "@/components/admin-dashboard";
 
 export default async function ProtectedPage() {
   const supabase = await createClient();
@@ -12,14 +10,5 @@ export default async function ProtectedPage() {
     redirect("/auth/login");
   }
 
-  return (
-    <div className="flex-1 w-full">
-      <div className="max-w-6xl mx-auto px-4">
-        <Breadcrumb />
-        <div className="py-4">
-          <ProfessionalProductUploadForm />
-        </div>
-      </div>
-    </div>
-  );
+  return <AdminDashboard />;
 }

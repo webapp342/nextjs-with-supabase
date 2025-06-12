@@ -1,0 +1,160 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.attribute_values (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  attribute_id uuid,
+  value character varying NOT NULL,
+  color_code character varying,
+  sort_order integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT attribute_values_pkey PRIMARY KEY (id),
+  CONSTRAINT attribute_values_attribute_id_fkey FOREIGN KEY (attribute_id) REFERENCES public.attributes(id)
+);
+CREATE TABLE public.attributes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name character varying NOT NULL,
+  slug character varying NOT NULL UNIQUE,
+  type character varying NOT NULL DEFAULT 'text'::character varying,
+  unit character varying,
+  is_required boolean DEFAULT false,
+  is_filterable boolean DEFAULT true,
+  sort_order integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT attributes_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.brands (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name character varying NOT NULL UNIQUE,
+  slug character varying NOT NULL UNIQUE,
+  description text,
+  logo_url text,
+  website_url text,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT brands_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.categories_new (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name character varying NOT NULL,
+  slug character varying NOT NULL UNIQUE,
+  description text,
+  icon character varying,
+  parent_id uuid,
+  level integer NOT NULL DEFAULT 0,
+  sort_order integer DEFAULT 0,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT categories_new_pkey PRIMARY KEY (id),
+  CONSTRAINT categories_new_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.categories_new(id)
+);
+CREATE TABLE public.category_banners (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  category_id uuid,
+  title character varying NOT NULL,
+  subtitle character varying,
+  description text,
+  image_url text,
+  link_category_id uuid,
+  background_color character varying DEFAULT '#ffffff'::character varying,
+  text_color character varying DEFAULT '#000000'::character varying,
+  sort_order integer DEFAULT 0,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT category_banners_pkey PRIMARY KEY (id),
+  CONSTRAINT category_banners_link_category_id_fkey FOREIGN KEY (link_category_id) REFERENCES public.categories_new(id),
+  CONSTRAINT category_banners_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories_new(id)
+);
+CREATE TABLE public.hero_banners (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  title character varying NOT NULL,
+  subtitle character varying,
+  description text,
+  image_url text NOT NULL,
+  mobile_image_url text,
+  link_url text,
+  link_text character varying,
+  background_color character varying DEFAULT '#ffffff'::character varying,
+  text_color character varying DEFAULT '#000000'::character varying,
+  button_color character varying DEFAULT '#e91e63'::character varying,
+  sort_order integer DEFAULT 0,
+  is_active boolean DEFAULT true,
+  start_date timestamp with time zone,
+  end_date timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT hero_banners_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.product_attributes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  product_id uuid,
+  attribute_id uuid,
+  attribute_value_id uuid,
+  custom_value text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT product_attributes_pkey PRIMARY KEY (id),
+  CONSTRAINT product_attributes_attribute_value_id_fkey FOREIGN KEY (attribute_value_id) REFERENCES public.attribute_values(id),
+  CONSTRAINT product_attributes_attribute_id_fkey FOREIGN KEY (attribute_id) REFERENCES public.attributes(id),
+  CONSTRAINT product_attributes_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id)
+);
+CREATE TABLE public.product_types (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name character varying NOT NULL,
+  slug character varying NOT NULL,
+  description text,
+  brand_id uuid,
+  category_id uuid,
+  is_active boolean DEFAULT true,
+  sort_order integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT product_types_pkey PRIMARY KEY (id),
+  CONSTRAINT product_types_brand_id_fkey FOREIGN KEY (brand_id) REFERENCES public.brands(id),
+  CONSTRAINT product_types_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories_new(id)
+);
+CREATE TABLE public.products (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text NOT NULL,
+  description text,
+  price numeric NOT NULL,
+  image_urls ARRAY,
+  created_at timestamp with time zone DEFAULT now(),
+  user_id uuid,
+  category text,
+  brand text,
+  main_category_id uuid,
+  sub_category_id uuid,
+  brand_id uuid,
+  short_description text,
+  compare_price numeric,
+  sku character varying,
+  barcode character varying,
+  weight numeric,
+  length numeric,
+  width numeric,
+  height numeric,
+  stock_quantity integer DEFAULT 0,
+  min_stock_level integer DEFAULT 0,
+  tags ARRAY,
+  seo_title character varying,
+  seo_description text,
+  is_active boolean DEFAULT true,
+  is_featured boolean DEFAULT false,
+  is_on_sale boolean DEFAULT false,
+  updated_at timestamp with time zone DEFAULT now(),
+  category_id uuid,
+  is_bestseller boolean DEFAULT false,
+  sales_count integer DEFAULT 0,
+  product_type_id uuid,
+  CONSTRAINT products_pkey PRIMARY KEY (id),
+  CONSTRAINT products_product_type_id_fkey FOREIGN KEY (product_type_id) REFERENCES public.product_types(id),
+  CONSTRAINT products_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT products_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories_new(id)
+);
+CREATE TABLE public.users (
+  id uuid NOT NULL,
+  user_type text NOT NULL,
+  CONSTRAINT users_pkey PRIMARY KEY (id),
+  CONSTRAINT users_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
+);

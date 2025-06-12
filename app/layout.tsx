@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
-import { TopBanner } from "@/components/top-banner";
-import { Navbar } from "@/components/navbar";
+import { ClientLayout } from "@/components/client-layout";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -35,18 +34,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="min-h-screen flex flex-col">
-            {/* Top Banner */}
-            <TopBanner />
-            
-            {/* Sticky Navbar */}
-            <Navbar />
-
-            {/* Main Content */}
-            <main className="flex-1">
-              {children}
-            </main>
-          </div>
+          <ClientLayout>
+            {children}
+          </ClientLayout>
         </ThemeProvider>
       </body>
     </html>

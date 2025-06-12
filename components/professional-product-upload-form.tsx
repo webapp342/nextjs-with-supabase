@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { X, Upload, Plus } from 'lucide-react';
 import Image from 'next/image';
 import { v4 as uuidv4 } from 'uuid';
+import { HierarchicalCategorySelector } from './hierarchical-category-selector';
 
 interface Category {
   id: string;
@@ -25,7 +26,12 @@ interface Brand {
   id: string;
   name: string;
   slug: string;
-  country: string;
+  description?: string;
+  logo_url?: string;
+  website_url?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 interface ProductType {
@@ -36,20 +42,25 @@ interface ProductType {
   category_id: string;
 }
 
-interface AttributeCategory {
+interface Attribute {
   id: string;
   name: string;
   slug: string;
   type: string;
+  unit?: string;
   is_required: boolean;
+  is_filterable: boolean;
+  sort_order: number;
+  created_at: string;
 }
 
 interface AttributeValue {
   id: string;
+  attribute_id: string;
   value: string;
-  slug: string;
-  attribute_category_id: string;
   color_code?: string;
+  sort_order: number;
+  created_at: string;
 }
 
 export function ProfessionalProductUploadForm() {
@@ -72,11 +83,10 @@ export function ProfessionalProductUploadForm() {
     },
     stockQuantity: '',
     minStockLevel: '',
-    categoryId: '', // Tek kategori ID'si
+    categoryId: '',
     brandId: '',
     productTypeId: '',
     newBrandName: '',
-    newBrandCountry: '',
     showNewBrandForm: false,
     newProductTypeName: '',
     showNewProductTypeForm: false,
@@ -86,7 +96,8 @@ export function ProfessionalProductUploadForm() {
     seoDescription: '',
     isActive: true,
     isFeatured: false,
-    isOnSale: false
+    isOnSale: false,
+    isBestseller: false
   });
 
   // Data state
@@ -94,7 +105,7 @@ export function ProfessionalProductUploadForm() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [filteredProductTypes, setFilteredProductTypes] = useState<ProductType[]>([]);
-  const [attributeCategories, setAttributeCategories] = useState<AttributeCategory[]>([]);
+  const [attributes, setAttributes] = useState<Attribute[]>([]);
   const [attributeValues, setAttributeValues] = useState<AttributeValue[]>([]);
   const [selectedAttributes, setSelectedAttributes] = useState<{[key: string]: string[]}>({});
 
@@ -106,34 +117,25 @@ export function ProfessionalProductUploadForm() {
   // UI state
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [currentStep, setCurrentStep] = useState(1);
   const [dataLoading, setDataLoading] = useState(true);
-
-  const steps = [
-    { id: 1, title: 'Temel Bilgiler', description: 'Ürün adı, açıklama ve kategori' },
-    { id: 2, title: 'Fiyat ve Stok', description: 'Fiyat, stok miktarı ve ürün kodları' },
-    { id: 3, title: 'Özellikler', description: 'Renk, boy, cilt tipi gibi özellikler' },
-    { id: 4, title: 'Görseller', description: 'Ürün fotoğrafları' },
-    { id: 5, title: 'SEO ve Etiketler', description: 'Arama motoru optimizasyonu' }
-  ];
 
   // Data fetching
   useEffect(() => {
     const fetchData = async () => {
       setDataLoading(true);
       try {
-        const [categoriesRes, brandsRes, productTypesRes, attributeCategoriesRes, attributeValuesRes] = await Promise.all([
+        const [categoriesRes, brandsRes, productTypesRes, attributesRes, attributeValuesRes] = await Promise.all([
           supabase.from('categories_new').select('*').eq('is_active', true).order('sort_order'),
           supabase.from('brands').select('*').eq('is_active', true).order('name'),
           supabase.from('product_types').select('*').eq('is_active', true).order('sort_order'),
-          supabase.from('attribute_categories').select('*').order('name'),
+          supabase.from('attributes').select('*').order('sort_order'),
           supabase.from('attribute_values').select('*').order('sort_order')
         ]);
 
         if (categoriesRes.data) setCategories(categoriesRes.data);
         if (brandsRes.data) setBrands(brandsRes.data);
         if (productTypesRes.data) setProductTypes(productTypesRes.data);
-        if (attributeCategoriesRes.data) setAttributeCategories(attributeCategoriesRes.data);
+        if (attributesRes.data) setAttributes(attributesRes.data);
         if (attributeValuesRes.data) setAttributeValues(attributeValuesRes.data);
 
       } catch (error) {
@@ -206,15 +208,13 @@ export function ProfessionalProductUploadForm() {
 
   // Handle image URL addition
   const handleImageUrlAdd = () => {
-    const url = prompt('Görsel URL\'sini girin:');
+    const url = prompt('Görsel URL\'si girin:');
     if (url && url.trim()) {
       setImageUrls(prev => [...prev, url.trim()]);
     }
   };
 
-
-
-  // Handle tags
+  // Handle tag addition
   const addTag = () => {
     if (formData.newTag.trim() && !formData.tags.includes(formData.newTag.trim())) {
       setFormData(prev => ({
@@ -225,6 +225,7 @@ export function ProfessionalProductUploadForm() {
     }
   };
 
+  // Handle tag removal
   const removeTag = (tagToRemove: string) => {
     setFormData(prev => ({
       ...prev,
@@ -233,21 +234,21 @@ export function ProfessionalProductUploadForm() {
   };
 
   // Handle attributes
-  const handleAttributeChange = (categoryId: string, valueId: string, checked: boolean) => {
+  const handleAttributeChange = (attributeId: string, valueId: string, checked: boolean) => {
     setSelectedAttributes(prev => {
-      const category = prev[categoryId] || [];
+      const current = prev[attributeId] || [];
       if (checked) {
-        return { ...prev, [categoryId]: [...category, valueId] };
+        return { ...prev, [attributeId]: [...current, valueId] };
       } else {
-        return { ...prev, [categoryId]: category.filter(id => id !== valueId) };
+        return { ...prev, [attributeId]: current.filter(id => id !== valueId) };
       }
     });
   };
 
   // Handle new brand creation
   const handleCreateNewBrand = async () => {
-    if (!formData.newBrandName.trim() || !formData.newBrandCountry.trim()) {
-      setMessage('Marka adı ve ülke bilgisi gereklidir');
+    if (!formData.newBrandName.trim()) {
+      setMessage('Marka adı gereklidir');
       return;
     }
 
@@ -262,7 +263,6 @@ export function ProfessionalProductUploadForm() {
         .insert([{
           name: formData.newBrandName.trim(),
           slug: slug,
-          country: formData.newBrandCountry.trim(),
           is_active: true
         }])
         .select()
@@ -276,7 +276,6 @@ export function ProfessionalProductUploadForm() {
         ...prev,
         brandId: newBrand.id,
         newBrandName: '',
-        newBrandCountry: '',
         showNewBrandForm: false
       }));
       setMessage('Yeni marka başarıyla eklendi!');
@@ -329,27 +328,19 @@ export function ProfessionalProductUploadForm() {
   };
 
   // Form validation
-  const validateStep = (step: number) => {
-    switch (step) {
-      case 1:
-        return formData.name.trim() && formData.description.trim() && formData.categoryId;
-      case 2:
-        return formData.price && parseFloat(formData.price) > 0;
-      case 3:
-        return true; // Attributes are optional
-      case 4:
-        return images.length > 0 || imageUrls.length > 0;
-      case 5:
-        return true; // SEO is optional
-      default:
-        return false;
-    }
+  const validateForm = () => {
+    return formData.name.trim() && 
+           formData.description.trim() && 
+           formData.categoryId &&
+           formData.price && 
+           parseFloat(formData.price) > 0 &&
+           (images.length > 0 || imageUrls.length > 0);
   };
 
   // Submit form
   const handleSubmit = async () => {
-    if (!validateStep(5)) {
-      setMessage('Lütfen tüm gerekli alanları doldurun');
+    if (!validateForm()) {
+      setMessage('Lütfen tüm gerekli alanları doldurun (Ad, Açıklama, Kategori, Fiyat ve en az 1 görsel)');
       return;
     }
 
@@ -408,6 +399,7 @@ export function ProfessionalProductUploadForm() {
         is_active: formData.isActive,
         is_featured: formData.isFeatured,
         is_on_sale: formData.isOnSale,
+        is_bestseller: formData.isBestseller,
         user_id: user.id
       };
 
@@ -445,16 +437,15 @@ export function ProfessionalProductUploadForm() {
         name: '', description: '', shortDescription: '', price: '', comparePrice: '',
         sku: '', barcode: '', weight: '', dimensions: { length: '', width: '', height: '' },
         stockQuantity: '', minStockLevel: '', categoryId: '', brandId: '', productTypeId: '',
-        newBrandName: '', newBrandCountry: '', showNewBrandForm: false,
+        newBrandName: '', showNewBrandForm: false,
         newProductTypeName: '', showNewProductTypeForm: false,
         tags: [], newTag: '', seoTitle: '', seoDescription: '',
-        isActive: true, isFeatured: false, isOnSale: false
+        isActive: true, isFeatured: false, isOnSale: false, isBestseller: false
       });
       setImages([]);
       setImageUrls([]);
       setImagePreviews([]);
       setSelectedAttributes({});
-      setCurrentStep(1);
 
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen bir hata oluştu';
@@ -478,44 +469,19 @@ export function ProfessionalProductUploadForm() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      {/* Progress Steps */}
-      <div className="mb-8">
-        <div className="flex justify-between items-center">
-          {steps.map((step) => (
-            <div
-              key={step.id}
-              className={`flex flex-col items-center ${
-                currentStep >= step.id ? 'text-primary' : 'text-muted-foreground'
-              }`}
-            >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  currentStep >= step.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted'
-                }`}
-              >
-                {step.id}
-              </div>
-              <div className="text-xs mt-2 text-center">
-                <div className="font-medium">{step.title}</div>
-                <div className="text-muted-foreground">{step.description}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
       <Card>
         <CardHeader>
-          <CardTitle>
-            {steps[currentStep - 1]?.title} - Profesyonel Ürün Yükleme
-          </CardTitle>
+          <CardTitle>Ürün Ekleme Formu</CardTitle>
+          <p className="text-muted-foreground">
+            Yeni ürün eklemek için aşağıdaki formu doldurun. * ile işaretli alanlar zorunludur.
+          </p>
         </CardHeader>
         <CardContent>
-          {/* Step 1: Basic Information */}
-          {currentStep === 1 && (
+          <div className="space-y-8">
+            {/* Basic Information */}
             <div className="space-y-6">
+              <h3 className="text-lg font-semibold border-b pb-2">Temel Bilgiler</h3>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="name">Ürün Adı *</Label>
@@ -539,7 +505,7 @@ export function ProfessionalProductUploadForm() {
                       <option value="">Marka seçin</option>
                       {brands.map((brand) => (
                         <option key={brand.id} value={brand.id}>
-                          {brand.name} ({brand.country})
+                          {brand.name}
                         </option>
                       ))}
                     </select>
@@ -558,32 +524,21 @@ export function ProfessionalProductUploadForm() {
                     {formData.showNewBrandForm && (
                       <div className="border rounded-lg p-4 space-y-3 bg-gray-50">
                         <h4 className="font-medium text-sm">Yeni Marka Bilgileri</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div>
-                            <Label htmlFor="newBrandName">Marka Adı *</Label>
-                            <Input
-                              id="newBrandName"
-                              value={formData.newBrandName}
-                              onChange={(e) => handleInputChange('newBrandName', e.target.value)}
-                              placeholder="Örn: MAC, L'Oréal"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="newBrandCountry">Ülke *</Label>
-                            <Input
-                              id="newBrandCountry"
-                              value={formData.newBrandCountry}
-                              onChange={(e) => handleInputChange('newBrandCountry', e.target.value)}
-                              placeholder="Örn: USA, France"
-                            />
-                          </div>
+                        <div>
+                          <Label htmlFor="newBrandName">Marka Adı *</Label>
+                          <Input
+                            id="newBrandName"
+                            value={formData.newBrandName}
+                            onChange={(e) => handleInputChange('newBrandName', e.target.value)}
+                            placeholder="Örn: MAC, L'Oréal"
+                          />
                         </div>
                         <div className="flex gap-2">
                           <Button
                             type="button"
                             size="sm"
                             onClick={handleCreateNewBrand}
-                            disabled={!formData.newBrandName.trim() || !formData.newBrandCountry.trim()}
+                            disabled={!formData.newBrandName.trim()}
                           >
                             Marka Ekle
                           </Button>
@@ -600,6 +555,17 @@ export function ProfessionalProductUploadForm() {
                     )}
                   </div>
                 </div>
+              </div>
+
+              <div>
+                <HierarchicalCategorySelector
+                  value={formData.categoryId}
+                  onChange={(categoryId) => handleInputChange('categoryId', categoryId)}
+                  required={true}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  En spesifik kategoriyi seçin. Breadcrumb otomatik oluşturulacak.
+                </p>
               </div>
 
               {/* Product Type Selection - Only show if brand and category are selected */}
@@ -674,29 +640,6 @@ export function ProfessionalProductUploadForm() {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="category">Kategori *</Label>
-                  <select
-                    id="category"
-                    value={formData.categoryId}
-                    onChange={(e) => handleInputChange('categoryId', e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    required
-                  >
-                    <option value="">Kategori seçin</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {'—'.repeat(cat.level * 2)} {cat.icon && `${cat.icon} `}{cat.name}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Ana kategori, alt kategori veya alt-alt kategori seçebilirsiniz
-                  </p>
-                </div>
-              </div>
-
               <div>
                 <Label htmlFor="shortDescription">Kısa Açıklama</Label>
                 <Input
@@ -719,11 +662,11 @@ export function ProfessionalProductUploadForm() {
                 />
               </div>
             </div>
-          )}
 
-          {/* Step 2: Pricing and Inventory */}
-          {currentStep === 2 && (
+            {/* Pricing and Inventory */}
             <div className="space-y-6">
+              <h3 className="text-lg font-semibold border-b pb-2">Fiyat ve Stok Bilgileri</h3>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="price">Satış Fiyatı (؋) *</Label>
@@ -738,7 +681,7 @@ export function ProfessionalProductUploadForm() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="comparePrice">İndirim Öncesi Fiyat (؋)</Label>
+                  <Label htmlFor="comparePrice">Karşılaştırma Fiyatı (؋)</Label>
                   <Input
                     id="comparePrice"
                     type="number"
@@ -747,6 +690,9 @@ export function ProfessionalProductUploadForm() {
                     onChange={(e) => handleInputChange('comparePrice', e.target.value)}
                     placeholder="0.00"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    İndirim öncesi fiyat (isteğe bağlı)
+                  </p>
                 </div>
               </div>
 
@@ -833,32 +779,32 @@ export function ProfessionalProductUploadForm() {
                 </div>
               </div>
             </div>
-          )}
 
-          {/* Step 3: Attributes */}
-          {currentStep === 3 && (
+            {/* Attributes */}
             <div className="space-y-6">
+              <h3 className="text-lg font-semibold border-b pb-2">Ürün Özellikleri</h3>
               <div className="text-sm text-muted-foreground mb-4">
                 Ürününüzün özelliklerini seçin. Bu bilgiler müşterilerin doğru ürünü bulmasına yardımcı olur.
               </div>
               
-              {attributeCategories.map((category) => {
-                const categoryValues = attributeValues.filter(v => v.attribute_category_id === category.id);
-                if (categoryValues.length === 0) return null;
+              {attributes.map((attribute) => {
+                const attributeValues_filtered = attributeValues.filter(v => v.attribute_id === attribute.id);
+                if (attributeValues_filtered.length === 0) return null;
 
                 return (
-                  <div key={category.id} className="border rounded-lg p-4">
+                  <div key={attribute.id} className="border rounded-lg p-4">
                     <h3 className="font-medium mb-3">
-                      {category.name}
-                      {category.is_required && <span className="text-red-500 ml-1">*</span>}
+                      {attribute.name}
+                      {attribute.is_required && <span className="text-red-500 ml-1">*</span>}
+                      {attribute.unit && <span className="text-muted-foreground ml-1">({attribute.unit})</span>}
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                      {categoryValues.map((value) => (
+                      {attributeValues_filtered.map((value) => (
                         <label key={value.id} className="flex items-center space-x-2 p-2 border rounded hover:bg-accent cursor-pointer">
                           <input
                             type="checkbox"
-                            checked={selectedAttributes[category.id]?.includes(value.id) || false}
-                            onChange={(e) => handleAttributeChange(category.id, value.id, e.target.checked)}
+                            checked={selectedAttributes[attribute.id]?.includes(value.id) || false}
+                            onChange={(e) => handleAttributeChange(attribute.id, value.id, e.target.checked)}
                             className="rounded"
                           />
                           <span className="text-sm">
@@ -877,11 +823,10 @@ export function ProfessionalProductUploadForm() {
                 );
               })}
             </div>
-          )}
 
-          {/* Step 4: Images */}
-          {currentStep === 4 && (
+            {/* Images */}
             <div className="space-y-6">
+              <h3 className="text-lg font-semibold border-b pb-2">Ürün Görselleri</h3>
               <div>
                 <Label>Ürün Görselleri *</Label>
                 <p className="text-sm text-muted-foreground mb-4">
@@ -962,11 +907,11 @@ export function ProfessionalProductUploadForm() {
                 </div>
               )}
             </div>
-          )}
 
-          {/* Step 5: SEO and Tags */}
-          {currentStep === 5 && (
+            {/* SEO and Tags */}
             <div className="space-y-6">
+              <h3 className="text-lg font-semibold border-b pb-2">SEO ve Etiketler</h3>
+              
               <div>
                 <Label htmlFor="tags">Etiketler</Label>
                 <div className="flex gap-2 mb-2">
@@ -1055,52 +1000,40 @@ export function ProfessionalProductUploadForm() {
                   />
                   <Label htmlFor="isOnSale">İndirimli ürün olarak işaretle</Label>
                 </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isBestseller"
+                    checked={formData.isBestseller}
+                    onChange={(e) => handleInputChange('isBestseller', e.target.checked)}
+                  />
+                  <Label htmlFor="isBestseller">Çok satanlar listesine ekle</Label>
+                </div>
               </div>
             </div>
-          )}
 
-          {/* Navigation Buttons */}
-          <div className="flex justify-between items-center mt-8 pt-6 border-t">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
-              disabled={currentStep === 1}
-            >
-              Önceki
-            </Button>
-
-            <div className="text-sm text-muted-foreground">
-              Adım {currentStep} / {steps.length}
-            </div>
-
-            {currentStep < steps.length ? (
-              <Button
-                type="button"
-                onClick={() => setCurrentStep(prev => Math.min(steps.length, prev + 1))}
-                disabled={!validateStep(currentStep)}
-              >
-                Sonraki
-              </Button>
-            ) : (
+            {/* Submit Button */}
+            <div className="flex justify-end pt-6 border-t">
               <Button
                 onClick={handleSubmit}
-                disabled={loading || !validateStep(currentStep)}
+                disabled={loading || !validateForm()}
+                className="px-8"
               >
                 {loading ? 'Yükleniyor...' : 'Ürünü Yayınla'}
               </Button>
+            </div>
+
+            {message && (
+              <div className={`mt-4 p-3 rounded-md text-sm ${
+                message.includes('başarıyla') 
+                  ? 'bg-green-50 text-green-700 border border-green-200' 
+                  : 'bg-red-50 text-red-700 border border-red-200'
+              }`}>
+                {message}
+              </div>
             )}
           </div>
-
-          {message && (
-            <div className={`mt-4 p-3 rounded-md text-sm ${
-              message.includes('başarıyla') 
-                ? 'bg-green-50 text-green-700 border border-green-200' 
-                : 'bg-red-50 text-red-700 border border-red-200'
-            }`}>
-              {message}
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>
