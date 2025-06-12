@@ -16,14 +16,31 @@ interface Product {
   price: number;
   compare_price?: number;
   image_urls: string[];
-  brand: string;
+  brand_name: string;
   user_id: string;
   is_on_sale?: boolean;
   stock_quantity?: number;
   tags?: string[];
+  brands?: { name: string };
+  categories?: { name: string };
+  product_types?: { name: string };
 }
 
-export function ProductList() {
+interface ProductListProps {
+  filters?: {
+    brand_id?: string;
+    category_id?: string;
+    product_type_id?: string;
+  };
+  showFilters?: boolean;
+  showHeader?: boolean;
+}
+
+export function ProductList({ 
+  filters = {}, 
+  showFilters = true, 
+  showHeader = true 
+}: ProductListProps = {}) {
   const supabase = createClient();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,9 +49,21 @@ export function ProductList() {
 
   useEffect(() => {
     const fetchProducts = async () => {
+      // First, get all products
       let query = supabase
         .from('products')
         .select('*');
+      
+      // Apply filters
+      if (filters.brand_id) {
+        query = query.eq('brand_id', filters.brand_id);
+      }
+      if (filters.category_id) {
+        query = query.eq('category_id', filters.category_id);
+      }
+      if (filters.product_type_id) {
+        query = query.eq('product_type_id', filters.product_type_id);
+      }
       
       // Add sorting
       switch (sortBy) {
@@ -51,20 +80,40 @@ export function ProductList() {
           query = query.order('created_at', { ascending: false });
       }
 
-      const { data, error } = await query;
+      const { data: productsData, error: productsError } = await query;
 
-      if (error) {
-        setError(error.message);
+      if (productsError) {
+        setError(productsError.message);
         setLoading(false);
         return;
       }
 
-      setProducts(data as Product[]);
+      // Get all brands to map brand_id to brand_name
+      const { data: brandsData, error: brandsError } = await supabase
+        .from('brands')
+        .select('id, name');
+
+      if (brandsError) {
+        setError(brandsError.message);
+        setLoading(false);
+        return;
+      }
+
+      // Create a map of brand_id to brand_name
+      const brandMap = new Map(brandsData?.map(brand => [brand.id, brand.name]) || []);
+
+      // Transform data to include brand_name
+      const transformedData = productsData?.map(product => ({
+        ...product,
+        brand_name: brandMap.get(product.brand_id) || 'مارک مشخص نشده'
+      }));
+
+      setProducts(transformedData as Product[]);
       setLoading(false);
     };
 
     fetchProducts();
-  }, [supabase, sortBy]);
+  }, [supabase, sortBy, filters]);
 
   // Calculate discount percentage
   const getDiscountPercentage = (originalPrice: number, salePrice: number) => {
@@ -108,38 +157,42 @@ export function ProductList() {
   return (
     <div className="w-full py-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between mb-6 px-0">
-        <h1 className="text-xl font-bold text-right">
-          آرایشی ({toPersianNumber(products.length)} کالا)
-        </h1>
-      </div>
+      {showHeader && (
+        <div className="flex items-center justify-between mb-6 px-0">
+          <h1 className="text-xl font-bold text-right">
+            آرایشی ({toPersianNumber(products.length)} کالا)
+          </h1>
+        </div>
+      )}
 
       {/* Sort and Filter Controls */}
-      <div className="flex items-center justify-between mb-6 border-b pb-4 ">
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => {/* Open sort menu */}}
-            className="text-sm"
-          >
-            <ArrowUpDown className="w-4 h-4 mr-2" />
-            مرتب سازی
-          </Button>
+      {showFilters && (
+        <div className="flex items-center justify-between mb-6 border-b pb-4 ">
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {/* Open sort menu */}}
+              className="text-sm"
+            >
+              <ArrowUpDown className="w-4 h-4 mr-2" />
+              مرتب سازی
+            </Button>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {/* Open filter menu */}}
+              className="text-sm"
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              فیلترها
+            </Button>
+          </div>
         </div>
-        
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => {/* Open filter menu */}}
-            className="text-sm"
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            فیلترها
-          </Button>
-        </div>
-      </div>
+      )}
 
       {/* Products Grid with Separators */}
       <div className="grid grid-cols-2">
@@ -184,7 +237,7 @@ export function ProductList() {
                   <div className="space-y-2">
                     {/* Brand - gray color at top */}
                     <div className="text-sm text-gray-500 text-right mr-0">
-                      {product.brand || 'مارک مشخص نشده'}
+                      {product.brand_name || 'مارک مشخص نشده'}
                     </div>
 
                     {/* Product Name - main product info */}

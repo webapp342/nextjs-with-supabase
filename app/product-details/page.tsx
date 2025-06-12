@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 
 import { toPersianNumber } from '@/lib/utils';
-import { Breadcrumb } from '@/components/breadcrumb';
+import { EnhancedBreadcrumb } from '@/components/enhanced-breadcrumb';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -68,7 +68,8 @@ function ProductDetailsContent() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-8">
-      <Breadcrumb />
+      {/* Kategori Breadcrumb - Fotoğrafın Üstünde */}
+      <EnhancedBreadcrumb showOnlyCategory={true} />
       
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Product Images */}
@@ -106,6 +107,9 @@ function ProductDetailsContent() {
             </div>
           )}
         </div>
+        
+        {/* Marka Breadcrumb - Fotoğrafın Altında */}
+        <EnhancedBreadcrumb showOnlyBrand={true} />
 
         {/* Product Info */}
         <div className="space-y-6">

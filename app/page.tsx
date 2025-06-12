@@ -32,7 +32,7 @@ export default function Home() {
 
       {/* Products Section */}
       <div className="w-full">
-        <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="px-2 py-6">
           <ProductList />
         </div>
       </div>
