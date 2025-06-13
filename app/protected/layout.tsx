@@ -7,7 +7,7 @@ export default function ProtectedLayout({
 }) {
   return (
     <AdminLayout>
-      {children}
+          {children}
     </AdminLayout>
   );
 }

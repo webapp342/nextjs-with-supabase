@@ -3,10 +3,9 @@
 import { useEffect, useState, Suspense } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
-
+import { ChevronLeft } from 'lucide-react';
 import { toPersianNumber } from '@/lib/utils';
 import { EnhancedBreadcrumb } from '@/components/enhanced-breadcrumb';
-
 import { useSearchParams } from 'next/navigation';
 
 interface Product {
@@ -17,10 +16,26 @@ interface Product {
   image_urls: string[];
   brand: string;
   user_id: string;
+  brand_id: string;
+  category_id: string;
+}
+
+interface Brand {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
 }
 
 function ProductDetailsContent() {
   const [product, setProduct] = useState<Product | null>(null);
+  const [brand, setBrand] = useState<Brand | null>(null);
+  const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
@@ -35,19 +50,43 @@ function ProductDetailsContent() {
         return;
       }
 
-      const { data, error } = await supabase
+      // Fetch product with brand and category info
+      const { data: productData, error: productError } = await supabase
         .from('products')
         .select('*')
         .eq('id', productId)
         .single();
 
-      if (error) {
-        setError(error.message);
+      if (productError) {
+        setError(productError.message);
         setLoading(false);
         return;
       }
 
-      setProduct(data as Product);
+      setProduct(productData as Product);
+
+      // Fetch brand info
+      if (productData.brand_id) {
+        const { data: brandData } = await supabase
+          .from('brands')
+          .select('id, name, slug')
+          .eq('id', productData.brand_id)
+          .single();
+        
+        if (brandData) setBrand(brandData);
+      }
+
+      // Fetch category info
+      if (productData.category_id) {
+        const { data: categoryData } = await supabase
+          .from('categories_new')
+          .select('id, name, slug')
+          .eq('id', productData.category_id)
+          .single();
+        
+        if (categoryData) setCategory(categoryData);
+      }
+
       setLoading(false);
     };
 
@@ -108,15 +147,35 @@ function ProductDetailsContent() {
           )}
         </div>
         
-        {/* Marka Breadcrumb - Fotoğrafın Altında */}
-        <EnhancedBreadcrumb showOnlyBrand={true} />
+        {/* Brand + Category Breadcrumb - Fotoğrafın Altında */}
+        {brand && category && (
+          <div className="lg:col-span-2">
+            <div className="py-2" dir="rtl">
+              <div className="text-sm text-gray-600 text-right">
+                <div className="flex items-center gap-2 ">
+                  <a 
+                    href={`/brand/${brand.slug}`}
+                    className="text-gray-700 hover:text-gray-900 transition-colors"
+                  >
+                    {brand.name}
+                  </a>
+                  <ChevronLeft className="w-4 h-4 text-gray-400" />
+                  <a 
+                    href={`/brand/${brand.slug}/${category.slug}`}
+                    className="text-gray-900 font-medium hover:text-gray-700 transition-colors"
+                  >
+                    {category.name} {brand.name}
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Product Info */}
         <div className="space-y-6">
           {/* Brand */}
-          <div className="text-sm text-gray-600 text-right">
-            {product.brand}
-          </div>
+          
 
           {/* Product Name */}
           <h1 className="text-2xl font-bold text-right leading-tight">
@@ -128,13 +187,12 @@ function ProductDetailsContent() {
             <div className="text-2xl font-bold text-right">
               تومان {toPersianNumber(product.price.toLocaleString())}
             </div>
-            {/* Add compare price if available */}
             <div className="text-sm text-gray-500 text-right">
               شامل مالیات بر ارزش افزوده
             </div>
           </div>
 
-          {/* Color Selection (Demo) */}
+          {/* Color Selection */}
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-right">رنگ:</h3>
             <div className="flex flex-wrap gap-2 justify-end">

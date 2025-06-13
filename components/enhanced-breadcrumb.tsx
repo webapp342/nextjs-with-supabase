@@ -35,7 +35,6 @@ interface EnhancedBreadcrumbProps {
   brandSlug?: string;
   productTypeName?: string;
   productTypeSlug?: string;
-  categoryId?: string; // Kategori bilgisini dışarıdan alabilmek için
 }
 
 export function EnhancedBreadcrumb({ 
@@ -46,7 +45,6 @@ export function EnhancedBreadcrumb({
   brandSlug,
   productTypeName,
   productTypeSlug,
-  categoryId
 }: EnhancedBreadcrumbProps = {}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -55,103 +53,7 @@ export function EnhancedBreadcrumb({
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
-  // CategoryId verildiğinde kategori breadcrumb'ını oluştur
   useEffect(() => {
-    const buildCategoryBreadcrumbFromId = async () => {
-      if (!categoryId) return;
-
-      try {
-        const { data: category } = await supabase
-          .from('categories_new')
-          .select('*')
-          .eq('id', categoryId)
-          .eq('is_active', true)
-          .single();
-
-        if (!category) return;
-
-        const categoryItems: BreadcrumbItem[] = [];
-        
-        // Kategori hiyerarşisini geriye doğru oluştur
-        const buildHierarchy = async (currentCategory: any) => {
-          if (currentCategory.parent_id) {
-            const { data: parentCategory } = await supabase
-              .from('categories_new')
-              .select('*')
-              .eq('id', currentCategory.parent_id)
-              .eq('is_active', true)
-              .single();
-
-            if (parentCategory) {
-              await buildHierarchy(parentCategory);
-              
-              // Parent kategori için path oluştur
-              let parentPath = `/category/${parentCategory.slug}`;
-              if (parentCategory.parent_id) {
-                // Eğer grandparent varsa, tam path'i oluştur
-                const { data: grandParent } = await supabase
-                  .from('categories_new')
-                  .select('slug')
-                  .eq('id', parentCategory.parent_id)
-                  .single();
-                
-                if (grandParent) {
-                  parentPath = `/category/${grandParent.slug}/${parentCategory.slug}`;
-                }
-              }
-              
-              categoryItems.push({
-                label: parentCategory.name,
-                href: parentPath
-              });
-            }
-          }
-          
-          // Mevcut kategori için path oluştur
-          let currentPath = `/category/${currentCategory.slug}`;
-          if (currentCategory.parent_id) {
-            // Parent path'ini al
-            const parentPaths = categoryItems.map(item => {
-              const segments = item.href.split('/').filter(s => s && s !== 'category');
-              return segments;
-            });
-            
-            if (parentPaths.length > 0) {
-              const fullParentPath = parentPaths[parentPaths.length - 1];
-              currentPath = `/category/${fullParentPath.join('/')}/${currentCategory.slug}`;
-            }
-          }
-          
-          categoryItems.push({
-            label: currentCategory.name,
-            href: currentPath
-          });
-        };
-
-                 await buildHierarchy(category);
-         setCategoryBreadcrumbs(categoryItems);
-         setBrandBreadcrumbs([]); // Brand breadcrumbs'ı sıfırla
-         setLoading(false);
-         
-       } catch (error) {
-         console.error('Category breadcrumb error:', error);
-         setLoading(false);
-       }
-     };
-
-     if (showBrandProductType && categoryId) {
-       setLoading(true);
-       buildCategoryBreadcrumbFromId();
-     }
-   }, [categoryId, showBrandProductType, supabase]);
-
-  useEffect(() => {
-    // showBrandProductType modunda bu useEffect'i çalıştırma
-    if (showBrandProductType) {
-      setLoading(false);
-      return;
-    }
-
     const generateBreadcrumbs = async () => {
       setLoading(true);
       const pathSegments = pathname.split('/').filter(segment => segment !== '');
@@ -268,7 +170,7 @@ export function EnhancedBreadcrumb({
         } else if (pathSegments.includes('brand')) {
           // Marka sayfası için breadcrumb
           const brandSlug = pathSegments[pathSegments.indexOf('brand') + 1];
-          const productTypeSlug = pathSegments[pathSegments.indexOf('brand') + 2];
+          const categorySlug = pathSegments[pathSegments.indexOf('brand') + 2];
           
           const { data: brand } = await supabase
             .from('brands')
@@ -285,19 +187,19 @@ export function EnhancedBreadcrumb({
               href: `/brand/${brand.slug}`
             });
 
-            if (productTypeSlug) {
-              const { data: productType } = await supabase
-                .from('product_types')
+            if (categorySlug) {
+              // Kategori bilgisini al
+              const { data: category } = await supabase
+                .from('categories_new')
                 .select('*')
-                .eq('slug', productTypeSlug)
-                .eq('brand_id', brand.id)
+                .eq('slug', categorySlug)
                 .eq('is_active', true)
                 .single();
 
-              if (productType) {
+              if (category) {
                 brandItems.push({
-                  label: productType.name,
-                  href: `/brand/${brand.slug}/${productType.slug}`
+                  label: `${brand.name} ${category.name}`, // "پنسیس عطر زنانه" formatı
+                  href: `/brand/${brand.slug}/${category.slug}`
                 });
               }
             }
@@ -321,7 +223,7 @@ export function EnhancedBreadcrumb({
     };
 
     generateBreadcrumbs();
-  }, [pathname, searchParams, supabase, showBrandProductType]);
+  }, [pathname, searchParams, supabase]);
 
   if (loading) {
     return (

@@ -34,13 +34,7 @@ interface Brand {
   updated_at: string;
 }
 
-interface ProductType {
-  id: string;
-  name: string;
-  slug: string;
-  brand_id: string;
-  category_id: string;
-}
+
 
 interface Attribute {
   id: string;
@@ -85,11 +79,9 @@ export function ProfessionalProductUploadForm() {
     minStockLevel: '',
     categoryId: '',
     brandId: '',
-    productTypeId: '',
     newBrandName: '',
+    newBrandSlug: '',
     showNewBrandForm: false,
-    newProductTypeName: '',
-    showNewProductTypeForm: false,
     tags: [] as string[],
     newTag: '',
     seoTitle: '',
@@ -103,8 +95,6 @@ export function ProfessionalProductUploadForm() {
   // Data state
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
-  const [productTypes, setProductTypes] = useState<ProductType[]>([]);
-  const [filteredProductTypes, setFilteredProductTypes] = useState<ProductType[]>([]);
   const [attributes, setAttributes] = useState<Attribute[]>([]);
   const [attributeValues, setAttributeValues] = useState<AttributeValue[]>([]);
   const [selectedAttributes, setSelectedAttributes] = useState<{[key: string]: string[]}>({});
@@ -124,17 +114,15 @@ export function ProfessionalProductUploadForm() {
     const fetchData = async () => {
       setDataLoading(true);
       try {
-        const [categoriesRes, brandsRes, productTypesRes, attributesRes, attributeValuesRes] = await Promise.all([
+        const [categoriesRes, brandsRes, attributesRes, attributeValuesRes] = await Promise.all([
           supabase.from('categories_new').select('*').eq('is_active', true).order('sort_order'),
           supabase.from('brands').select('*').eq('is_active', true).order('name'),
-          supabase.from('product_types').select('*').eq('is_active', true).order('sort_order'),
           supabase.from('attributes').select('*').order('sort_order'),
           supabase.from('attribute_values').select('*').order('sort_order')
         ]);
 
         if (categoriesRes.data) setCategories(categoriesRes.data);
         if (brandsRes.data) setBrands(brandsRes.data);
-        if (productTypesRes.data) setProductTypes(productTypesRes.data);
         if (attributesRes.data) setAttributes(attributesRes.data);
         if (attributeValuesRes.data) setAttributeValues(attributeValuesRes.data);
 
@@ -149,29 +137,16 @@ export function ProfessionalProductUploadForm() {
     fetchData();
   }, [supabase]);
 
-  // Filter product types based on selected brand and category
-  useEffect(() => {
-    if (formData.brandId && formData.categoryId) {
-      const filtered = productTypes.filter(pt => 
-        pt.brand_id === formData.brandId && pt.category_id === formData.categoryId
-      );
-      setFilteredProductTypes(filtered);
-    } else {
-      setFilteredProductTypes([]);
-    }
-    
-    // Reset product type selection if not valid for current brand/category
-    if (formData.productTypeId) {
-      const isValid = productTypes.some(pt => 
-        pt.id === formData.productTypeId && 
-        pt.brand_id === formData.brandId && 
-        pt.category_id === formData.categoryId
-      );
-      if (!isValid) {
-        setFormData(prev => ({ ...prev, productTypeId: '' }));
-      }
-    }
-  }, [formData.brandId, formData.categoryId, productTypes, formData.productTypeId]);
+
+
+  // Generate slug from text
+  const generateSlug = (text: string) => {
+    return text.toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+      .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+  };
 
   // Handle form input changes
   const handleInputChange = (field: string, value: string | boolean | number) => {
@@ -185,7 +160,18 @@ export function ProfessionalProductUploadForm() {
         }
       }));
     } else {
-      setFormData(prev => ({ ...prev, [field]: value }));
+      setFormData(prev => {
+        const newData = { ...prev, [field]: value };
+        
+        // Auto-generate slug when brand name changes
+        if (field === 'newBrandName' && typeof value === 'string') {
+          newData.newBrandSlug = generateSlug(value);
+        }
+        
+
+        
+        return newData;
+      });
     }
   };
 
@@ -247,22 +233,24 @@ export function ProfessionalProductUploadForm() {
 
   // Handle new brand creation
   const handleCreateNewBrand = async () => {
-    if (!formData.newBrandName.trim()) {
-      setMessage('Marka adı gereklidir');
+    if (!formData.newBrandName.trim() || !formData.newBrandSlug.trim()) {
+      setMessage('Marka adı ve slug gereklidir');
       return;
     }
 
     try {
-      const slug = formData.newBrandName.toLowerCase()
-        .replace(/[^a-z0-9]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
+      // Validate slug format
+      const slugRegex = /^[a-z0-9-]+$/;
+      if (!slugRegex.test(formData.newBrandSlug)) {
+        setMessage('Slug sadece küçük harf, rakam ve tire içerebilir');
+        return;
+      }
 
       const { data: newBrand, error } = await supabase
         .from('brands')
         .insert([{
           name: formData.newBrandName.trim(),
-          slug: slug,
+          slug: formData.newBrandSlug.trim(),
           is_active: true
         }])
         .select()
@@ -276,6 +264,7 @@ export function ProfessionalProductUploadForm() {
         ...prev,
         brandId: newBrand.id,
         newBrandName: '',
+        newBrandSlug: '',
         showNewBrandForm: false
       }));
       setMessage('Yeni marka başarıyla eklendi!');
@@ -285,47 +274,7 @@ export function ProfessionalProductUploadForm() {
     }
   };
 
-  // Handle new product type creation
-  const handleCreateNewProductType = async () => {
-    if (!formData.newProductTypeName.trim() || !formData.brandId || !formData.categoryId) {
-      setMessage('Ürün çeşidi adı, marka ve kategori seçimi gereklidir');
-      return;
-    }
 
-    try {
-      const slug = formData.newProductTypeName.toLowerCase()
-        .replace(/[^a-z0-9]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
-
-      const { data: newProductType, error } = await supabase
-        .from('product_types')
-        .insert([{
-          name: formData.newProductTypeName.trim(),
-          slug: slug,
-          brand_id: formData.brandId,
-          category_id: formData.categoryId,
-          is_active: true
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Add new product type to list and select it
-      setProductTypes(prev => [...prev, newProductType]);
-      setFormData(prev => ({
-        ...prev,
-        productTypeId: newProductType.id,
-        newProductTypeName: '',
-        showNewProductTypeForm: false
-      }));
-      setMessage('Yeni ürün çeşidi başarıyla eklendi!');
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Ürün çeşidi eklenirken hata oluştu';
-      setMessage(`Hata: ${errorMessage}`);
-    }
-  };
 
   // Form validation
   const validateForm = () => {
@@ -391,7 +340,6 @@ export function ProfessionalProductUploadForm() {
         min_stock_level: formData.minStockLevel ? parseInt(formData.minStockLevel) : 0,
         category_id: formData.categoryId,
         brand_id: formData.brandId || null,
-        product_type_id: formData.productTypeId || null,
         tags: formData.tags,
         seo_title: formData.seoTitle || null,
         seo_description: formData.seoDescription || null,
@@ -436,9 +384,8 @@ export function ProfessionalProductUploadForm() {
       setFormData({
         name: '', description: '', shortDescription: '', price: '', comparePrice: '',
         sku: '', barcode: '', weight: '', dimensions: { length: '', width: '', height: '' },
-        stockQuantity: '', minStockLevel: '', categoryId: '', brandId: '', productTypeId: '',
-        newBrandName: '', showNewBrandForm: false,
-        newProductTypeName: '', showNewProductTypeForm: false,
+        stockQuantity: '', minStockLevel: '', categoryId: '', brandId: '',
+        newBrandName: '', newBrandSlug: '', showNewBrandForm: false,
         tags: [], newTag: '', seoTitle: '', seoDescription: '',
         isActive: true, isFeatured: false, isOnSale: false, isBestseller: false
       });
@@ -524,21 +471,46 @@ export function ProfessionalProductUploadForm() {
                     {formData.showNewBrandForm && (
                       <div className="border rounded-lg p-4 space-y-3 bg-gray-50">
                         <h4 className="font-medium text-sm">Yeni Marka Bilgileri</h4>
-                        <div>
-                          <Label htmlFor="newBrandName">Marka Adı *</Label>
-                          <Input
-                            id="newBrandName"
-                            value={formData.newBrandName}
-                            onChange={(e) => handleInputChange('newBrandName', e.target.value)}
-                            placeholder="Örn: MAC, L'Oréal"
-                          />
+                          <div>
+                            <Label htmlFor="newBrandName">Marka Adı *</Label>
+                            <Input
+                              id="newBrandName"
+                              value={formData.newBrandName}
+                              onChange={(e) => handleInputChange('newBrandName', e.target.value)}
+                              placeholder="Örn: MAC, L'Oréal, پنسیس"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="newBrandSlug">Marka Slug *</Label>
+                            <div className="flex gap-2">
+                              <Input
+                                id="newBrandSlug"
+                                value={formData.newBrandSlug}
+                                onChange={(e) => handleInputChange('newBrandSlug', e.target.value)}
+                                placeholder="Örn: mac, loreal, pensis"
+                                className="flex-1"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleInputChange('newBrandSlug', generateSlug(formData.newBrandName))}
+                                disabled={!formData.newBrandName.trim()}
+                                className="whitespace-nowrap"
+                              >
+                                Otomatik
+                              </Button>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              URL'de kullanılacak (sadece küçük harf, rakam ve tire)
+                            </p>
                         </div>
                         <div className="flex gap-2">
                           <Button
                             type="button"
                             size="sm"
                             onClick={handleCreateNewBrand}
-                            disabled={!formData.newBrandName.trim()}
+                            disabled={!formData.newBrandName.trim() || !formData.newBrandSlug.trim()}
                           >
                             Marka Ekle
                           </Button>
@@ -557,88 +529,23 @@ export function ProfessionalProductUploadForm() {
                 </div>
               </div>
 
-              <div>
+                <div>
                 <HierarchicalCategorySelector
-                  value={formData.categoryId}
+                    value={formData.categoryId}
                   onChange={(categoryId) => handleInputChange('categoryId', categoryId)}
                   required={true}
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  En spesifik kategoriyi seçin. Breadcrumb otomatik oluşturulacak.
-                </p>
+                <div className="text-xs text-muted-foreground mt-2 space-y-1">
+                  <p>En spesifik kategoriyi seçin. Bu kategori hem marka hem de genel kategori sayfalarında kullanılacak.</p>
+                  <div className="bg-blue-50 p-2 rounded text-blue-700">
+                    <p><strong>URL Yapısı:</strong></p>
+                    <p>• <strong>Marka Sayfası:</strong> <code>/brand/{'{brand-slug}'}/{'{category-slug}'}</code></p>
+                    <p>• <strong>Kategori Sayfası:</strong> <code>/categories/{'{category-hierarchy}'}</code></p>
+                  </div>
+                </div>
               </div>
 
-              {/* Product Type Selection - Only show if brand and category are selected */}
-              {formData.brandId && formData.categoryId && (
-                <div>
-                  <Label htmlFor="productType">Ürün Çeşidi</Label>
-                  <div className="space-y-3">
-                    <select
-                      id="productType"
-                      value={formData.productTypeId}
-                      onChange={(e) => handleInputChange('productTypeId', e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    >
-                      <option value="">Ürün çeşidi seçin (isteğe bağlı)</option>
-                      {filteredProductTypes.map((productType) => (
-                        <option key={productType.id} value={productType.id}>
-                          {productType.name}
-                        </option>
-                      ))}
-                    </select>
-                    
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleInputChange('showNewProductTypeForm', !formData.showNewProductTypeForm)}
-                      className="text-sm"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      {formData.showNewProductTypeForm ? 'İptal' : 'Yeni Ürün Çeşidi Ekle'}
-                    </Button>
 
-                    {formData.showNewProductTypeForm && (
-                      <div className="border rounded-lg p-4 space-y-3 bg-gray-50">
-                        <h4 className="font-medium text-sm">Yeni Ürün Çeşidi</h4>
-                        <div>
-                          <Label htmlFor="newProductTypeName">Ürün Çeşidi Adı *</Label>
-                          <Input
-                            id="newProductTypeName"
-                            value={formData.newProductTypeName}
-                            onChange={(e) => handleInputChange('newProductTypeName', e.target.value)}
-                            placeholder="Örn: Liquid Foundation, Waterproof Mascara"
-                          />
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Bu ürün çeşidi seçili marka ve kategori için kullanılabilir olacak
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={handleCreateNewProductType}
-                            disabled={!formData.newProductTypeName.trim()}
-                          >
-                            Ürün Çeşidi Ekle
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleInputChange('showNewProductTypeForm', false)}
-                          >
-                            İptal
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Breadcrumb'da "Marka > Ürün Çeşidi" şeklinde gösterilir
-                  </p>
-                </div>
-              )}
 
               <div>
                 <Label htmlFor="shortDescription">Kısa Açıklama</Label>
@@ -1009,8 +916,8 @@ export function ProfessionalProductUploadForm() {
                     onChange={(e) => handleInputChange('isBestseller', e.target.checked)}
                   />
                   <Label htmlFor="isBestseller">Çok satanlar listesine ekle</Label>
-                </div>
               </div>
+            </div>
             </div>
 
             {/* Submit Button */}
@@ -1022,17 +929,17 @@ export function ProfessionalProductUploadForm() {
               >
                 {loading ? 'Yükleniyor...' : 'Ürünü Yayınla'}
               </Button>
-            </div>
+          </div>
 
-            {message && (
-              <div className={`mt-4 p-3 rounded-md text-sm ${
-                message.includes('başarıyla') 
-                  ? 'bg-green-50 text-green-700 border border-green-200' 
-                  : 'bg-red-50 text-red-700 border border-red-200'
-              }`}>
-                {message}
-              </div>
-            )}
+          {message && (
+            <div className={`mt-4 p-3 rounded-md text-sm ${
+              message.includes('başarıyla') 
+                ? 'bg-green-50 text-green-700 border border-green-200' 
+                : 'bg-red-50 text-red-700 border border-red-200'
+            }`}>
+              {message}
+            </div>
+          )}
           </div>
         </CardContent>
       </Card>

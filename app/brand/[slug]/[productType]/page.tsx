@@ -17,22 +17,22 @@ interface Brand {
   logo_url?: string;
 }
 
-interface ProductType {
+interface Category {
   id: string;
   name: string;
   slug: string;
   description?: string;
-  brand_id: string;
-  category_id: string;
+  parent_id?: string;
+  level: number;
 }
 
-export default function BrandProductTypePage() {
+export default function BrandCategoryPage() {
   const params = useParams();
   const brandSlug = params.slug as string;
-  const productTypeSlug = params.productType as string;
+  const categorySlug = params.productType as string;
   
   const [brand, setBrand] = useState<Brand | null>(null);
-  const [productType, setProductType] = useState<ProductType | null>(null);
+  const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalProductCount, setTotalProductCount] = useState(0);
@@ -53,17 +53,16 @@ export default function BrandProductTypePage() {
         if (brandError) throw brandError;
         setBrand(brandData);
 
-        // Fetch product type info
-        const { data: productTypeData, error: productTypeError } = await supabase
-          .from('product_types')
+        // Fetch category info
+        const { data: categoryData, error: categoryError } = await supabase
+          .from('categories_new')
           .select('*')
-          .eq('slug', productTypeSlug)
-          .eq('brand_id', brandData.id)
+          .eq('slug', categorySlug)
           .eq('is_active', true)
           .single();
 
-        if (productTypeError) throw productTypeError;
-        setProductType(productTypeData);
+        if (categoryError) throw categoryError;
+        setCategory(categoryData);
 
       } catch (error: any) {
         console.error('Error fetching data:', error);
@@ -73,19 +72,19 @@ export default function BrandProductTypePage() {
       }
     };
 
-    if (brandSlug && productTypeSlug) {
+    if (brandSlug && categorySlug) {
       fetchData();
     }
-  }, [brandSlug, productTypeSlug, supabase]);
+  }, [brandSlug, categorySlug, supabase]);
 
   useEffect(() => {
     const fetchProductCount = async () => {
-      if (brand?.id && productType?.id) {
+      if (brand?.id && category?.id) {
         const { count } = await supabase
           .from('products')
           .select('*', { count: 'exact', head: true })
           .eq('brand_id', brand.id)
-          .eq('product_type_id', productType.id)
+          .eq('category_id', category.id)
           .eq('is_active', true);
         
         setTotalProductCount(count || 0);
@@ -93,7 +92,7 @@ export default function BrandProductTypePage() {
     };
 
     fetchProductCount();
-  }, [brand?.id, productType?.id, supabase]);
+  }, [brand?.id, category?.id, supabase]);
 
   if (loading) {
     return (
@@ -111,12 +110,12 @@ export default function BrandProductTypePage() {
     );
   }
 
-  if (error || !brand || !productType) {
+  if (error || !brand || !category) {
     return (
       <div className="w-full max-w-6xl mx-auto px-4 py-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Sayfa Bulunamadı</h1>
-          <p className="text-gray-600">Aradığınız ürün çeşidi mevcut değil veya kaldırılmış.</p>
+          <p className="text-gray-600">Aradığınız kategori mevcut değil veya kaldırılmış.</p>
         </div>
       </div>
     );
@@ -124,20 +123,13 @@ export default function BrandProductTypePage() {
 
   return (
     <div className="w-full py-6 px-2">
-              {/* Marka + Ürün Tipi Breadcrumb - Özel format */}
-        <EnhancedBreadcrumb 
-          showBrandProductType={true}
-          brandName={brand.name}
-          brandSlug={brand.slug}
-          productTypeName={productType.name}
-          productTypeSlug={productType.slug}
-          categoryId={productType.category_id}
-        />
+      {/* Normal breadcrumb - artık doğru çalışacak */}
+      <EnhancedBreadcrumb />
       
-      {/* Simple Brand + Product Type Header - Like Khanoumi */}
+      {/* Simple Brand + Category Header - Like Khanoumi */}
       <div className="flex justify-end mb-6 px-0 mt-4">
         <h1 className="text-xl font-bold text-right">
-          {brand.name} {productType.name} ({toPersianNumber(totalProductCount)} کالا)
+          {brand.name} {category.name} ({toPersianNumber(totalProductCount)} کالا)
         </h1>
       </div>
 
@@ -170,7 +162,7 @@ export default function BrandProductTypePage() {
       <ProductList 
         filters={{ 
           brand_id: brand.id,
-          product_type_id: productType.id 
+          category_id: category.id 
         }}
         showFilters={false}
         showHeader={false}
