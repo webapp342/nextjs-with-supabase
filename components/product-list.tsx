@@ -31,6 +31,9 @@ interface ProductListProps {
     brand_id?: string;
     category_id?: string;
     product_type_id?: string;
+    is_bestseller?: boolean;
+    is_new?: boolean;
+    is_recommended?: boolean;
   };
   showFilters?: boolean;
   showHeader?: boolean;
@@ -63,6 +66,15 @@ export function ProductList({
       }
       if (filters.product_type_id) {
         query = query.eq('product_type_id', filters.product_type_id);
+      }
+      if (filters.is_bestseller) {
+        query = query.eq('is_bestseller', true);
+      }
+      if (filters.is_new) {
+        query = query.eq('is_new', true);
+      }
+      if (filters.is_recommended) {
+        query = query.eq('is_recommended', true);
       }
       
       // Add sorting
