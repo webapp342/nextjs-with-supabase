@@ -231,8 +231,8 @@ export function HierarchicalCategorySelector({
       setShowNewMainForm(false);
       setMessage('Yeni ana kategori başarıyla eklendi!');
       
-    } catch (error: any) {
-      setMessage(`Hata: ${error.message}`);
+    } catch (error: unknown) {
+      setMessage(`Hata: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`);
     }
   };
 
@@ -271,8 +271,8 @@ export function HierarchicalCategorySelector({
       setShowNewSubForm(false);
       setMessage('Yeni alt kategori başarıyla eklendi!');
       
-    } catch (error: any) {
-      setMessage(`Hata: ${error.message}`);
+    } catch (error: unknown) {
+      setMessage(`Hata: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`);
     }
   };
 
@@ -311,8 +311,8 @@ export function HierarchicalCategorySelector({
       setShowNewSubSubForm(false);
       setMessage('Yeni alt-alt kategori başarıyla eklendi!');
       
-    } catch (error: any) {
-      setMessage(`Hata: ${error.message}`);
+    } catch (error: unknown) {
+      setMessage(`Hata: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`);
     }
   };
 

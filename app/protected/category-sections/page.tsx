@@ -18,7 +18,7 @@ export default async function CategorySectionsPage() {
             Ana Kategori Sayfa Yönetimi
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Ana kategori sayfalarına özel banner ve ürün section'larını buradan yönetebilirsiniz.
+            Ana kategori sayfalarına özel banner ve ürün section&apos;larını buradan yönetebilirsiniz.
           </p>
         </div>
       </div>

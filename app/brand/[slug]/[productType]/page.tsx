@@ -64,9 +64,9 @@ export default function BrandCategoryPage() {
         if (categoryError) throw categoryError;
         setCategory(categoryData);
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error fetching data:', error);
-        setError(error.message);
+        setError(error instanceof Error ? error.message : 'Bir hata oluştu');
       } finally {
         setLoading(false);
       }

@@ -208,7 +208,7 @@ export function BannerManagement() {
     try {
       // Upload to 'images' bucket (standard bucket name)
       const fileName = `banners/${Date.now()}-${file.name}`;
-      const { data, error } = await supabase
+      const { error } = await supabase
         .storage
         .from('images')
         .upload(fileName, file);

@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { 
   Plus, 
@@ -17,7 +16,6 @@ import {
   EyeOff,
   Calendar,
   Link as LinkIcon,
-  Palette,
   ArrowUp,
   ArrowDown
 } from 'lucide-react';
@@ -139,9 +137,9 @@ export function HeroBannerManagement() {
       title: banner.title,
       image_url: banner.image_url,
       mobile_image_url: banner.mobile_image_url || '',
-      link_type: (banner as any).link_type || 'url',
-      link_category_id: (banner as any).link_category_id || '',
-      link_brand_id: (banner as any).link_brand_id || '',
+      link_type: banner.link_type || 'url',
+      link_category_id: banner.link_category_id || '',
+      link_brand_id: banner.link_brand_id || '',
       link_url: banner.link_url || '',
       sort_order: banner.sort_order,
       is_active: banner.is_active
@@ -165,7 +163,7 @@ export function HeroBannerManagement() {
       alert('Hero banner başarıyla silindi!');
     } catch (error) {
       console.error('Silme hatası:', error);
-      alert('Silme hatası: ' + (error as any).message);
+      alert('Silme hatası: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
     }
   };
 
@@ -178,7 +176,7 @@ export function HeroBannerManagement() {
 
     try {
       const fileName = `hero-banners/${isMobile ? 'mobile-' : ''}${Date.now()}-${file.name}`;
-      const { data, error } = await supabase
+      const { error } = await supabase
         .storage
         .from('products')
         .upload(fileName, file);
@@ -194,7 +192,7 @@ export function HeroBannerManagement() {
       setFormData(prev => ({ ...prev, [field]: publicUrl }));
     } catch (error) {
       console.error('Resim yükleme hatası:', error);
-      alert('Resim yükleme hatası: ' + (error as any).message);
+      alert('Resim yükleme hatası: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
     } finally {
       setUploadState(false);
     }
@@ -241,7 +239,7 @@ export function HeroBannerManagement() {
       resetForm();
     } catch (error) {
       console.error('Kaydetme hatası:', error);
-      alert('Kaydetme hatası: ' + (error as any).message);
+      alert('Kaydetme hatası: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
     } finally {
       setLoading(false);
     }

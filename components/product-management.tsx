@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -11,8 +11,7 @@ import {
   Trash2, 
   Search, 
   Eye,
-  Package,
-  Filter
+  Package
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -41,9 +40,9 @@ export function ProductManagement() {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [fetchProducts]);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -58,7 +57,7 @@ export function ProductManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
 
   const toggleProductStatus = async (productId: string, currentStatus: boolean) => {
     try {

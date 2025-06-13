@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronLeft } from 'lucide-react';
+
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -11,21 +11,7 @@ interface BreadcrumbItem {
   href: string;
 }
 
-interface BreadcrumbData {
-  product_id: string;
-  product_name: string;
-  brand_name: string;
-  brand_slug: string;
-  product_type_name: string;
-  product_type_slug: string;
-  category_name: string;
-  category_slug: string;
-  category_level: number;
-  parent_category_name?: string;
-  parent_category_slug?: string;
-  grandparent_category_name?: string;
-  grandparent_category_slug?: string;
-}
+
 
 interface EnhancedBreadcrumbProps {
   showOnlyCategory?: boolean;

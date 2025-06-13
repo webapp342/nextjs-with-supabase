@@ -28,7 +28,7 @@ export default async function HeroBannersPage() {
           Hero Banner Yönetimi
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
-          Ana sayfa hero banner'larını buradan yönetebilirsiniz.
+          Ana sayfa hero banner&apos;larını buradan yönetebilirsiniz.
         </p>
       </div>
       

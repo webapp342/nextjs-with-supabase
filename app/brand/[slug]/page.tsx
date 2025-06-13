@@ -27,7 +27,7 @@ export default function BrandPage() {
   const params = useParams();
   const brandSlug = params.slug as string;
   const [brand, setBrand] = useState<Brand | null>(null);
-  const [productTypes, setProductTypes] = useState<ProductType[]>([]);
+  const [, setProductTypes] = useState<ProductType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalProductCount, setTotalProductCount] = useState(0);
@@ -63,7 +63,7 @@ export default function BrandPage() {
         
         // Transform the data to get actual counts
         const typesWithCounts = await Promise.all(
-          (productTypesData || []).map(async (type: any) => {
+          (productTypesData || []).map(async (type: { id: string; name: string; slug: string }) => {
             const { count } = await supabase
               .from('products')
               .select('*', { count: 'exact', head: true })
@@ -81,9 +81,9 @@ export default function BrandPage() {
 
         setProductTypes(typesWithCounts);
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error fetching brand data:', error);
-        setError(error.message);
+        setError(error instanceof Error ? error.message : 'Bir hata oluştu');
       } finally {
         setLoading(false);
       }

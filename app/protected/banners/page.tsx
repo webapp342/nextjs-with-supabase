@@ -18,7 +18,7 @@ export default async function BannersPage() {
             Banner Yönetimi
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Ana sayfa ve kategori banner'larınızı buradan yönetebilirsiniz.
+            Ana sayfa ve kategori banner&apos;larınızı buradan yönetebilirsiniz.
           </p>
         </div>
       </div>

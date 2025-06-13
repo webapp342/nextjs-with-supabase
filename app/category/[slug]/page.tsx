@@ -39,8 +39,8 @@ export default function CategoryPage() {
   
   const [products, setProducts] = useState<Product[]>([]);
   const [category, setCategory] = useState<Category | null>(null);
-  const [childCategories, setChildCategories] = useState<Category[]>([]);
-  const [totalProductCount, setTotalProductCount] = useState(0);
+  const [, setChildCategories] = useState<Category[]>([]);
+  const [, setTotalProductCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   

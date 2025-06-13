@@ -7,17 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Filter, ArrowUpDown } from 'lucide-react';
 import { toPersianNumber } from '@/lib/utils';
 
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  compare_price?: number;
-  image_urls: string[];
-  brand: string;
-  brand_name?: string;
-  created_at: string;
-}
+
 
 export default function NewProductsPage() {
   const [totalProductCount, setTotalProductCount] = useState(0);

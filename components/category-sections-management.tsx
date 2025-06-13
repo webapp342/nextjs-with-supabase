@@ -5,10 +5,9 @@ import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Save, X, Eye, EyeOff } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
 import Image from 'next/image';
 
 interface CategorySection {
@@ -405,7 +404,7 @@ export function CategorySectionsManagement() {
                   <select
                     id="section_type"
                     value={formData.section_type}
-                    onChange={(e) => setFormData(prev => ({ ...prev, section_type: e.target.value as any }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, section_type: e.target.value as CategorySection['section_type'] }))}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   >
                     <option value="banner">Banner</option>
@@ -452,7 +451,7 @@ export function CategorySectionsManagement() {
                         id="product_filter_type"
                         value={formData.product_filter_type}
                         onChange={(e) => {
-                          setFormData(prev => ({ ...prev, product_filter_type: e.target.value as any }));
+                          setFormData(prev => ({ ...prev, product_filter_type: e.target.value as CategorySection['product_filter_type'] }));
                           setSelectedProducts([]);
                         }}
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -607,7 +606,7 @@ export function CategorySectionsManagement() {
                     <select
                       id="display_style"
                       value={formData.display_style}
-                      onChange={(e) => setFormData(prev => ({ ...prev, display_style: e.target.value as any }))}
+                      onChange={(e) => setFormData(prev => ({ ...prev, display_style: e.target.value as CategorySection['display_style'] }))}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     >
                       <option value="grid">Grid</option>
@@ -636,7 +635,7 @@ export function CategorySectionsManagement() {
       {selectedCategory && (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">
-            {categories.find(c => c.id === selectedCategory)?.name} - Section'lar
+            {categories.find(c => c.id === selectedCategory)?.name} - Section&apos;lar
           </h2>
           
           {sections.length === 0 ? (
@@ -644,7 +643,7 @@ export function CategorySectionsManagement() {
               <CardContent className="p-8 text-center">
                 <p className="text-gray-500">Bu kategori için henüz section oluşturulmamış.</p>
                 <Button onClick={() => setShowForm(true)} className="mt-4">
-                  İlk Section'ı Oluştur
+                  İlk Section&apos;ı Oluştur
                 </Button>
               </CardContent>
             </Card>
