@@ -120,7 +120,8 @@ export function CategoryBanners({ categoryId = null, limit }: CategoryBannersPro
     };
 
     fetchBanners();
-  }, [supabase, categoryId, limit]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryId, limit]);
 
   if (loading) {
     return (

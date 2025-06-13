@@ -507,7 +507,7 @@ export function ProfessionalProductUploadForm() {
                               </Button>
                             </div>
                             <p className="text-xs text-muted-foreground mt-1">
-                              URL'de kullanılacak (sadece küçük harf, rakam ve tire)
+                              URL&apos;de kullanılacak (sadece küçük harf, rakam ve tire)
                             </p>
                         </div>
                         <div className="flex gap-2">

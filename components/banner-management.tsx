@@ -224,7 +224,7 @@ export function BannerManagement() {
       setFormData(prev => ({ ...prev, image_url: publicUrl }));
     } catch (error) {
       console.error('Resim yükleme hatası:', error);
-      alert('Resim yükleme hatası: ' + (error as any).message);
+              alert('Resim yükleme hatası: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
     } finally {
       setUploading(false);
     }
@@ -337,7 +337,7 @@ export function BannerManagement() {
                   <select
                     id="link_type"
                     value={formData.link_type}
-                    onChange={(e) => setFormData(prev => ({ ...prev, link_type: e.target.value as any }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, link_type: e.target.value as 'category' | 'brand' | 'url' | 'tag' }))}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   >
                     <option value="category">Kategori</option>

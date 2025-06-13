@@ -66,6 +66,7 @@ export function CategoryPageSections({ categoryId }: CategoryPageSectionsProps) 
     if (categoryId) {
       fetchSections();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryId]);
 
   const fetchSections = async () => {
