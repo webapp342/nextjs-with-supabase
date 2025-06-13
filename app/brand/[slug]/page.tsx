@@ -139,8 +139,8 @@ export default function BrandPage() {
 
   return (
     <div className="w-full py-6 px-2 ">
-      {/* Simple Brand Header - Like Khanoumi */}
-      <div className="flex items-center justify-between mb-6 px-0 ">
+      {/* Simple Brand Header - RTL aligned */}
+      <div className="flex items-center justify-end mb-6 px-0 ">
         <h1 className="text-xl font-bold text-right">
           {brand.name} ({toPersianNumber(totalProductCount)} کالا)
         </h1>

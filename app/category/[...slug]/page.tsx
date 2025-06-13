@@ -216,10 +216,9 @@ export default function DynamicCategoryPage() {
     <div className="w-full px-4 py-8">
       <Breadcrumb />
       
-      {/* Category Header */}
+      {/* Category Header - RTL aligned */}
       <div className="mb-8">
-        <div className="flex items-center gap-4 mb-4">
-          {category.icon && <div className="text-4xl">{category.icon}</div>}
+        <div className="flex items-center justify-end mb-4">
           <div>
             <h1 className="text-3xl font-bold text-right">{category.name}</h1>
             {category.description && (
@@ -258,9 +257,6 @@ export default function DynamicCategoryPage() {
                 className="group p-4 border rounded-lg hover:shadow-md transition-all duration-200"
               >
                 <div className="text-center">
-                  {child.icon && (
-                    <div className="text-2xl mb-2">{child.icon}</div>
-                  )}
                   <h3 className="font-medium text-sm group-hover:text-primary transition-colors">
                     {child.name}
                   </h3>
@@ -341,11 +337,11 @@ export default function DynamicCategoryPage() {
                               <div className="flex flex-col">
                                 {/* Original Price */}
                                 <div className="text-sm text-gray-400 line-through">
-                                  <span className="font-sans text-left">{toPersianNumber(product.compare_price!.toLocaleString())} ؋</span>
+                                  <span className="font-sans text-left">{toPersianNumber(product.compare_price!.toLocaleString())}</span>
                                 </div>
                                 {/* Sale Price */}
                                 <div className="text-sm font-bold">
-                                  <span className="font-sans text-left">{toPersianNumber(product.price.toLocaleString())} ؋</span>
+                                  <span className="font-sans text-left">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
                                 </div>
                               </div>
                             </div>
@@ -354,7 +350,7 @@ export default function DynamicCategoryPage() {
                           <div className="pt-4">
                             <div className="flex items-end min-h-[44px]">
                               <div className="text-sm font-bold">
-                                <span className="font-sans text-left">{toPersianNumber(product.price.toLocaleString())} ؋</span>
+                                <span className="font-sans text-left">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
                               </div>
                             </div>
                           </div>

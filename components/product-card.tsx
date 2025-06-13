@@ -133,7 +133,7 @@ export function ProductCard({
           </div>
         )}
 
-        {/* Product Name */}
+        {/* Product Name - Fixed RTL text truncation */}
         <h3 className={cn(
           config.title,
           "font-medium text-right leading-[1.3] text-gray-800"
@@ -145,7 +145,9 @@ export function ProductCard({
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           height: '2.6em',
-          lineHeight: '1.3em'
+          lineHeight: '1.3em',
+          direction: 'rtl',
+          textAlign: 'right'
         }}>
           {product.name}
         </h3>
@@ -165,9 +167,9 @@ export function ProductCard({
                 <div className="text-xs text-gray-400 line-through">
                   <span className="font-sans text-left">{toPersianNumber(product.compare_price!.toLocaleString())}</span>
                 </div>
-                {/* Sale Price - symbol on left */}
+                {/* Sale Price - symbol on left with &lrm; */}
                 <div className={cn(config.price, "font-bold")}>
-                  <span className="font-sans text-left">؋ {toPersianNumber(product.price.toLocaleString())}</span>
+                  <span className="font-sans text-left">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
                 </div>
               </div>
             </div>
@@ -176,7 +178,7 @@ export function ProductCard({
           <div className="pt-4">
             <div className="flex items-end min-h-[44px]">
               <div className={cn(config.price, "font-bold")}>
-                            <span className="font-sans text-left">؋ &lrm; <span className="font-bold">{toPersianNumber(product.price.toLocaleString())}</span></span>
+                <span className="font-sans text-left">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
               </div>
             </div>
           </div>

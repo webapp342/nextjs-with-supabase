@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload } from 'lucide-react';
 import Image from 'next/image';
 
 interface Banner {
@@ -50,6 +50,7 @@ export function BannerManagement() {
   const [loading, setLoading] = useState(true);
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [uploading, setUploading] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -197,6 +198,28 @@ export function BannerManagement() {
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    const file = e.target.files[0];
+    setUploading(true);
+
+    try {
+      const { data, error } = await supabase
+        .storage
+        .from('banners')
+        .upload(`${Date.now()}-${file.name}`, file);
+
+      if (error) throw error;
+
+      setFormData(prev => ({ ...prev, image_url: data.publicUrl }));
+    } catch (error) {
+      console.error('Resim yükleme hatası:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (loading) {
     return <div className="p-8 text-center">Banner&apos;lar yükleniyor...</div>;
   }
@@ -242,13 +265,43 @@ export function BannerManagement() {
 
               <div>
                 <Label htmlFor="image_url">Görsel URL *</Label>
-                <Input
-                  id="image_url"
-                  type="url"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
-                  required
-                />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-4">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploading}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={uploading}
+                      onClick={() => document.querySelector<HTMLInputElement>('input[type="file"]')?.click()}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      {uploading ? 'Yükleniyor...' : 'Resim Yükle'}
+                    </Button>
+                  </div>
+                  <Input
+                    id="image_url"
+                    type="url"
+                    value={formData.image_url}
+                    onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+                    placeholder="Veya resim URL'si girin"
+                    required
+                  />
+                  {formData.image_url && (
+                    <div className="mt-2 relative w-32 h-20 rounded-lg overflow-hidden">
+                      <Image
+                        src={formData.image_url}
+                        alt="Preview"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

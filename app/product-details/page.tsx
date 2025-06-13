@@ -185,7 +185,7 @@ function ProductDetailsContent() {
           {/* Price */}
           <div className="space-y-2">
             <div className="text-2xl font-bold text-right">
-              تومان {toPersianNumber(product.price.toLocaleString())}
+              <span className="font-sans text-left">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
             </div>
             <div className="text-sm text-gray-500 text-right">
               شامل مالیات بر ارزش افزوده

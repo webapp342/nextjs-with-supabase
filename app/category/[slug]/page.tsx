@@ -275,18 +275,24 @@ export default function CategoryPage() {
                         {product.name}
                       </h3>
                       
-                      {/* Price */}
+                      {/* Price Section */}
                       {hasDiscount ? (
                         <div className="pt-4">
-                          <div className="flex items-end min-h-[44px]">
-                            <div>
+                          <div className="flex items-center gap-3">
+                            {/* Discount Badge */}
+                            <div className="bg-red-500 font-sans text-white text-sm px-2 py-1 rounded">
+                              {toPersianNumber(discountPercentage)}%
+                            </div>
+                            
+                            {/* Price Stack */}
+                            <div className="flex flex-col">
                               {/* Original Price */}
-                              <div className="text-xs text-gray-400 line-through mb-1">
-                                <span className="font-sans text-left">{toPersianNumber(product.compare_price!.toLocaleString())} ؋</span>
+                              <div className="text-sm text-gray-400 line-through">
+                                <span className="font-sans text-left">{toPersianNumber(product.compare_price!.toLocaleString())}</span>
                               </div>
                               {/* Sale Price */}
                               <div className="text-sm font-bold">
-                                <span className="font-sans text-left">{toPersianNumber(product.price.toLocaleString())} ؋</span>
+                                <span className="font-sans text-left">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
                               </div>
                             </div>
                           </div>
@@ -295,7 +301,7 @@ export default function CategoryPage() {
                         <div className="pt-4">
                           <div className="flex items-end min-h-[44px]">
                             <div className="text-sm font-bold">
-                              <span className="font-sans text-left">{toPersianNumber(product.price.toLocaleString())} ؋</span>
+                              <span className="font-sans text-left">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
                             </div>
                           </div>
                         </div>
