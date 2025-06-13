@@ -54,6 +54,12 @@ const sidebarItems = [
     description: 'Ana sayfa ve kategori banner\'ları'
   },
   {
+    title: 'Ana Kategori Sayfaları',
+    href: '/protected/category-sections',
+    icon: Palette,
+    description: 'Ana kategori sayfası section\'ları'
+  },
+  {
     title: 'Kategoriler',
     href: '/protected/categories',
     icon: FolderTree,

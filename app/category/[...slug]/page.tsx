@@ -28,6 +28,7 @@ interface Product {
   compare_price?: number;
   image_urls: string[];
   brand: string;
+  brand_name?: string;
 }
 
 export default function DynamicCategoryPage() {
@@ -87,16 +88,100 @@ export default function DynamicCategoryPage() {
         if (childError) throw childError;
         setChildCategories(childData || []);
 
-        // Bu kategorideki ürünleri getir
-        const { data: productsData, error: productsError } = await supabase
+        // Bu kategorideki ürünleri getir (hem doğrudan hem de alt kategorilerden)
+        let allProducts: Product[] = [];
+        
+        // Önce bu kategoriye doğrudan atanmış ürünleri al
+        const { data: directProducts, error: directError } = await supabase
           .from('products')
-          .select('*')
+          .select(`
+            id,
+            name,
+            description,
+            price,
+            compare_price,
+            image_urls,
+            brand,
+            brand_id
+          `)
           .eq('category_id', categoryData.id)
           .eq('is_active', true)
           .order('created_at', { ascending: false });
 
-        if (productsError) throw productsError;
-        setProducts(productsData || []);
+        if (directError) throw directError;
+
+        // Brand bilgilerini ayrı olarak getir
+        const directProductsWithBrands = await Promise.all(
+          (directProducts || []).map(async (product) => {
+            if (product.brand_id) {
+              const { data: brandData } = await supabase
+                .from('brands')
+                .select('name')
+                .eq('id', product.brand_id)
+                .single();
+              
+              return {
+                ...product,
+                brand_name: brandData?.name || product.brand
+              };
+            }
+            return {
+              ...product,
+              brand_name: product.brand
+            };
+          })
+        );
+
+        allProducts = [...directProductsWithBrands];
+
+        // Eğer alt kategoriler varsa, onların ürünlerini de al
+        if (childData && childData.length > 0) {
+          for (const child of childData) {
+            const { data: childProducts, error: childError } = await supabase
+              .from('products')
+              .select(`
+                id,
+                name,
+                description,
+                price,
+                compare_price,
+                image_urls,
+                brand,
+                brand_id
+              `)
+              .eq('category_id', child.id)
+              .eq('is_active', true)
+              .order('created_at', { ascending: false });
+            
+            if (childError) throw childError;
+
+            // Brand bilgilerini ayrı olarak getir
+            const childProductsWithBrands = await Promise.all(
+              (childProducts || []).map(async (product) => {
+                if (product.brand_id) {
+                  const { data: brandData } = await supabase
+                    .from('brands')
+                    .select('name')
+                    .eq('id', product.brand_id)
+                    .single();
+                  
+                  return {
+                    ...product,
+                    brand_name: brandData?.name || product.brand
+                  };
+                }
+                return {
+                  ...product,
+                  brand_name: product.brand
+                };
+              })
+            );
+
+            allProducts = [...allProducts, ...childProductsWithBrands];
+          }
+        }
+
+        setProducts(allProducts);
 
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Bir hata oluştu');
@@ -235,7 +320,7 @@ export default function DynamicCategoryPage() {
                       <div className="space-y-2">
                         {/* Brand */}
                         <div className="text-sm text-gray-500 text-right mr-0">
-                          {product.brand || 'مارک مشخص نشده'}
+                          {product.brand_name || 'مارک مشخص نشده'}
                         </div>
 
                         {/* Product Name */}
@@ -256,11 +341,11 @@ export default function DynamicCategoryPage() {
                               <div className="flex flex-col">
                                 {/* Original Price */}
                                 <div className="text-sm text-gray-400 line-through">
-                                  <span className="font-sans text-left">؋ {toPersianNumber(product.compare_price!.toLocaleString())}</span>
+                                  <span className="font-sans text-left">{toPersianNumber(product.compare_price!.toLocaleString())} ؋</span>
                                 </div>
                                 {/* Sale Price */}
                                 <div className="text-sm font-bold">
-                                  <span className="font-sans text-left">؋ {toPersianNumber(product.price.toLocaleString())}</span>
+                                  <span className="font-sans text-left">{toPersianNumber(product.price.toLocaleString())} ؋</span>
                                 </div>
                               </div>
                             </div>
@@ -269,7 +354,7 @@ export default function DynamicCategoryPage() {
                           <div className="pt-4">
                             <div className="flex items-end min-h-[44px]">
                               <div className="text-sm font-bold">
-                                <span className="font-sans text-left">؋ {toPersianNumber(product.price.toLocaleString())}</span>
+                                <span className="font-sans text-left">{toPersianNumber(product.price.toLocaleString())} ؋</span>
                               </div>
                             </div>
                           </div>

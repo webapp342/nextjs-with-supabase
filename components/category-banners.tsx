@@ -11,10 +11,14 @@ interface Banner {
   subtitle?: string;
   image_url: string;
   link_category_id?: string;
+  link_brand_id?: string;
+  link_url?: string;
+  link_type?: 'category' | 'brand' | 'url' | 'tag';
   background_color: string;
   text_color: string;
   sort_order: number;
   category_slug?: string; // Join edilmiş kategori slug'ı
+  brand_slug?: string; // Join edilmiş brand slug'ı
 }
 
 interface CategoryBannersProps {
@@ -34,7 +38,8 @@ export function CategoryBanners({ categoryId = null, limit }: CategoryBannersPro
           .from('category_banners')
           .select(`
             *,
-            link_category:categories_new!category_banners_link_category_id_fkey(slug)
+            link_category:categories_new!category_banners_link_category_id_fkey(slug),
+            link_brand:brands!category_banners_link_brand_id_fkey(slug)
           `)
           .eq('is_active', true)
           .order('sort_order');
@@ -57,7 +62,8 @@ export function CategoryBanners({ categoryId = null, limit }: CategoryBannersPro
 
         const transformedBanners = data?.map(banner => ({
           ...banner,
-          category_slug: banner.link_category?.slug
+          category_slug: banner.link_category?.slug,
+          brand_slug: banner.link_brand?.slug
         })) || [];
 
         setBanners(transformedBanners);
@@ -87,10 +93,29 @@ export function CategoryBanners({ categoryId = null, limit }: CategoryBannersPro
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-      {banners.map((banner) => (
+      {banners.map((banner) => {
+        // Link URL'ini belirle
+        let linkUrl = '#';
+        if (banner.link_type === 'category' && banner.category_slug) {
+          linkUrl = `/category/${banner.category_slug}`;
+        } else if (banner.link_type === 'brand' && banner.brand_slug) {
+          linkUrl = `/brand/${banner.brand_slug}`;
+        } else if (banner.link_type === 'url' && banner.link_url) {
+          linkUrl = banner.link_url;
+        } else if (banner.link_type === 'tag') {
+          if (banner.link_url === 'bestseller') linkUrl = '/tags/bestseller';
+          else if (banner.link_url === 'recommended') linkUrl = '/tags/recommended';
+          else if (banner.link_url === 'new') linkUrl = '/tags/new';
+        }
+        // Fallback: Eğer link_type yoksa eski mantığı kullan
+        else if (!banner.link_type && banner.category_slug) {
+          linkUrl = `/category/${banner.category_slug}`;
+        }
+
+        return (
         <Link
           key={banner.id}
-          href={banner.category_slug ? `/category/${banner.category_slug}` : '#'}
+          href={linkUrl}
           className="group relative overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
         >
           <div 
@@ -143,7 +168,8 @@ export function CategoryBanners({ categoryId = null, limit }: CategoryBannersPro
             </div>
           </div>
         </Link>
-      ))}
+        );
+      })}
     </div>
   );
 } 

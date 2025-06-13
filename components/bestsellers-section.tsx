@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import Image from 'next/image';
 import Link from 'next/link';
-import { toPersianNumber } from '@/lib/utils';
+import { ProductCard } from '@/components/product-card';
 
 interface Product {
   id: string;
@@ -14,6 +13,7 @@ interface Product {
   compare_price?: number;
   image_urls: string[];
   brand: string;
+  brand_name?: string;
   sales_count: number;
 }
 
@@ -26,7 +26,17 @@ export function BestsellersSection() {
     const fetchBestsellerProducts = async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select(`
+          id,
+          name,
+          description,
+          price,
+          compare_price,
+          image_urls,
+          brand,
+          brand_id,
+          sales_count
+        `)
         .eq('is_bestseller', true)
         .eq('is_active', true)
         .order('sales_count', { ascending: false })
@@ -34,9 +44,33 @@ export function BestsellersSection() {
 
       if (error) {
         console.error('Error fetching bestsellers:', error);
-      } else {
-        setProducts(data || []);
+        setLoading(false);
+        return;
       }
+
+      // Brand bilgilerini ayrı olarak getir
+      const productsWithBrands = await Promise.all(
+        (data || []).map(async (product) => {
+          if (product.brand_id) {
+            const { data: brandData } = await supabase
+              .from('brands')
+              .select('name')
+              .eq('id', product.brand_id)
+              .single();
+            
+            return {
+              ...product,
+              brand_name: brandData?.name || product.brand
+            };
+          }
+          return {
+            ...product,
+            brand_name: product.brand
+          };
+        })
+      );
+
+      setProducts(productsWithBrands || []);
       setLoading(false);
     };
 
@@ -45,13 +79,12 @@ export function BestsellersSection() {
 
   if (loading) {
     return (
-      <div className="py-8">
+      <div className="py-8 bg-white">
         <div className="flex items-center justify-between mb-6 px-4">
         <Link href="/bestsellers" className="text-pink-500 text-sm">
             مشاهده همه
           </Link>
           <h2 className="text-xl font-bold text-right">پرفروش‌ترین‌ها</h2>
-         
         </div>
         <div className="flex gap-4 px-4 overflow-x-auto">
           {[...Array(4)].map((_, i) => (
@@ -71,14 +104,13 @@ export function BestsellersSection() {
   }
 
   return (
-    <div className="py-8 bg-gray-50">
+    <div className="py-8 bg-white">
       {/* Section Header */}
       <div className="flex items-center justify-between mb-6 px-4">
-              <Link href="/tags/bestseller" className="text-pink-500 text-sm hover:text-pink-600">
+        <Link href="/tags/bestseller" className="text-pink-500 text-sm hover:text-pink-600">
           مشاهده همه
         </Link>
         <h2 className="text-xl font-bold text-right">پرفروش‌ترین‌ها</h2>
-        
       </div>
 
       {/* Horizontal Scroll Products */}
@@ -89,87 +121,15 @@ export function BestsellersSection() {
           }
         `}</style>
         
-        {products.map((product) => {
-          const hasDiscount = product.compare_price && product.compare_price > product.price;
-          const discountPercentage = hasDiscount 
-            ? Math.round(((product.compare_price! - product.price) / product.compare_price!) * 100)
-            : 0;
-
-          return (
-            <Link 
+        {products.map((product) => (
+          <ProductCard
               key={product.id} 
-              href={`/product-details?id=${product.id}`}
-              className="min-w-[200px] max-w-[200px] bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
-            >
-              {/* Product Image */}
-              <div className="relative w-full h-48 bg-gray-50">
-                {product.image_urls && product.image_urls.length > 0 ? (
-                  <Image 
-                    src={product.image_urls[0]} 
-                    alt={product.name} 
-                    fill
-                    className="object-contain p-2"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">
-                    <span className="text-xs">تصویر موجود نیست</span>
-                  </div>
-                )}
-                
-
-              </div>
-
-              {/* Product Info */}
-              <div className="p-4 space-y-2">
-                {/* Brand */}
-                <div className="text-xs text-gray-500 text-right">
-                  {product.brand}
-                </div>
-
-                {/* Product Name */}
-                <h3 className="font-medium text-sm text-right leading-tight line-clamp-2 min-h-[2.5rem]">
-                  {product.name}
-                </h3>
-
-                {/* Price Section */}
-                {hasDiscount ? (
-                  <div className="pt-4">
-                    <div className="flex items-center gap-3">
-                      {/* Discount Badge */}
-                      <div className="bg-red-500 text-white text-xs px-2 py-1 rounded font-bold">
-                        {toPersianNumber(discountPercentage)}%
-                      </div>
-                      
-                      {/* Price Stack */}
-                      <div className="flex flex-col">
-                        {/* Original Price */}
-                        <div className="text-xs text-gray-400 line-through">
-                          <span className="font-sans text-left">{toPersianNumber(product.compare_price!.toLocaleString())}</span>
-                        </div>
-                        {/* Sale Price */}
-                        <div className="text-sm font-bold">
-                          <span className="font-sans text-left"> ؋ {toPersianNumber(product.price.toLocaleString())}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="pt-4">
-                    <div className="flex items-end min-h-[44px]">
-                      <div className="text-sm font-bold">
-                        <span className="font-sans text-left">؋ &lrm; {toPersianNumber(product.price.toLocaleString())}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Sales Count */}
-               
-              </div>
-            </Link>
-          );
-        })}
+            product={product}
+            showBadges={false}
+            size="md"
+            className="min-w-[200px] max-w-[200px]"
+          />
+        ))}
       </div>
     </div>
   );

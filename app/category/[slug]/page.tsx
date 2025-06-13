@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Breadcrumb } from '@/components/breadcrumb';
+import { toPersianNumber } from '@/lib/utils';
 import { CategoryBanners } from '@/components/category-banners';
+import { CategoryPageSections } from '@/components/category-page-sections';
 import Image from 'next/image';
 import Link from 'next/link';
-import { toPersianNumber } from '@/lib/utils';
 
 interface Product {
   id: string;
@@ -17,6 +17,7 @@ interface Product {
   compare_price?: number;
   image_urls: string[];
   brand: string;
+  brand_name?: string;
   category: string;
   user_id: string;
 }
@@ -79,13 +80,47 @@ export default function CategoryPage() {
         // Bu kategorideki ürünleri getir
         const { data: productsData, error: productsError } = await supabase
           .from('products')
-          .select('*')
+          .select(`
+            id,
+            name,
+            description,
+            price,
+            compare_price,
+            image_urls,
+            brand,
+            brand_id,
+            category,
+            user_id
+          `)
           .eq('category_id', categoryData.id)
           .eq('is_active', true)
           .order('created_at', { ascending: false });
 
         if (productsError) throw productsError;
-        setProducts(productsData || []);
+
+        // Brand bilgilerini ayrı olarak getir
+        const productsWithBrands = await Promise.all(
+          (productsData || []).map(async (product) => {
+            if (product.brand_id) {
+              const { data: brandData } = await supabase
+                .from('brands')
+                .select('name')
+                .eq('id', product.brand_id)
+                .single();
+              
+              return {
+                ...product,
+                brand_name: brandData?.name || product.brand
+              };
+            }
+            return {
+              ...product,
+              brand_name: product.brand
+            };
+          })
+        );
+
+        setProducts(productsWithBrands || []);
 
         // Toplam ürün sayısını hesapla (bu kategori + alt kategoriler)
         let totalCount = productsData?.length || 0;
@@ -141,49 +176,13 @@ export default function CategoryPage() {
 
   return (
     <div className="w-full px-0 py-8">
-      <div className="px-4">
-        <Breadcrumb />
-        
-        {/* Category Header */}
-        <div className="flex items-center gap-4 mb-8 mt-4">
-          <div className="text-4xl">{category.icon}</div>
-          <div>
-            <h1 className="text-2xl font-bold text-right">{category.name}</h1>
-            <p className="text-muted-foreground text-right">
-              {toPersianNumber(totalProductCount)} ürün bulundu
-            </p>
-          </div>
-        </div>
-
-      </div>
-
       {/* Category Banners */}
       <CategoryBanners categoryId={category.id} />
 
-      {/* Alt Kategoriler */}
-      {childCategories.length > 0 && (
-        <div className="mb-8 px-4">
-          <h2 className="text-xl font-bold mb-4 text-right">دسته‌بندی‌ها</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {childCategories.map((child) => (
-              <Link
-                key={child.id}
-                href={`/category/${category.slug}/${child.slug}`}
-                className="group p-4 border rounded-lg hover:shadow-md transition-all duration-200"
-              >
-                <div className="text-center">
-                  {child.icon && (
-                    <div className="text-2xl mb-2">{child.icon}</div>
-                  )}
-                  <h3 className="font-medium text-sm group-hover:text-primary transition-colors">
-                    {child.name}
-                  </h3>
-                </div>
-              </Link>
-            ))}
-          </div>
+      {/* Category Page Sections */}
+      <div className="px-4 mb-8">
+        <CategoryPageSections categoryId={category.id} />
         </div>
-      )}
 
       {/* Ürünler */}
       {products.length > 0 && (
@@ -268,7 +267,7 @@ export default function CategoryPage() {
                     <div className="text-right">
                       {/* Brand */}
                       <div className="text-xs text-gray-500 mb-1">
-                        {product.brand}
+                        {product.brand_name}
                       </div>
                       
                       {/* Product Name */}
@@ -283,11 +282,11 @@ export default function CategoryPage() {
                             <div>
                               {/* Original Price */}
                               <div className="text-xs text-gray-400 line-through mb-1">
-                                <span className="font-sans text-left">؋ {toPersianNumber(product.compare_price!.toLocaleString())}</span>
+                                <span className="font-sans text-left">{toPersianNumber(product.compare_price!.toLocaleString())} ؋</span>
                               </div>
                               {/* Sale Price */}
                               <div className="text-sm font-bold">
-                                <span className="font-sans text-left"> ؋ {toPersianNumber(product.price.toLocaleString())}</span>
+                                <span className="font-sans text-left">{toPersianNumber(product.price.toLocaleString())} ؋</span>
                               </div>
                             </div>
                           </div>
@@ -296,7 +295,7 @@ export default function CategoryPage() {
                         <div className="pt-4">
                           <div className="flex items-end min-h-[44px]">
                             <div className="text-sm font-bold">
-                              <span className="font-sans text-left">؋ {toPersianNumber(product.price.toLocaleString())}</span>
+                              <span className="font-sans text-left">{toPersianNumber(product.price.toLocaleString())} ؋</span>
                             </div>
                           </div>
                         </div>
@@ -310,26 +309,7 @@ export default function CategoryPage() {
         </div>
       )}
 
-      {/* Alt kategoriler varsa ama bu kategoride ürün yoksa */}
-      {products.length === 0 && childCategories.length > 0 && (
-        <div className="text-center py-8 px-4">
-          <p className="text-lg text-muted-foreground mb-4">
-            Bu kategoride doğrudan ürün bulunmuyor
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Alt kategorilerden birini seçerek ürünleri görüntüleyebilirsiniz
-          </p>
-        </div>
-      )}
 
-      {/* Hiç ürün ve alt kategori yoksa */}
-      {products.length === 0 && childCategories.length === 0 && (
-        <div className="text-center py-16 px-4">
-          <p className="text-lg text-muted-foreground">
-            Bu kategoride henüz ürün bulunmuyor
-          </p>
-        </div>
-      )}
     </div>
   );
 } 

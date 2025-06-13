@@ -63,9 +63,58 @@ CREATE TABLE public.category_banners (
   sort_order integer DEFAULT 0,
   is_active boolean DEFAULT true,
   created_at timestamp with time zone DEFAULT now(),
+  link_brand_id uuid,
+  link_url text,
+  link_type text CHECK (link_type = ANY (ARRAY['category'::text, 'brand'::text, 'url'::text, 'tag'::text])),
   CONSTRAINT category_banners_pkey PRIMARY KEY (id),
   CONSTRAINT category_banners_link_category_id_fkey FOREIGN KEY (link_category_id) REFERENCES public.categories_new(id),
+  CONSTRAINT category_banners_link_brand_id_fkey FOREIGN KEY (link_brand_id) REFERENCES public.brands(id),
   CONSTRAINT category_banners_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories_new(id)
+);
+CREATE TABLE public.category_page_sections (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  category_id uuid,
+  section_type text NOT NULL CHECK (section_type = ANY (ARRAY['banner'::text, 'product_grid'::text, 'featured_products'::text, 'bestsellers'::text, 'new_products'::text, 'recommended'::text])),
+  title text,
+  subtitle text,
+  description text,
+  image_url text,
+  background_color text DEFAULT '#ffffff'::text,
+  text_color text DEFAULT '#000000'::text,
+  link_type text CHECK (link_type = ANY (ARRAY['category'::text, 'brand'::text, 'url'::text, 'tag'::text])),
+  link_category_id uuid,
+  link_brand_id uuid,
+  link_url text,
+  product_filter_type text CHECK (product_filter_type = ANY (ARRAY['manual'::text, 'category'::text, 'brand'::text, 'tag'::text, 'price_range'::text])),
+  filter_category_id uuid,
+  filter_brand_id uuid,
+  filter_tags ARRAY,
+  min_price numeric,
+  max_price numeric,
+  product_limit integer DEFAULT 10,
+  display_style text DEFAULT 'grid'::text CHECK (display_style = ANY (ARRAY['grid'::text, 'horizontal_scroll'::text, 'list'::text])),
+  sort_order integer DEFAULT 0,
+  is_active boolean DEFAULT true,
+  show_on_mobile boolean DEFAULT true,
+  show_on_desktop boolean DEFAULT true,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  updated_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT category_page_sections_pkey PRIMARY KEY (id),
+  CONSTRAINT category_page_sections_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories_new(id),
+  CONSTRAINT category_page_sections_link_category_id_fkey FOREIGN KEY (link_category_id) REFERENCES public.categories_new(id),
+  CONSTRAINT category_page_sections_link_brand_id_fkey FOREIGN KEY (link_brand_id) REFERENCES public.brands(id),
+  CONSTRAINT category_page_sections_filter_category_id_fkey FOREIGN KEY (filter_category_id) REFERENCES public.categories_new(id),
+  CONSTRAINT category_page_sections_filter_brand_id_fkey FOREIGN KEY (filter_brand_id) REFERENCES public.brands(id)
+);
+CREATE TABLE public.category_section_products (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  section_id uuid,
+  product_id uuid,
+  sort_order integer DEFAULT 0,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT category_section_products_pkey PRIMARY KEY (id),
+  CONSTRAINT category_section_products_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id),
+  CONSTRAINT category_section_products_section_id_fkey FOREIGN KEY (section_id) REFERENCES public.category_page_sections(id)
 );
 CREATE TABLE public.hero_banners (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -95,8 +144,8 @@ CREATE TABLE public.product_attributes (
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT product_attributes_pkey PRIMARY KEY (id),
   CONSTRAINT product_attributes_attribute_value_id_fkey FOREIGN KEY (attribute_value_id) REFERENCES public.attribute_values(id),
-  CONSTRAINT product_attributes_attribute_id_fkey FOREIGN KEY (attribute_id) REFERENCES public.attributes(id),
-  CONSTRAINT product_attributes_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id)
+  CONSTRAINT product_attributes_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id),
+  CONSTRAINT product_attributes_attribute_id_fkey FOREIGN KEY (attribute_id) REFERENCES public.attributes(id)
 );
 CREATE TABLE public.product_types (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -147,6 +196,8 @@ CREATE TABLE public.products (
   is_bestseller boolean DEFAULT false,
   sales_count integer DEFAULT 0,
   product_type_id uuid,
+  is_recommended boolean DEFAULT false,
+  is_new boolean DEFAULT false,
   CONSTRAINT products_pkey PRIMARY KEY (id),
   CONSTRAINT products_product_type_id_fkey FOREIGN KEY (product_type_id) REFERENCES public.product_types(id),
   CONSTRAINT products_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),

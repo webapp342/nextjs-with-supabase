@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus } from 'lucide-react';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 
 interface Banner {
@@ -17,12 +17,16 @@ interface Banner {
   image_url: string;
   category_id?: string;
   link_category_id?: string;
+  link_brand_id?: string;
+  link_url?: string;
+  link_type?: 'category' | 'brand' | 'url' | 'tag';
   background_color: string;
   text_color: string;
   sort_order: number;
   is_active: boolean;
   category_name?: string;
   link_category_name?: string;
+  link_brand_name?: string;
 }
 
 interface Category {
@@ -31,11 +35,18 @@ interface Category {
   level: number;
 }
 
+interface Brand {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export function BannerManagement() {
   const supabase = createClient();
   
   const [banners, setBanners] = useState<Banner[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -45,7 +56,10 @@ export function BannerManagement() {
     subtitle: '',
     image_url: '',
     category_id: '',
+    link_type: 'category' as 'category' | 'brand' | 'url' | 'tag',
     link_category_id: '',
+    link_brand_id: '',
+    link_url: '',
     background_color: '#ffffff',
     text_color: '#000000',
     sort_order: 0,
@@ -59,7 +73,8 @@ export function BannerManagement() {
         .select(`
           *,
           category:categories_new!category_banners_category_id_fkey(name),
-          link_category:categories_new!category_banners_link_category_id_fkey(name)
+          link_category:categories_new!category_banners_link_category_id_fkey(name),
+          link_brand:brands!category_banners_link_brand_id_fkey(name)
         `)
         .order('sort_order');
 
@@ -68,19 +83,22 @@ export function BannerManagement() {
       const transformedBanners = bannerData?.map(banner => ({
         ...banner,
         category_name: banner.category?.name || 'Ana Sayfa',
-        link_category_name: banner.link_category?.name
+        link_category_name: banner.link_category?.name,
+        link_brand_name: banner.link_brand?.name
       })) || [];
 
       setBanners(transformedBanners);
 
-      const { data: categoryData, error: categoryError } = await supabase
-        .from('categories_new')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order');
+      const [categoryRes, brandRes] = await Promise.all([
+        supabase.from('categories_new').select('*').eq('is_active', true).order('sort_order'),
+        supabase.from('brands').select('id, name, slug').eq('is_active', true).order('name')
+      ]);
 
-      if (categoryError) throw categoryError;
-      setCategories(categoryData || []);
+      if (categoryRes.error) throw categoryRes.error;
+      if (brandRes.error) throw brandRes.error;
+      
+      setCategories(categoryRes.data || []);
+      setBrands(brandRes.data || []);
 
     } catch (error) {
       console.error('Veri yüklenirken hata:', error);
@@ -93,6 +111,41 @@ export function BannerManagement() {
     fetchData();
   }, [fetchData]);
 
+  const handleEdit = (banner: Banner) => {
+    setFormData({
+      title: banner.title,
+      subtitle: banner.subtitle || '',
+      image_url: banner.image_url,
+      category_id: banner.category_id || '',
+      link_type: banner.link_type || 'category',
+      link_category_id: banner.link_category_id || '',
+      link_brand_id: banner.link_brand_id || '',
+      link_url: banner.link_url || '',
+      background_color: banner.background_color,
+      text_color: banner.text_color,
+      sort_order: banner.sort_order,
+      is_active: banner.is_active
+    });
+    setEditingBanner(banner);
+    setShowForm(true);
+  };
+
+  const handleDelete = async (bannerId: string) => {
+    if (!confirm('Bu banner\'ı silmek istediğinizden emin misiniz?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('category_banners')
+        .delete()
+        .eq('id', bannerId);
+
+      if (error) throw error;
+      await fetchData();
+    } catch (error) {
+      console.error('Banner silme hatası:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -100,7 +153,9 @@ export function BannerManagement() {
       const bannerData = {
         ...formData,
         category_id: formData.category_id || null,
-        link_category_id: formData.link_category_id || null
+        link_category_id: formData.link_type === 'category' ? formData.link_category_id || null : null,
+        link_brand_id: formData.link_type === 'brand' ? formData.link_brand_id || null : null,
+        link_url: ['url', 'tag'].includes(formData.link_type) ? formData.link_url || null : null
       };
 
       if (editingBanner) {
@@ -123,7 +178,10 @@ export function BannerManagement() {
         subtitle: '',
         image_url: '',
         category_id: '',
+        link_type: 'category',
         link_category_id: '',
+        link_brand_id: '',
+        link_url: '',
         background_color: '#ffffff',
         text_color: '#000000',
         sort_order: 0,
@@ -212,6 +270,24 @@ export function BannerManagement() {
                 </div>
 
                 <div>
+                  <Label htmlFor="link_type">Link Türü</Label>
+                  <select
+                    id="link_type"
+                    value={formData.link_type}
+                    onChange={(e) => setFormData(prev => ({ ...prev, link_type: e.target.value as any }))}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="category">Kategori</option>
+                    <option value="brand">Marka</option>
+                    <option value="tag">Etiket (Bestseller/Recommended/New)</option>
+                    <option value="url">Özel URL</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Dynamic Link Fields */}
+              {formData.link_type === 'category' && (
+                <div>
                   <Label htmlFor="link_category_id">Link Kategorisi</Label>
                   <select
                     id="link_category_id"
@@ -219,7 +295,7 @@ export function BannerManagement() {
                     onChange={(e) => setFormData(prev => ({ ...prev, link_category_id: e.target.value }))}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   >
-                    <option value="">Bağlantı yok</option>
+                    <option value="">Kategori seçin</option>
                     {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>
                         {'—'.repeat(cat.level * 2)} {cat.name}
@@ -227,7 +303,55 @@ export function BannerManagement() {
                     ))}
                   </select>
                 </div>
-              </div>
+              )}
+
+              {formData.link_type === 'brand' && (
+                <div>
+                  <Label htmlFor="link_brand_id">Marka</Label>
+                  <select
+                    id="link_brand_id"
+                    value={formData.link_brand_id}
+                    onChange={(e) => setFormData(prev => ({ ...prev, link_brand_id: e.target.value }))}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="">Marka seçin</option>
+                    {brands.map((brand) => (
+                      <option key={brand.id} value={brand.id}>
+                        {brand.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {formData.link_type === 'tag' && (
+                <div>
+                  <Label htmlFor="link_url">Etiket</Label>
+                  <select
+                    id="link_url"
+                    value={formData.link_url}
+                    onChange={(e) => setFormData(prev => ({ ...prev, link_url: e.target.value }))}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="">Etiket seçin</option>
+                    <option value="bestseller">Çok Satanlar</option>
+                    <option value="recommended">Önerilen</option>
+                    <option value="new">Yeni Ürünler</option>
+                  </select>
+                </div>
+              )}
+
+              {formData.link_type === 'url' && (
+                <div>
+                  <Label htmlFor="link_url">URL</Label>
+                  <Input
+                    id="link_url"
+                    value={formData.link_url}
+                    onChange={(e) => setFormData(prev => ({ ...prev, link_url: e.target.value }))}
+                    placeholder="/custom-page veya https://external.com"
+                  />
+                </div>
+              )}
 
               <div className="flex gap-2">
                 <Button type="submit">
@@ -265,9 +389,31 @@ export function BannerManagement() {
               <p className="text-sm text-muted-foreground mb-2">
                 {banner.category_name}
               </p>
-              <Badge variant={banner.is_active ? "default" : "secondary"}>
-                {banner.is_active ? 'Aktif' : 'Pasif'}
-              </Badge>
+              <div className="flex items-center justify-between">
+                <Badge variant={banner.is_active ? "default" : "secondary"}>
+                  {banner.is_active ? 'Aktif' : 'Pasif'}
+                </Badge>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(banner)}
+                    className="flex items-center gap-1"
+                  >
+                    <Edit className="w-3 h-3" />
+                    Düzenle
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDelete(banner.id)}
+                    className="flex items-center gap-1"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    Sil
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         ))}
