@@ -198,7 +198,7 @@ export function EnhancedBreadcrumb({
 
               if (category) {
                 brandItems.push({
-                  label: `${brand.name} ${category.name}`, // "پنسیس عطر زنانه" formatı
+                  label: `${category.name} ${brand.name}`, // "عطر زنانه هات لاو" formatı
                   href: `/brand/${brand.slug}/${category.slug}`
                 });
               }
@@ -254,7 +254,14 @@ export function EnhancedBreadcrumb({
               {index !== items.length - 1 && <span className="text-gray-400">←</span>}
             </>
           ) : (
-            <span className="text-gray-900 font-medium">{item.label}</span>
+            <>
+              <Link 
+                href={item.href}
+                className="text-gray-900 font-medium hover:text-gray-700 transition-colors"
+              >
+                {item.label}
+              </Link>
+            </>
           )}
         </div>
       ))}
@@ -312,21 +319,19 @@ export function EnhancedBreadcrumb({
     );
   }
 
-  // Her ikisini de göster (eski versiyon)
+  // Her ikisini de göster (temiz versiyon)
   return (
-    <div className="space-y-3 py-4 bg-gray-50 rounded-lg px-4" dir="rtl">
+    <div className="space-y-2 py-2" dir="rtl">
       {/* Kategori Breadcrumbs (Üst) */}
       {categoryBreadcrumbs.length > 0 && (
         <div className="text-right">
-          <div className="text-xs text-gray-500 mb-1">مسیر دسته‌بندی:</div>
           {renderBreadcrumbItems(categoryBreadcrumbs)}
         </div>
       )}
       
       {/* Marka/Ürün Tipi Breadcrumbs (Alt) */}
       {brandBreadcrumbs.length > 0 && (
-        <div className="text-right border-t pt-2">
-          <div className="text-xs text-gray-500 mb-1">مارک و نوع محصول:</div>
+        <div className="text-right">
           {renderBreadcrumbItems(brandBreadcrumbs, true)}
         </div>
       )}

@@ -129,7 +129,7 @@ export default function BrandCategoryPage() {
       {/* Simple Brand + Category Header - Like Khanoumi */}
       <div className="flex justify-end mb-6 px-0 mt-4">
         <h1 className="text-xl font-bold text-right">
-          {brand.name} {category.name} ({toPersianNumber(totalProductCount)} کالا)
+        {category.name} {brand.name}  ({toPersianNumber(totalProductCount)} کالا)
         </h1>
       </div>
 

@@ -14,44 +14,42 @@ interface Product {
   compare_price?: number;
   image_urls: string[];
   brand: string;
-  sales_count: number;
 }
 
-export function BestsellersSection() {
+export function NewProductsSection() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
   useEffect(() => {
-    const fetchBestsellerProducts = async () => {
+    const fetchNewProducts = async () => {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('is_bestseller', true)
+        .eq('is_new', true)
         .eq('is_active', true)
-        .order('sales_count', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(10);
 
       if (error) {
-        console.error('Error fetching bestsellers:', error);
+        console.error('Error fetching new products:', error);
       } else {
         setProducts(data || []);
       }
       setLoading(false);
     };
 
-    fetchBestsellerProducts();
+    fetchNewProducts();
   }, [supabase]);
 
   if (loading) {
     return (
       <div className="py-8">
         <div className="flex items-center justify-between mb-6 px-4">
-        <Link href="/bestsellers" className="text-pink-500 text-sm">
+          <Link href="/tags/new" className="text-pink-500 text-sm">
             مشاهده همه
           </Link>
-          <h2 className="text-xl font-bold text-right">پرفروش‌ترین‌ها</h2>
-         
+          <h2 className="text-xl font-bold text-right">جدیدترین محصولات</h2>
         </div>
         <div className="flex gap-4 px-4 overflow-x-auto">
           {[...Array(4)].map((_, i) => (
@@ -74,11 +72,10 @@ export function BestsellersSection() {
     <div className="py-8 bg-gray-50">
       {/* Section Header */}
       <div className="flex items-center justify-between mb-6 px-4">
-              <Link href="/tags/bestseller" className="text-pink-500 text-sm hover:text-pink-600">
+                  <Link href="/tags/new" className="text-pink-500 text-sm hover:text-pink-600">
           مشاهده همه
         </Link>
-        <h2 className="text-xl font-bold text-right">پرفروش‌ترین‌ها</h2>
-        
+        <h2 className="text-xl font-bold text-right">جدیدترین محصولات</h2>
       </div>
 
       {/* Horizontal Scroll Products */}
@@ -99,7 +96,7 @@ export function BestsellersSection() {
             <Link 
               key={product.id} 
               href={`/product-details?id=${product.id}`}
-              className="min-w-[200px] max-w-[200px] bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
+              className="min-w-[200px] max-w-[200px] bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden border"
             >
               {/* Product Image */}
               <div className="relative w-full h-48 bg-gray-50">
@@ -117,7 +114,10 @@ export function BestsellersSection() {
                   </div>
                 )}
                 
-
+                {/* New Badge */}
+                <div className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded font-bold">
+                  جدید
+                </div>
               </div>
 
               {/* Product Info */}
@@ -149,7 +149,7 @@ export function BestsellersSection() {
                         </div>
                         {/* Sale Price */}
                         <div className="text-sm font-bold">
-                          <span className="font-sans text-left"> ؋ {toPersianNumber(product.price.toLocaleString())}</span>
+                          <span className="font-sans text-left">؋ {toPersianNumber(product.price.toLocaleString())}</span>
                         </div>
                       </div>
                     </div>
@@ -158,14 +158,11 @@ export function BestsellersSection() {
                   <div className="pt-4">
                     <div className="flex items-end min-h-[44px]">
                       <div className="text-sm font-bold">
-                        <span className="font-sans text-left">؋ &lrm; {toPersianNumber(product.price.toLocaleString())}</span>
+                        <span className="font-sans text-left">؋ {toPersianNumber(product.price.toLocaleString())}</span>
                       </div>
                     </div>
                   </div>
                 )}
-
-                {/* Sales Count */}
-               
               </div>
             </Link>
           );

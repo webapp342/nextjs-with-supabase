@@ -89,7 +89,9 @@ export function ProfessionalProductUploadForm() {
     isActive: true,
     isFeatured: false,
     isOnSale: false,
-    isBestseller: false
+    isBestseller: false,
+    isRecommended: false,
+    isNew: false
   });
 
   // Data state
@@ -348,6 +350,8 @@ export function ProfessionalProductUploadForm() {
         is_featured: formData.isFeatured,
         is_on_sale: formData.isOnSale,
         is_bestseller: formData.isBestseller,
+        is_recommended: formData.isRecommended,
+        is_new: formData.isNew,
         user_id: user.id
       };
 
@@ -387,7 +391,8 @@ export function ProfessionalProductUploadForm() {
         stockQuantity: '', minStockLevel: '', categoryId: '', brandId: '',
         newBrandName: '', newBrandSlug: '', showNewBrandForm: false,
         tags: [], newTag: '', seoTitle: '', seoDescription: '',
-        isActive: true, isFeatured: false, isOnSale: false, isBestseller: false
+        isActive: true, isFeatured: false, isOnSale: false, isBestseller: false,
+        isRecommended: false, isNew: false
       });
       setImages([]);
       setImageUrls([]);
@@ -916,7 +921,27 @@ export function ProfessionalProductUploadForm() {
                     onChange={(e) => handleInputChange('isBestseller', e.target.checked)}
                   />
                   <Label htmlFor="isBestseller">Çok satanlar listesine ekle</Label>
-              </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isRecommended"
+                    checked={formData.isRecommended}
+                    onChange={(e) => handleInputChange('isRecommended', e.target.checked)}
+                  />
+                  <Label htmlFor="isRecommended">Önerilen ürünler listesine ekle</Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isNew"
+                    checked={formData.isNew}
+                    onChange={(e) => handleInputChange('isNew', e.target.checked)}
+                  />
+                  <Label htmlFor="isNew">Yeni ürünler listesine ekle</Label>
+                </div>
             </div>
             </div>
 

@@ -1,7 +1,8 @@
 import { CategoriesGrid } from "@/components/categories-grid";
-import { ProductList } from "@/components/product-list";
 import { CategoryBanners } from "@/components/category-banners";
 import { BestsellersSection } from "@/components/bestsellers-section";
+import { RecommendedSection } from "@/components/recommended-section";
+import { NewProductsSection } from "@/components/new-products-section";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import HeroBanners from "@/components/hero-banners";
 
@@ -30,11 +31,14 @@ export default function Home() {
         <BestsellersSection />
       </div>
 
-      {/* Products Section */}
+      {/* Recommended Section */}
       <div className="w-full">
-        <div className="px-2 py-6">
-          <ProductList />
-        </div>
+        <RecommendedSection />
+      </div>
+
+      {/* New Products Section */}
+      <div className="w-full">
+        <NewProductsSection />
       </div>
 
       {/* Footer */}
