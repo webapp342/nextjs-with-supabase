@@ -10,17 +10,26 @@ export default async function HeroBannersPage() {
     redirect("/auth/login");
   }
 
+  // Check if user is seller
+  const { data: userData } = await supabase
+    .from('users')
+    .select('user_type')
+    .eq('id', data.user.id)
+    .single();
+
+  if (!userData || userData.user_type !== 'seller') {
+    redirect("/auth/login");
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Hero Banner Yönetimi
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Ana sayfa hero banner'larınızı buradan yönetebilirsiniz.
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          Hero Banner Yönetimi
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Ana sayfa hero banner'larını buradan yönetebilirsiniz.
+        </p>
       </div>
       
       <HeroBannerManagement />

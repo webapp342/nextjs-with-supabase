@@ -54,9 +54,15 @@ const sidebarItems = [
     description: 'Ana sayfa ve kategori banner\'ları'
   },
   {
+    title: 'Hero Banner Yönetimi',
+    href: '/protected/hero-banners',
+    icon: Palette,
+    description: 'Ana sayfa hero banner\'ları'
+  },
+  {
     title: 'Ana Kategori Sayfaları',
     href: '/protected/category-sections',
-    icon: Palette,
+    icon: FolderTree,
     description: 'Ana kategori sayfası section\'ları'
   },
   {
@@ -92,7 +98,7 @@ const sidebarItems = [
   {
     title: 'Tema Ayarları',
     href: '/protected/theme',
-    icon: Palette,
+    icon: Settings,
     description: 'Site görünüm ayarları'
   },
   {

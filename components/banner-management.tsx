@@ -205,16 +205,25 @@ export function BannerManagement() {
     setUploading(true);
 
     try {
+      // Upload to 'images' bucket (standard bucket name)
+      const fileName = `banners/${Date.now()}-${file.name}`;
       const { data, error } = await supabase
         .storage
-        .from('banners')
-        .upload(`${Date.now()}-${file.name}`, file);
+        .from('images')
+        .upload(fileName, file);
 
       if (error) throw error;
 
-      setFormData(prev => ({ ...prev, image_url: data.publicUrl }));
+      // Get public URL
+      const { data: { publicUrl } } = supabase
+        .storage
+        .from('images')
+        .getPublicUrl(fileName);
+
+      setFormData(prev => ({ ...prev, image_url: publicUrl }));
     } catch (error) {
       console.error('Resim yükleme hatası:', error);
+      alert('Resim yükleme hatası: ' + (error as any).message);
     } finally {
       setUploading(false);
     }

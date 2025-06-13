@@ -1,14 +1,26 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Edit, Trash2, Upload, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Plus, 
+  Edit, 
+  Trash2, 
+  Upload,
+  Eye,
+  EyeOff,
+  Calendar,
+  Link as LinkIcon,
+  Palette,
+  ArrowUp,
+  ArrowDown
+} from 'lucide-react';
 import Image from 'next/image';
 
 interface HeroBanner {
@@ -27,18 +39,36 @@ interface HeroBanner {
   is_active: boolean;
   start_date?: string;
   end_date?: string;
+  created_at: string;
+}
+
+interface FormData {
+  title: string;
+  subtitle: string;
+  description: string;
+  image_url: string;
+  mobile_image_url: string;
+  link_url: string;
+  link_text: string;
+  background_color: string;
+  text_color: string;
+  button_color: string;
+  sort_order: number;
+  is_active: boolean;
+  start_date: string;
+  end_date: string;
 }
 
 export function HeroBannerManagement() {
-  const supabase = createClient();
-  
   const [banners, setBanners] = useState<HeroBanner[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingBanner, setEditingBanner] = useState<HeroBanner | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [editingBanner, setEditingBanner] = useState<HeroBanner | null>(null);
   const [uploading, setUploading] = useState(false);
-  
-  const [formData, setFormData] = useState({
+  const [uploadingMobile, setUploadingMobile] = useState(false);
+  const supabase = createClient();
+
+  const [formData, setFormData] = useState<FormData>({
     title: '',
     subtitle: '',
     description: '',
@@ -55,63 +85,45 @@ export function HeroBannerManagement() {
     end_date: ''
   });
 
-  const fetchBanners = useCallback(async () => {
+  useEffect(() => {
+    fetchBanners();
+  }, []);
+
+  const fetchBanners = async () => {
     try {
       const { data, error } = await supabase
         .from('hero_banners')
         .select('*')
-        .order('sort_order');
+        .order('sort_order', { ascending: true });
 
       if (error) throw error;
       setBanners(data || []);
     } catch (error) {
-      console.error('Hero banner yüklenirken hata:', error);
+      console.error('Hero banner yükleme hatası:', error);
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
-
-  useEffect(() => {
-    fetchBanners();
-  }, [fetchBanners]);
-
-  const uploadImage = async (file: File, isMobile = false) => {
-    try {
-      setUploading(true);
-      
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `hero-banners/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('images')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('images')
-        .getPublicUrl(filePath);
-
-      if (isMobile) {
-        setFormData(prev => ({ ...prev, mobile_image_url: publicUrl }));
-      } else {
-        setFormData(prev => ({ ...prev, image_url: publicUrl }));
-      }
-
-    } catch (error) {
-      console.error('Resim yükleme hatası:', error);
-      alert('Resim yüklenirken hata oluştu');
-    } finally {
-      setUploading(false);
-    }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, isMobile = false) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      uploadImage(file, isMobile);
-    }
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      subtitle: '',
+      description: '',
+      image_url: '',
+      mobile_image_url: '',
+      link_url: '',
+      link_text: '',
+      background_color: '#ffffff',
+      text_color: '#000000',
+      button_color: '#e91e63',
+      sort_order: banners.length,
+      is_active: true,
+      start_date: '',
+      end_date: ''
+    });
+    setEditingBanner(null);
+    setShowForm(false);
   };
 
   const handleEdit = (banner: HeroBanner) => {
@@ -145,96 +157,126 @@ export function HeroBannerManagement() {
         .eq('id', bannerId);
 
       if (error) throw error;
+      
       await fetchBanners();
+      alert('Hero banner başarıyla silindi!');
     } catch (error) {
-      console.error('Hero banner silme hatası:', error);
+      console.error('Silme hatası:', error);
+      alert('Silme hatası: ' + (error as any).message);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, isMobile = false) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    const file = e.target.files[0];
+    const setUploadState = isMobile ? setUploadingMobile : setUploading;
+    setUploadState(true);
+
+    try {
+      const fileName = `hero-banners/${isMobile ? 'mobile-' : ''}${Date.now()}-${file.name}`;
+      const { data, error } = await supabase
+        .storage
+        .from('images')
+        .upload(fileName, file);
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase
+        .storage
+        .from('images')
+        .getPublicUrl(fileName);
+
+      const field = isMobile ? 'mobile_image_url' : 'image_url';
+      setFormData(prev => ({ ...prev, [field]: publicUrl }));
+    } catch (error) {
+      console.error('Resim yükleme hatası:', error);
+      alert('Resim yükleme hatası: ' + (error as any).message);
+    } finally {
+      setUploadState(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!formData.title || !formData.image_url) {
-      alert('Başlık ve resim zorunludur');
-      return;
-    }
+    setLoading(true);
 
     try {
-      const bannerData = {
+      const submitData = {
         ...formData,
         start_date: formData.start_date || null,
-        end_date: formData.end_date || null,
-        mobile_image_url: formData.mobile_image_url || null,
-        link_url: formData.link_url || null,
-        link_text: formData.link_text || null,
-        subtitle: formData.subtitle || null,
-        description: formData.description || null
+        end_date: formData.end_date || null
       };
 
       if (editingBanner) {
         const { error } = await supabase
           .from('hero_banners')
-          .update(bannerData)
+          .update(submitData)
           .eq('id', editingBanner.id);
 
         if (error) throw error;
+        alert('Hero banner başarıyla güncellendi!');
       } else {
         const { error } = await supabase
           .from('hero_banners')
-          .insert([bannerData]);
+          .insert([submitData]);
 
         if (error) throw error;
+        alert('Hero banner başarıyla eklendi!');
       }
 
-      setFormData({
-        title: '',
-        subtitle: '',
-        description: '',
-        image_url: '',
-        mobile_image_url: '',
-        link_url: '',
-        link_text: '',
-        background_color: '#ffffff',
-        text_color: '#000000',
-        button_color: '#e91e63',
-        sort_order: 0,
-        is_active: true,
-        start_date: '',
-        end_date: ''
-      });
-      setEditingBanner(null);
-      setShowForm(false);
-      
       await fetchBanners();
-
-    } catch (error: unknown) {
-      console.error('Hero banner kayıt hatası:', error instanceof Error ? error.message : 'Bilinmeyen hata');
-      alert('Hero banner kaydedilirken hata oluştu');
+      resetForm();
+    } catch (error) {
+      console.error('Kaydetme hatası:', error);
+      alert('Kaydetme hatası: ' + (error as any).message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      subtitle: '',
-      description: '',
-      image_url: '',
-      mobile_image_url: '',
-      link_url: '',
-      link_text: '',
-      background_color: '#ffffff',
-      text_color: '#000000',
-      button_color: '#e91e63',
-      sort_order: 0,
-      is_active: true,
-      start_date: '',
-      end_date: ''
-    });
-    setEditingBanner(null);
-    setShowForm(false);
+  const toggleActive = async (bannerId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('hero_banners')
+        .update({ is_active: !currentStatus })
+        .eq('id', bannerId);
+
+      if (error) throw error;
+      await fetchBanners();
+    } catch (error) {
+      console.error('Durum güncelleme hatası:', error);
+    }
   };
 
-  if (loading) {
+  const updateSortOrder = async (bannerId: string, direction: 'up' | 'down') => {
+    const banner = banners.find(b => b.id === bannerId);
+    if (!banner) return;
+
+    const newOrder = direction === 'up' ? banner.sort_order - 1 : banner.sort_order + 1;
+    const swapBanner = banners.find(b => b.sort_order === newOrder);
+
+    if (!swapBanner) return;
+
+    try {
+      // Swap sort orders
+      await supabase
+        .from('hero_banners')
+        .update({ sort_order: newOrder })
+        .eq('id', bannerId);
+
+      await supabase
+        .from('hero_banners')
+        .update({ sort_order: banner.sort_order })
+        .eq('id', swapBanner.id);
+
+      await fetchBanners();
+    } catch (error) {
+      console.error('Sıralama güncelleme hatası:', error);
+    }
+  };
+
+  if (loading && banners.length === 0) {
     return <div className="p-8 text-center">Hero banner&apos;lar yükleniyor...</div>;
   }
 
@@ -251,14 +293,9 @@ export function HeroBannerManagement() {
       {showForm && (
         <Card className="mb-6">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>
-                {editingBanner ? 'Hero Banner Düzenle' : 'Yeni Hero Banner Ekle'}
-              </CardTitle>
-              <Button variant="ghost" size="sm" onClick={resetForm}>
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
+            <CardTitle>
+              {editingBanner ? 'Hero Banner Düzenle' : 'Yeni Hero Banner Ekle'}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -293,10 +330,10 @@ export function HeroBannerManagement() {
                 />
               </div>
 
-              {/* Image Upload */}
-              <div className="space-y-4">
-                <div>
-                  <Label>Ana Resim *</Label>
+              {/* Desktop Image */}
+              <div>
+                <Label>Desktop Görseli *</Label>
+                <div className="space-y-2">
                   <div className="flex items-center gap-4">
                     <Input
                       type="file"
@@ -308,36 +345,59 @@ export function HeroBannerManagement() {
                       type="button"
                       variant="outline"
                       disabled={uploading}
-                      onClick={() => document.querySelector<HTMLInputElement>('input[type="file"]')?.click()}
                     >
                       <Upload className="w-4 h-4 mr-2" />
-                      {uploading ? 'Yükleniyor...' : 'Resim Yükle'}
+                      {uploading ? 'Yükleniyor...' : 'Desktop Resim Yükle'}
                     </Button>
                   </div>
+                  <Input
+                    type="url"
+                    value={formData.image_url}
+                    onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+                    placeholder="Veya resim URL'si girin"
+                    required
+                  />
                   {formData.image_url && (
-                    <div className="mt-2 relative w-32 h-20 rounded-lg overflow-hidden">
+                    <div className="relative w-full h-32 rounded-lg overflow-hidden">
                       <Image
                         src={formData.image_url}
-                        alt="Preview"
+                        alt="Desktop Preview"
                         fill
                         className="object-cover"
                       />
                     </div>
                   )}
                 </div>
+              </div>
 
-                <div>
-                  <Label>Mobil Resim (Opsiyonel)</Label>
+              {/* Mobile Image */}
+              <div>
+                <Label>Mobil Görseli (Opsiyonel)</Label>
+                <div className="space-y-2">
                   <div className="flex items-center gap-4">
                     <Input
                       type="file"
                       accept="image/*"
                       onChange={(e) => handleImageUpload(e, true)}
-                      disabled={uploading}
+                      disabled={uploadingMobile}
                     />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={uploadingMobile}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      {uploadingMobile ? 'Yükleniyor...' : 'Mobil Resim Yükle'}
+                    </Button>
                   </div>
+                  <Input
+                    type="url"
+                    value={formData.mobile_image_url}
+                    onChange={(e) => setFormData(prev => ({ ...prev, mobile_image_url: e.target.value }))}
+                    placeholder="Veya mobil resim URL'si girin"
+                  />
                   {formData.mobile_image_url && (
-                    <div className="mt-2 relative w-32 h-20 rounded-lg overflow-hidden">
+                    <div className="relative w-32 h-20 rounded-lg overflow-hidden">
                       <Image
                         src={formData.mobile_image_url}
                         alt="Mobile Preview"
@@ -358,6 +418,7 @@ export function HeroBannerManagement() {
                     type="url"
                     value={formData.link_url}
                     onChange={(e) => setFormData(prev => ({ ...prev, link_url: e.target.value }))}
+                    placeholder="https://example.com"
                   />
                 </div>
                 <div>
@@ -366,52 +427,68 @@ export function HeroBannerManagement() {
                     id="link_text"
                     value={formData.link_text}
                     onChange={(e) => setFormData(prev => ({ ...prev, link_text: e.target.value }))}
+                    placeholder="Şimdi Satın Al"
                   />
                 </div>
               </div>
 
-              {/* Colors */}
+              {/* Color Settings */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="background_color">Arka Plan Rengi</Label>
-                  <Input
-                    id="background_color"
-                    type="color"
-                    value={formData.background_color}
-                    onChange={(e) => setFormData(prev => ({ ...prev, background_color: e.target.value }))}
-                  />
+                  <Label htmlFor="background_color">Arkaplan Rengi</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="background_color"
+                      type="color"
+                      value={formData.background_color}
+                      onChange={(e) => setFormData(prev => ({ ...prev, background_color: e.target.value }))}
+                      className="w-16 h-10"
+                    />
+                    <Input
+                      value={formData.background_color}
+                      onChange={(e) => setFormData(prev => ({ ...prev, background_color: e.target.value }))}
+                      placeholder="#ffffff"
+                    />
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="text_color">Metin Rengi</Label>
-                  <Input
-                    id="text_color"
-                    type="color"
-                    value={formData.text_color}
-                    onChange={(e) => setFormData(prev => ({ ...prev, text_color: e.target.value }))}
-                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="text_color"
+                      type="color"
+                      value={formData.text_color}
+                      onChange={(e) => setFormData(prev => ({ ...prev, text_color: e.target.value }))}
+                      className="w-16 h-10"
+                    />
+                    <Input
+                      value={formData.text_color}
+                      onChange={(e) => setFormData(prev => ({ ...prev, text_color: e.target.value }))}
+                      placeholder="#000000"
+                    />
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="button_color">Buton Rengi</Label>
-                  <Input
-                    id="button_color"
-                    type="color"
-                    value={formData.button_color}
-                    onChange={(e) => setFormData(prev => ({ ...prev, button_color: e.target.value }))}
-                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="button_color"
+                      type="color"
+                      value={formData.button_color}
+                      onChange={(e) => setFormData(prev => ({ ...prev, button_color: e.target.value }))}
+                      className="w-16 h-10"
+                    />
+                    <Input
+                      value={formData.button_color}
+                      onChange={(e) => setFormData(prev => ({ ...prev, button_color: e.target.value }))}
+                      placeholder="#e91e63"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Settings */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="sort_order">Sıralama</Label>
-                  <Input
-                    id="sort_order"
-                    type="number"
-                    value={formData.sort_order}
-                    onChange={(e) => setFormData(prev => ({ ...prev, sort_order: parseInt(e.target.value) || 0 }))}
-                  />
-                </div>
+              {/* Schedule Settings */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="start_date">Başlangıç Tarihi</Label>
                   <Input
@@ -432,20 +509,32 @@ export function HeroBannerManagement() {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="is_active"
-                  checked={formData.is_active}
-                  onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
-                  className="rounded"
-                />
-                <Label htmlFor="is_active">Aktif</Label>
+              {/* Settings */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="sort_order">Sıralama</Label>
+                  <Input
+                    id="sort_order"
+                    type="number"
+                    value={formData.sort_order}
+                    onChange={(e) => setFormData(prev => ({ ...prev, sort_order: parseInt(e.target.value) || 0 }))}
+                  />
+                </div>
+                <div className="flex items-center space-x-2 pt-6">
+                  <input
+                    type="checkbox"
+                    id="is_active"
+                    checked={formData.is_active}
+                    onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+                    className="rounded"
+                  />
+                  <Label htmlFor="is_active">Aktif</Label>
+                </div>
               </div>
 
-              <div className="flex gap-4">
-                <Button type="submit" disabled={uploading}>
-                  {editingBanner ? 'Güncelle' : 'Kaydet'}
+              <div className="flex items-center gap-4">
+                <Button type="submit" disabled={loading}>
+                  {loading ? 'Kaydediliyor...' : (editingBanner ? 'Güncelle' : 'Ekle')}
                 </Button>
                 <Button type="button" variant="outline" onClick={resetForm}>
                   İptal
@@ -457,60 +546,143 @@ export function HeroBannerManagement() {
       )}
 
       {/* Banner List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid gap-4">
         {banners.map((banner) => (
           <Card key={banner.id}>
-            <CardContent className="p-4">
-              <div className="relative w-full h-32 rounded-lg overflow-hidden mb-3">
-                <Image
-                  src={banner.image_url}
-                  alt={banner.title}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <h3 className="font-bold mb-2">{banner.title}</h3>
-              {banner.subtitle && (
-                <p className="text-sm text-muted-foreground mb-2">{banner.subtitle}</p>
-              )}
-              <div className="flex items-center justify-between mb-3">
-                <Badge variant={banner.is_active ? "default" : "secondary"}>
-                  {banner.is_active ? 'Aktif' : 'Pasif'}
-                </Badge>
-                <span className="text-xs text-muted-foreground">
-                  Sıra: {banner.sort_order}
-                </span>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEdit(banner)}
-                  className="flex items-center gap-1"
-                >
-                  <Edit className="w-3 h-3" />
-                  Düzenle
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDelete(banner.id)}
-                  className="flex items-center gap-1"
-                >
-                  <Trash2 className="w-3 h-3" />
-                  Sil
-                </Button>
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                {/* Banner Image */}
+                <div className="relative w-32 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                  <Image
+                    src={banner.image_url}
+                    alt={banner.title}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+
+                {/* Banner Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-semibold text-lg">{banner.title}</h3>
+                      {banner.subtitle && (
+                        <p className="text-gray-600 text-sm">{banner.subtitle}</p>
+                      )}
+                      {banner.description && (
+                        <p className="text-gray-500 text-sm mt-1 line-clamp-2">{banner.description}</p>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Badge variant={banner.is_active ? "default" : "secondary"}>
+                        {banner.is_active ? 'Aktif' : 'Pasif'}
+                      </Badge>
+                      <Badge variant="outline">
+                        Sıra: {banner.sort_order}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Banner Details */}
+                  <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
+                    {banner.link_url && (
+                      <div className="flex items-center gap-1">
+                        <LinkIcon className="w-4 h-4" />
+                        <span>Link var</span>
+                      </div>
+                    )}
+                    {banner.mobile_image_url && (
+                      <div className="flex items-center gap-1">
+                        <span>📱 Mobil görsel var</span>
+                      </div>
+                    )}
+                    {banner.start_date && (
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        <span>{new Date(banner.start_date).toLocaleDateString('tr-TR')}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Color Preview */}
+                  <div className="mt-3 flex items-center gap-2">
+                    <div 
+                      className="w-6 h-6 rounded border"
+                      style={{ backgroundColor: banner.background_color }}
+                      title="Arkaplan rengi"
+                    />
+                    <div 
+                      className="w-6 h-6 rounded border"
+                      style={{ backgroundColor: banner.text_color }}
+                      title="Metin rengi"
+                    />
+                    <div 
+                      className="w-6 h-6 rounded border"
+                      style={{ backgroundColor: banner.button_color }}
+                      title="Buton rengi"
+                    />
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => updateSortOrder(banner.id, 'up')}
+                      disabled={banner.sort_order === 0}
+                    >
+                      <ArrowUp className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => updateSortOrder(banner.id, 'down')}
+                      disabled={banner.sort_order === banners.length - 1}
+                    >
+                      <ArrowDown className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => toggleActive(banner.id, banner.is_active)}
+                  >
+                    {banner.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </Button>
+                  
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleEdit(banner)}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleDelete(banner.id)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
         ))}
-      </div>
 
-      {banners.length === 0 && (
-        <div className="text-center py-8 text-muted-foreground">
-          Henüz hero banner eklenmemiş.
-        </div>
-      )}
+        {banners.length === 0 && (
+          <Card>
+            <CardContent className="p-8 text-center text-gray-500">
+              Henüz hero banner eklenmemiş. İlk hero banner&apos;ınızı eklemek için yukarıdaki butonu kullanın.
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 } 
