@@ -56,6 +56,7 @@ export function CategoryBanners({ categoryId = null, limit }: CategoryBannersPro
           .eq('id', currentCategory.parent_id)
           .single();
         
+        if (!parentCategory) break;
         currentCategory = parentCategory;
       } else {
         break;

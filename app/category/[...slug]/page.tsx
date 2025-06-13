@@ -5,6 +5,8 @@ import { useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { CategoryBanners } from '@/components/category-banners';
 import { Breadcrumb } from '@/components/breadcrumb';
+import { Button } from '@/components/ui/button';
+import { Filter, ArrowUpDown } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { toPersianNumber } from '@/lib/utils';
@@ -270,9 +272,36 @@ export default function DynamicCategoryPage() {
       {/* Ürünler */}
       {products.length > 0 ? (
         <div>
-          <h2 className="text-xl font-bold mb-4 text-right">
-            محصولات ({toPersianNumber(products.length)} کالا)
-          </h2>
+          <div className="flex justify-end mb-6 px-0">
+            <h1 className="text-xl font-bold text-right">
+              {category.name} ({toPersianNumber(products.length)} کالا)
+            </h1>
+          </div>
+
+          {/* Sort and Filter Controls */}
+          <div className="flex items-center justify-between mb-6 border-b pb-4">
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="text-sm"
+              >
+                <ArrowUpDown className="w-4 h-4 mr-2" />
+                مرتب سازی
+              </Button>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="text-sm"
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                فیلترها
+              </Button>
+            </div>
+          </div>
           
           {/* Product Grid */}
           <div className="grid grid-cols-2">

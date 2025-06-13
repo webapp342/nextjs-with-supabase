@@ -187,9 +187,11 @@ export default function CategoryPage() {
       {/* Ürünler */}
       {products.length > 0 && (
         <div className="px-4">
-          <h2 className="text-xl font-bold mb-4 text-right">
-            محصولات ({toPersianNumber(products.length)} کالا)
-          </h2>
+          <div className="flex justify-end mb-6 px-0">
+            <h1 className="text-xl font-bold text-right">
+              {category.name} ({toPersianNumber(products.length)} کالا)
+            </h1>
+          </div>
           
           {/* Sort and Filter Controls */}
           <div className="flex items-center justify-between mb-6 border-b pb-4">
