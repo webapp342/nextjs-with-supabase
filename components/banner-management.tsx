@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Upload } from 'lucide-react';
 import Image from 'next/image';
+import { HierarchicalCategorySelector } from './hierarchical-category-selector';
 
 interface Banner {
   id: string;
@@ -350,20 +351,15 @@ export function BannerManagement() {
               {/* Dynamic Link Fields */}
               {formData.link_type === 'category' && (
                 <div>
-                  <Label htmlFor="link_category_id">Link Kategorisi</Label>
-                  <select
-                    id="link_category_id"
+                  <Label>Link Kategorisi</Label>
+                  <HierarchicalCategorySelector
                     value={formData.link_category_id}
-                    onChange={(e) => setFormData(prev => ({ ...prev, link_category_id: e.target.value }))}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  >
-                    <option value="">Kategori seçin</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {'—'.repeat(cat.level * 2)} {cat.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(categoryId) => setFormData(prev => ({ ...prev, link_category_id: categoryId }))}
+                    required={false}
+                  />
+                  <div className="text-xs text-muted-foreground mt-2">
+                    Banner tıklandığında yönlendirilecek kategoriyi seçin. Alt kategori seçebilir, ana kategoriye de yönlendirebilirsiniz.
+                  </div>
                 </div>
               )}
 

@@ -83,7 +83,7 @@ export function HierarchicalCategorySelector({
     };
 
     loadCategories();
-  }, []);
+  }, [value, supabase]); // Value değiştiğinde yeniden yükle
 
   // Reconstruct category hierarchy from selected value
   const reconstructHierarchy = async (categoryId: string, allCategories: Category[]) => {
@@ -141,7 +141,7 @@ export function HierarchicalCategorySelector({
           .order('sort_order, name');
 
         if (error) throw error;
-        setSubCategories(subs);
+        setSubCategories(subs || []);
         
         // Update form value to main category
         onChange(mainId);
@@ -171,7 +171,7 @@ export function HierarchicalCategorySelector({
           .order('sort_order, name');
 
         if (error) throw error;
-        setSubSubCategories(subSubs);
+        setSubSubCategories(subSubs || []);
         
         // Update form value to sub category
         onChange(subId);

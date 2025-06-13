@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,104 +23,112 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 
+
 interface HeroBanner {
   id: string;
   title: string;
-  subtitle?: string;
-  description?: string;
   image_url: string;
   mobile_image_url?: string;
+  link_type?: 'category' | 'brand' | 'url' | 'tag';
+  link_category_id?: string;
+  link_brand_id?: string;
   link_url?: string;
-  link_text?: string;
-  background_color: string;
-  text_color: string;
-  button_color: string;
   sort_order: number;
   is_active: boolean;
-  start_date?: string;
-  end_date?: string;
   created_at: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  level: number;
+}
+
+interface Brand {
+  id: string;
+  name: string;
+  slug: string;
 }
 
 interface FormData {
   title: string;
-  subtitle: string;
-  description: string;
   image_url: string;
   mobile_image_url: string;
+  link_type: 'category' | 'brand' | 'url' | 'tag';
+  link_category_id: string;
+  link_brand_id: string;
   link_url: string;
-  link_text: string;
-  background_color: string;
-  text_color: string;
-  button_color: string;
   sort_order: number;
   is_active: boolean;
-  start_date: string;
-  end_date: string;
 }
 
 export function HeroBannerManagement() {
+  const supabase = createClient();
+  
   const [banners, setBanners] = useState<HeroBanner[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
   const [editingBanner, setEditingBanner] = useState<HeroBanner | null>(null);
+  const [showForm, setShowForm] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadingMobile, setUploadingMobile] = useState(false);
-  const supabase = createClient();
 
   const [formData, setFormData] = useState<FormData>({
     title: '',
-    subtitle: '',
-    description: '',
     image_url: '',
     mobile_image_url: '',
+    link_type: 'url',
+    link_category_id: '',
+    link_brand_id: '',
     link_url: '',
-    link_text: '',
-    background_color: '#ffffff',
-    text_color: '#000000',
-    button_color: '#e91e63',
     sort_order: 0,
-    is_active: true,
-    start_date: '',
-    end_date: ''
+    is_active: true
   });
 
-  useEffect(() => {
-    fetchBanners();
-  }, []);
-
-  const fetchBanners = async () => {
+  const fetchData = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      const { data: bannerData, error: bannerError } = await supabase
         .from('hero_banners')
         .select('*')
-        .order('sort_order', { ascending: true });
+        .order('sort_order');
 
-      if (error) throw error;
-      setBanners(data || []);
+      if (bannerError) throw bannerError;
+      setBanners(bannerData || []);
+
+      const [categoryRes, brandRes] = await Promise.all([
+        supabase.from('categories_new').select('*').eq('is_active', true).order('sort_order'),
+        supabase.from('brands').select('id, name, slug').eq('is_active', true).order('name')
+      ]);
+
+      if (categoryRes.error) throw categoryRes.error;
+      if (brandRes.error) throw brandRes.error;
+      
+      setCategories(categoryRes.data || []);
+      setBrands(brandRes.data || []);
+
     } catch (error) {
-      console.error('Hero banner yükleme hatası:', error);
+      console.error('Veri yüklenirken hata:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const resetForm = () => {
     setFormData({
       title: '',
-      subtitle: '',
-      description: '',
       image_url: '',
       mobile_image_url: '',
+      link_type: 'url',
+      link_category_id: '',
+      link_brand_id: '',
       link_url: '',
-      link_text: '',
-      background_color: '#ffffff',
-      text_color: '#000000',
-      button_color: '#e91e63',
       sort_order: banners.length,
-      is_active: true,
-      start_date: '',
-      end_date: ''
+      is_active: true
     });
     setEditingBanner(null);
     setShowForm(false);
@@ -129,19 +137,14 @@ export function HeroBannerManagement() {
   const handleEdit = (banner: HeroBanner) => {
     setFormData({
       title: banner.title,
-      subtitle: banner.subtitle || '',
-      description: banner.description || '',
       image_url: banner.image_url,
       mobile_image_url: banner.mobile_image_url || '',
+      link_type: (banner as any).link_type || 'url',
+      link_category_id: (banner as any).link_category_id || '',
+      link_brand_id: (banner as any).link_brand_id || '',
       link_url: banner.link_url || '',
-      link_text: banner.link_text || '',
-      background_color: banner.background_color,
-      text_color: banner.text_color,
-      button_color: banner.button_color,
       sort_order: banner.sort_order,
-      is_active: banner.is_active,
-      start_date: banner.start_date ? banner.start_date.split('T')[0] : '',
-      end_date: banner.end_date ? banner.end_date.split('T')[0] : ''
+      is_active: banner.is_active
     });
     setEditingBanner(banner);
     setShowForm(true);
@@ -158,7 +161,7 @@ export function HeroBannerManagement() {
 
       if (error) throw error;
       
-      await fetchBanners();
+      await fetchData();
       alert('Hero banner başarıyla silindi!');
     } catch (error) {
       console.error('Silme hatası:', error);
@@ -177,14 +180,14 @@ export function HeroBannerManagement() {
       const fileName = `hero-banners/${isMobile ? 'mobile-' : ''}${Date.now()}-${file.name}`;
       const { data, error } = await supabase
         .storage
-        .from('images')
+        .from('products')
         .upload(fileName, file);
 
       if (error) throw error;
 
       const { data: { publicUrl } } = supabase
         .storage
-        .from('images')
+        .from('products')
         .getPublicUrl(fileName);
 
       const field = isMobile ? 'mobile_image_url' : 'image_url';
@@ -202,16 +205,25 @@ export function HeroBannerManagement() {
     setLoading(true);
 
     try {
-      const submitData = {
-        ...formData,
-        start_date: formData.start_date || null,
-        end_date: formData.end_date || null
+      const bannerData = {
+        title: formData.title,
+        image_url: formData.image_url,
+        mobile_image_url: formData.mobile_image_url || null,
+        link_type: formData.link_type,
+        link_category_id: formData.link_type === 'category' ? formData.link_category_id || null : null,
+        link_brand_id: formData.link_type === 'brand' ? formData.link_brand_id || null : null,
+        link_url: formData.link_type === 'url' ? formData.link_url : 
+                 formData.link_type === 'category' ? `/category/${categories.find(c => c.id === formData.link_category_id)?.name || ''}` :
+                 formData.link_type === 'brand' ? `/brand/${brands.find(b => b.id === formData.link_brand_id)?.slug || ''}` :
+                 formData.link_url || null,
+        sort_order: formData.sort_order,
+        is_active: formData.is_active
       };
 
       if (editingBanner) {
         const { error } = await supabase
           .from('hero_banners')
-          .update(submitData)
+          .update(bannerData)
           .eq('id', editingBanner.id);
 
         if (error) throw error;
@@ -219,13 +231,13 @@ export function HeroBannerManagement() {
       } else {
         const { error } = await supabase
           .from('hero_banners')
-          .insert([submitData]);
+          .insert([bannerData]);
 
         if (error) throw error;
         alert('Hero banner başarıyla eklendi!');
       }
 
-      await fetchBanners();
+      await fetchData();
       resetForm();
     } catch (error) {
       console.error('Kaydetme hatası:', error);
@@ -243,7 +255,7 @@ export function HeroBannerManagement() {
         .eq('id', bannerId);
 
       if (error) throw error;
-      await fetchBanners();
+      await fetchData();
     } catch (error) {
       console.error('Durum güncelleme hatası:', error);
     }
@@ -270,7 +282,7 @@ export function HeroBannerManagement() {
         .update({ sort_order: banner.sort_order })
         .eq('id', swapBanner.id);
 
-      await fetchBanners();
+      await fetchData();
     } catch (error) {
       console.error('Sıralama güncelleme hatası:', error);
     }
@@ -310,29 +322,14 @@ export function HeroBannerManagement() {
                     required
                   />
                 </div>
-                <div>
-                  <Label htmlFor="subtitle">Alt Başlık</Label>
-                  <Input
-                    id="subtitle"
-                    value={formData.subtitle}
-                    onChange={(e) => setFormData(prev => ({ ...prev, subtitle: e.target.value }))}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="description">Açıklama</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  rows={3}
-                />
               </div>
 
               {/* Desktop Image */}
               <div>
                 <Label>Desktop Görseli *</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Önerilen boyut: 1200x400px veya daha büyük. Yüksek kaliteli görsel kullanın.
+                </p>
                 <div className="space-y-2">
                   <div className="flex items-center gap-4">
                     <Input
@@ -358,12 +355,15 @@ export function HeroBannerManagement() {
                     required
                   />
                   {formData.image_url && (
-                    <div className="relative w-full h-32 rounded-lg overflow-hidden">
+                    <div className="relative h-32 rounded-lg overflow-hidden bg-gray-100">
                       <Image
                         src={formData.image_url}
                         alt="Desktop Preview"
                         fill
-                        className="object-cover"
+                        className="object-cover w-full h-full"
+                        quality={95}
+                        unoptimized
+                        style={{ objectFit: 'cover', width: '100%', height: '100%' }}
                       />
                     </div>
                   )}
@@ -373,6 +373,9 @@ export function HeroBannerManagement() {
               {/* Mobile Image */}
               <div>
                 <Label>Mobil Görseli (Opsiyonel)</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Önerilen boyut: 800x600px veya daha büyük. Mobil cihazlar için optimize edilmiş görsel.
+                </p>
                 <div className="space-y-2">
                   <div className="flex items-center gap-4">
                     <Input
@@ -397,12 +400,15 @@ export function HeroBannerManagement() {
                     placeholder="Veya mobil resim URL'si girin"
                   />
                   {formData.mobile_image_url && (
-                    <div className="relative w-32 h-20 rounded-lg overflow-hidden">
+                    <div className="relative h-32 rounded-lg overflow-hidden bg-gray-100">
                       <Image
                         src={formData.mobile_image_url}
                         alt="Mobile Preview"
                         fill
-                        className="object-cover"
+                        className="object-cover w-full h-full"
+                        quality={95}
+                        unoptimized
+                        style={{ objectFit: 'cover', width: '100%', height: '100%' }}
                       />
                     </div>
                   )}
@@ -412,101 +418,63 @@ export function HeroBannerManagement() {
               {/* Link Settings */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="link_url">Link URL</Label>
-                  <Input
-                    id="link_url"
-                    type="url"
-                    value={formData.link_url}
-                    onChange={(e) => setFormData(prev => ({ ...prev, link_url: e.target.value }))}
-                    placeholder="https://example.com"
-                  />
+                  <Label htmlFor="link_type">Link Türü</Label>
+                  <select
+                    value={formData.link_type}
+                    onChange={(e) => setFormData(prev => ({ ...prev, link_type: e.target.value as 'category' | 'brand' | 'url' | 'tag' }))}
+                  >
+                    <option value="category">Kategori</option>
+                    <option value="brand">Marka</option>
+                    <option value="url">URL</option>
+                    <option value="tag">Etiket</option>
+                  </select>
                 </div>
-                <div>
-                  <Label htmlFor="link_text">Buton Metni</Label>
-                  <Input
-                    id="link_text"
-                    value={formData.link_text}
-                    onChange={(e) => setFormData(prev => ({ ...prev, link_text: e.target.value }))}
-                    placeholder="Şimdi Satın Al"
-                  />
-                </div>
-              </div>
 
-              {/* Color Settings */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="background_color">Arkaplan Rengi</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="background_color"
-                      type="color"
-                      value={formData.background_color}
-                      onChange={(e) => setFormData(prev => ({ ...prev, background_color: e.target.value }))}
-                      className="w-16 h-10"
-                    />
-                    <Input
-                      value={formData.background_color}
-                      onChange={(e) => setFormData(prev => ({ ...prev, background_color: e.target.value }))}
-                      placeholder="#ffffff"
-                    />
+                {formData.link_type === 'category' && (
+                  <div>
+                    <Label htmlFor="link_category_id">Kategori</Label>
+                    <select
+                      value={formData.link_category_id}
+                      onChange={(e) => setFormData(prev => ({ ...prev, link_category_id: e.target.value }))}
+                    >
+                      <option value="">Kategori seçin</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                </div>
-                <div>
-                  <Label htmlFor="text_color">Metin Rengi</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="text_color"
-                      type="color"
-                      value={formData.text_color}
-                      onChange={(e) => setFormData(prev => ({ ...prev, text_color: e.target.value }))}
-                      className="w-16 h-10"
-                    />
-                    <Input
-                      value={formData.text_color}
-                      onChange={(e) => setFormData(prev => ({ ...prev, text_color: e.target.value }))}
-                      placeholder="#000000"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="button_color">Buton Rengi</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="button_color"
-                      type="color"
-                      value={formData.button_color}
-                      onChange={(e) => setFormData(prev => ({ ...prev, button_color: e.target.value }))}
-                      className="w-16 h-10"
-                    />
-                    <Input
-                      value={formData.button_color}
-                      onChange={(e) => setFormData(prev => ({ ...prev, button_color: e.target.value }))}
-                      placeholder="#e91e63"
-                    />
-                  </div>
-                </div>
-              </div>
+                )}
 
-              {/* Schedule Settings */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="start_date">Başlangıç Tarihi</Label>
-                  <Input
-                    id="start_date"
-                    type="date"
-                    value={formData.start_date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="end_date">Bitiş Tarihi</Label>
-                  <Input
-                    id="end_date"
-                    type="date"
-                    value={formData.end_date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
-                  />
-                </div>
+                {formData.link_type === 'brand' && (
+                  <div>
+                    <Label htmlFor="link_brand_id">Marka</Label>
+                    <select
+                      value={formData.link_brand_id}
+                      onChange={(e) => setFormData(prev => ({ ...prev, link_brand_id: e.target.value }))}
+                    >
+                      <option value="">Marka seçin</option>
+                      {brands.map((brand) => (
+                        <option key={brand.id} value={brand.id}>
+                          {brand.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {formData.link_type === 'url' && (
+                  <div>
+                    <Label htmlFor="link_url">Link URL</Label>
+                    <Input
+                      id="link_url"
+                      value={formData.link_url}
+                      onChange={(e) => setFormData(prev => ({ ...prev, link_url: e.target.value }))}
+                      placeholder="/category/makeup"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Settings */}
@@ -552,12 +520,15 @@ export function HeroBannerManagement() {
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
                 {/* Banner Image */}
-                <div className="relative w-32 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                <div className="relative w-32 h-20 rounded-lg overflow-hidden flex-shrink-0 border">
                   <Image
                     src={banner.image_url}
                     alt={banner.title}
                     fill
-                    className="object-cover"
+                    className="object-cover w-full h-full"
+                    quality={95}
+                    unoptimized
+                    style={{ objectFit: 'cover', width: '100%', height: '100%' }}
                   />
                 </div>
 
@@ -566,11 +537,8 @@ export function HeroBannerManagement() {
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="font-semibold text-lg">{banner.title}</h3>
-                      {banner.subtitle && (
-                        <p className="text-gray-600 text-sm">{banner.subtitle}</p>
-                      )}
-                      {banner.description && (
-                        <p className="text-gray-500 text-sm mt-1 line-clamp-2">{banner.description}</p>
+                      {banner.mobile_image_url && (
+                        <p className="text-gray-600 text-sm">📱 Mobil görsel var</p>
                       )}
                     </div>
                     
@@ -592,36 +560,12 @@ export function HeroBannerManagement() {
                         <span>Link var</span>
                       </div>
                     )}
-                    {banner.mobile_image_url && (
-                      <div className="flex items-center gap-1">
-                        <span>📱 Mobil görsel var</span>
-                      </div>
-                    )}
-                    {banner.start_date && (
+                    {banner.created_at && (
                       <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
-                        <span>{new Date(banner.start_date).toLocaleDateString('tr-TR')}</span>
+                        <span>{new Date(banner.created_at).toLocaleDateString('tr-TR')}</span>
                       </div>
                     )}
-                  </div>
-
-                  {/* Color Preview */}
-                  <div className="mt-3 flex items-center gap-2">
-                    <div 
-                      className="w-6 h-6 rounded border"
-                      style={{ backgroundColor: banner.background_color }}
-                      title="Arkaplan rengi"
-                    />
-                    <div 
-                      className="w-6 h-6 rounded border"
-                      style={{ backgroundColor: banner.text_color }}
-                      title="Metin rengi"
-                    />
-                    <div 
-                      className="w-6 h-6 rounded border"
-                      style={{ backgroundColor: banner.button_color }}
-                      title="Buton rengi"
-                    />
                   </div>
                 </div>
 

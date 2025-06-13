@@ -19,6 +19,13 @@ interface Banner {
   sort_order: number;
   category_slug?: string; // Join edilmiş kategori slug'ı
   brand_slug?: string; // Join edilmiş brand slug'ı
+  link_category?: {
+    id: string;
+    slug: string;
+    parent_id?: string;
+    level: number;
+  };
+  category_url?: string;
 }
 
 interface CategoryBannersProps {
@@ -31,6 +38,33 @@ export function CategoryBanners({ categoryId = null, limit }: CategoryBannersPro
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Hierarchical category URL generator
+  const getCategoryUrl = async (category: { id: string; slug: string; parent_id?: string; level: number }): Promise<string> => {
+    if (!category) return '/';
+    
+    const hierarchy: string[] = [];
+    let currentCategory = category;
+    
+    // Build hierarchy from bottom to top
+    while (currentCategory) {
+      hierarchy.unshift(currentCategory.slug);
+      
+      if (currentCategory.parent_id) {
+        const { data: parentCategory } = await supabase
+          .from('categories_new')
+          .select('id, slug, parent_id, level')
+          .eq('id', currentCategory.parent_id)
+          .single();
+        
+        currentCategory = parentCategory;
+      } else {
+        break;
+      }
+    }
+    
+    return `/category/${hierarchy.join('/')}`;
+  };
+
   useEffect(() => {
     const fetchBanners = async () => {
       try {
@@ -38,7 +72,7 @@ export function CategoryBanners({ categoryId = null, limit }: CategoryBannersPro
           .from('category_banners')
           .select(`
             *,
-            link_category:categories_new!category_banners_link_category_id_fkey(slug),
+            link_category:categories_new!category_banners_link_category_id_fkey(id, slug, parent_id, level),
             link_brand:brands!category_banners_link_brand_id_fkey(slug)
           `)
           .eq('is_active', true)
@@ -60,11 +94,22 @@ export function CategoryBanners({ categoryId = null, limit }: CategoryBannersPro
 
         if (error) throw error;
 
-        const transformedBanners = data?.map(banner => ({
-          ...banner,
-          category_slug: banner.link_category?.slug,
-          brand_slug: banner.link_brand?.slug
-        })) || [];
+        // Transform banners ve hierarchical URL'leri hesapla
+        const transformedBanners = await Promise.all(
+          (data || []).map(async (banner) => {
+            let categoryUrl = '';
+            if (banner.link_category) {
+              categoryUrl = await getCategoryUrl(banner.link_category);
+            }
+            
+            return {
+              ...banner,
+              category_slug: banner.link_category?.slug,
+              brand_slug: banner.link_brand?.slug,
+              category_url: categoryUrl
+            };
+          })
+        );
 
         setBanners(transformedBanners);
       } catch (error) {
@@ -96,8 +141,9 @@ export function CategoryBanners({ categoryId = null, limit }: CategoryBannersPro
       {banners.map((banner) => {
         // Link URL'ini belirle
         let linkUrl = '#';
-        if (banner.link_type === 'category' && banner.category_slug) {
-          linkUrl = `/category/${banner.category_slug}`;
+        if (banner.link_type === 'category' && banner.category_url) {
+          // Pre-calculated hierarchical category URL kullan
+          linkUrl = banner.category_url;
         } else if (banner.link_type === 'brand' && banner.brand_slug) {
           linkUrl = `/brand/${banner.brand_slug}`;
         } else if (banner.link_type === 'url' && banner.link_url) {

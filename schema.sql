@@ -125,6 +125,9 @@ CREATE TABLE public.hero_banners (
   mobile_image_url text,
   link_url text,
   link_text character varying,
+  link_type character varying DEFAULT 'url'::character varying CHECK (link_type = ANY (ARRAY['category'::character varying, 'brand'::character varying, 'url'::character varying, 'tag'::character varying])),
+  link_category_id uuid,
+  link_brand_id uuid,
   background_color character varying DEFAULT '#ffffff'::character varying,
   text_color character varying DEFAULT '#000000'::character varying,
   button_color character varying DEFAULT '#e91e63'::character varying,
@@ -133,7 +136,9 @@ CREATE TABLE public.hero_banners (
   start_date timestamp with time zone,
   end_date timestamp with time zone,
   created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT hero_banners_pkey PRIMARY KEY (id)
+  CONSTRAINT hero_banners_pkey PRIMARY KEY (id),
+  CONSTRAINT hero_banners_link_category_id_fkey FOREIGN KEY (link_category_id) REFERENCES public.categories_new(id),
+  CONSTRAINT hero_banners_link_brand_id_fkey FOREIGN KEY (link_brand_id) REFERENCES public.brands(id)
 );
 CREATE TABLE public.product_attributes (
   id uuid NOT NULL DEFAULT gen_random_uuid(),

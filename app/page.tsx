@@ -16,7 +16,7 @@ export default function Home() {
 
       {/* Category Banners Section */}
       <div className="w-full">
-        <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="w-full px-0 py-4 md:py-6">
           <CategoryBanners limit={6} />
         </div>
       </div>

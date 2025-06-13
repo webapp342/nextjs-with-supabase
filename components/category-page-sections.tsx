@@ -291,8 +291,11 @@ export function CategoryPageSections({ categoryId }: CategoryPageSectionsProps) 
                   src={section.image_url}
                   alt={section.title || 'Banner'}
                   fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                  quality={95}
+                  priority
                   unoptimized
+                  style={{ objectFit: 'cover', width: '100%', height: '100%' }}
                 />
               )}
               

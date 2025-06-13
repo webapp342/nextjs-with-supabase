@@ -56,7 +56,7 @@ export default function HeroBanners() {
       <div className="py-8">
         <div className="flex gap-4 px-4 overflow-x-auto">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex-shrink-0 w-80 h-48 bg-gray-200 rounded-lg animate-pulse" />
+            <div key={i} className="flex-shrink-0 w-80 h-44 md:w-96 md:h-56 bg-gray-200 rounded-lg animate-pulse" />
           ))}
         </div>
       </div>
@@ -85,8 +85,7 @@ export default function HeroBanners() {
         {banners.map((banner) => (
           <div
             key={banner.id}
-            className="flex-shrink-0 w-80 h-48 rounded-lg overflow-hidden shadow-md relative"
-            style={{ backgroundColor: banner.background_color }}
+            className="flex-shrink-0 w-80 h-44 md:w-96 md:h-56 rounded-lg overflow-hidden shadow-lg relative"
           >
             {banner.link_url ? (
               <Link href={banner.link_url} className="block w-full h-full">
@@ -104,59 +103,35 @@ export default function HeroBanners() {
 
 function BannerContent({ banner }: { banner: HeroBanner }) {
   return (
-    <div className="relative w-full h-full flex items-center">
-      {/* Background Image */}
-      <div className="absolute inset-0">
+    <div className="relative w-full h-full">
+      {/* Background Image - Desktop */}
+      <div className="absolute inset-0 hidden md:block">
         <Image
           src={banner.image_url}
           alt={banner.title}
           fill
-          className="object-cover opacity-20"
-          sizes="(max-width: 768px) 320px, 320px"
+          className="object-cover w-full h-full"
+          sizes="(max-width: 768px) 100vw, 384px"
+          quality={100}
+          priority
+          unoptimized
+          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
         />
       </div>
       
-      {/* Content */}
-      <div className="relative z-10 p-6 w-full">
-        <div className="text-right">
-          {/* Subtitle */}
-          {banner.subtitle && (
-            <div 
-              className="text-sm font-medium mb-1"
-              style={{ color: banner.text_color }}
-            >
-              {banner.subtitle}
-            </div>
-          )}
-          
-          {/* Title */}
-          <h3 
-            className="text-lg font-bold mb-2 leading-tight"
-            style={{ color: banner.text_color }}
-          >
-            {banner.title}
-          </h3>
-          
-          {/* Description */}
-          {banner.description && (
-            <p 
-              className="text-xs mb-4 opacity-80 leading-relaxed"
-              style={{ color: banner.text_color }}
-            >
-              {banner.description}
-            </p>
-          )}
-          
-          {/* Button */}
-          {banner.link_text && (
-            <button
-              className="px-4 py-2 text-xs font-medium rounded-md text-white transition-opacity hover:opacity-90"
-              style={{ backgroundColor: banner.button_color }}
-            >
-              {banner.link_text}
-            </button>
-          )}
-        </div>
+      {/* Background Image - Mobile */}
+      <div className="absolute inset-0 block md:hidden">
+        <Image
+          src={banner.mobile_image_url || banner.image_url}
+          alt={banner.title}
+          fill
+          className="object-cover w-full h-full"
+          sizes="(max-width: 768px) 100vw, 384px"
+          quality={100}
+          priority
+          unoptimized
+          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+        />
       </div>
     </div>
   )
