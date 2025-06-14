@@ -5,40 +5,55 @@ import { RecommendedSection } from "@/components/recommended-section";
 import { NewProductsSection } from "@/components/new-products-section";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import HeroBanners from "@/components/hero-banners";
+import { QuickAccessButtons } from "@/components/quick-access-buttons";
+import { CategoryImageButtons } from "@/components/category-image-buttons";
+import { PositionedBanners } from "@/components/positioned-banners";
+import SecondaryHeroBanners from "@/components/secondary-hero-banners";
 
 export default function Home() {
   return (
     <>
-      {/* Hero Banners Section */}
+      {/* 1. Quick Access Buttons Section */}
+      <QuickAccessButtons />
+
+      {/* 2. Hero Banners Section */}
       <div className="w-full">
         <HeroBanners />
       </div>
 
-      {/* Category Banners Section */}
-      <div className="w-full">
-        <div className="w-full px-0 py-4 md:py-6">
-          <CategoryBanners limit={6} />
-        </div>
-      </div>
+      {/* 3. Category Image Buttons Section */}
+      <CategoryImageButtons />
 
-      {/* Categories Section - Hidden on mobile since we have mobile menu */}
-      <div className="hidden md:block w-full">
-        <CategoriesGrid />
-      </div>
-
-      {/* Bestsellers Section */}
+      {/* 4. Bestsellers Section */}
       <div className="w-full">
         <BestsellersSection />
       </div>
 
-      {/* Recommended Section */}
+      {/* 5. Middle Banners */}
+      <div className="w-full px-4 py-6 space-y-4">
+        <PositionedBanners position="home_middle_1" />
+        <PositionedBanners position="home_middle_2" />
+      </div>
+
+      {/* 6. Recommended Section */}
       <div className="w-full">
         <RecommendedSection />
       </div>
 
-      {/* New Products Section */}
+      {/* 7. Secondary Hero Banners (Slide edilebilen) */}
+      <div className="w-full px-4 py-6">
+        <SecondaryHeroBanners />
+      </div>
+
+      {/* 8. New Products Section */}
       <div className="w-full">
         <NewProductsSection />
+      </div>
+
+      {/* 9. Bottom Banners */}
+      <div className="w-full px-4 py-6 space-y-4">
+        <PositionedBanners position="home_bottom_1" />
+        <PositionedBanners position="home_bottom_2" />
       </div>
 
       {/* Footer */}

@@ -60,6 +60,30 @@ const sidebarItems = [
     description: 'Ana sayfa hero banner\'ları'
   },
   {
+    title: 'İkinci Hero Banner Yönetimi',
+    href: '/protected/secondary-hero-banners',
+    icon: Palette,
+    description: 'Ana sayfa ikinci hero banner\'ları (slide edilebilen)'
+  },
+  {
+    title: 'Hızlı Erişim Butonları',
+    href: '/protected/quick-access-buttons',
+    icon: Tag,
+    description: 'Ana sayfa hızlı erişim butonları'
+  },
+  {
+    title: 'Resimli Kategori Butonları',
+    href: '/protected/category-image-buttons',
+    icon: ImageIcon,
+    description: 'Ana sayfa resimli kategori butonları'
+  },
+  {
+    title: 'Pozisyonlu Banner Yönetimi',
+    href: '/protected/positioned-banners',
+    icon: Palette,
+    description: 'Ana sayfa pozisyonlu banner\'ları'
+  },
+  {
     title: 'Ana Kategori Sayfaları',
     href: '/protected/category-sections',
     icon: FolderTree,
