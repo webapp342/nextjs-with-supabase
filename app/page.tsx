@@ -1,5 +1,4 @@
-import { CategoriesGrid } from "@/components/categories-grid";
-import { CategoryBanners } from "@/components/category-banners";
+
 import { BestsellersSection } from "@/components/bestsellers-section";
 import { RecommendedSection } from "@/components/recommended-section";
 import { NewProductsSection } from "@/components/new-products-section";
@@ -9,6 +8,7 @@ import { QuickAccessButtons } from "@/components/quick-access-buttons";
 import { CategoryImageButtons } from "@/components/category-image-buttons";
 import { PositionedBanners } from "@/components/positioned-banners";
 import SecondaryHeroBanners from "@/components/secondary-hero-banners";
+import GridBanners from "@/components/grid-banners";
 
 export default function Home() {
   return (
@@ -29,28 +29,33 @@ export default function Home() {
         <BestsellersSection />
       </div>
 
-      {/* 5. Middle Banners */}
+      {/* 5. Grid Banners Section */}
+      <div className="w-full">
+        <GridBanners />
+      </div>
+
+      {/* 6. Middle Banners */}
       <div className="w-full px-4 py-6 space-y-4">
         <PositionedBanners position="home_middle_1" />
         <PositionedBanners position="home_middle_2" />
       </div>
 
-      {/* 6. Recommended Section */}
+      {/* 7. Recommended Section */}
       <div className="w-full">
         <RecommendedSection />
       </div>
 
-      {/* 7. Secondary Hero Banners (Slide edilebilen) */}
-      <div className="w-full px-4 py-6">
+      {/* 8. Secondary Hero Banners (Slide edilebilen) */}
+      <div className="w-full">
         <SecondaryHeroBanners />
       </div>
 
-      {/* 8. New Products Section */}
+      {/* 9. New Products Section */}
       <div className="w-full">
         <NewProductsSection />
       </div>
 
-      {/* 9. Bottom Banners */}
+      {/* 10. Bottom Banners */}
       <div className="w-full px-4 py-6 space-y-4">
         <PositionedBanners position="home_bottom_1" />
         <PositionedBanners position="home_bottom_2" />

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+
 
 interface QuickAccessButton {
   id: string;
@@ -23,6 +23,7 @@ export function QuickAccessButtons() {
 
   useEffect(() => {
     fetchButtons();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchButtons = async () => {
@@ -72,7 +73,7 @@ export function QuickAccessButtons() {
       while (currentCategory.parent_id) {
         const { data: parentCategory, error: parentError } = await supabase
           .from('categories_new')
-          .select('id, slug, parent_id')
+          .select('id, slug, parent_id, level')
           .eq('id', currentCategory.parent_id)
           .single();
 
@@ -95,9 +96,15 @@ export function QuickAccessButtons() {
 
   return (
     <div className="w-full py-3 px-4 bg-white border-b border-gray-100">
-      <div className="flex items-center overflow-x-auto scrollbar-hide gap-2 pb-1">
-        {buttons.map((button, index) => (
-          <div key={button.id} className="flex items-center gap-2 flex-shrink-0">
+      <div 
+        className="flex items-center overflow-x-auto scrollbar-hide gap-2 pb-1"
+        style={{
+          direction: 'rtl',
+          scrollBehavior: 'smooth'
+        }}
+      >
+        {buttons.map((button) => (
+          <div key={button.id} className="flex items-center flex-shrink-0" style={{ direction: 'ltr' }}>
             <Link
               href={button.link_url}
               className="flex items-center justify-center min-w-0 flex-shrink-0"
@@ -106,11 +113,6 @@ export function QuickAccessButtons() {
                 {button.title}
               </div>
             </Link>
-            
-            {/* Separator dot - not after last item */}
-            {index < buttons.length - 1 && (
-              <div className="w-1 h-1 bg-gray-300 rounded-full flex-shrink-0"></div>
-            )}
           </div>
         ))}
       </div>

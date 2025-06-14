@@ -1,11 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import Image from 'next/image';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface SecondaryHeroBanner {
   id: string;
@@ -27,15 +25,11 @@ interface SecondaryHeroBanner {
 
 export default function SecondaryHeroBanners() {
   const [banners, setBanners] = useState<SecondaryHeroBanner[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
-  useEffect(() => {
-    fetchBanners();
-  }, []);
-
-  const fetchBanners = async () => {
+  const fetchBanners = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('secondary_hero_banners')
@@ -43,7 +37,10 @@ export default function SecondaryHeroBanners() {
         .eq('is_active', true)
         .order('sort_order');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching secondary hero banners:', error);
+        return;
+      }
 
       // Filter banners by date if they have date restrictions
       const now = new Date();
@@ -55,156 +52,147 @@ export default function SecondaryHeroBanners() {
 
       setBanners(activeBanners);
     } catch (error) {
-      console.error('Error fetching secondary hero banners:', error);
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    fetchBanners();
+  }, [fetchBanners]);
 
   // Auto-slide functionality
   useEffect(() => {
     if (banners.length <= 1) return;
 
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => 
-        prevIndex === banners.length - 1 ? 0 : prevIndex + 1
-      );
-    }, 5000); // Change slide every 5 seconds
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        const currentScroll = container.scrollLeft;
+        const bannerWidth = container.clientWidth;
+        const maxScroll = container.scrollWidth - container.clientWidth;
+        
+        // Move to next banner (LTR) - more smoothly
+        const nextScroll = currentScroll + bannerWidth;
+        
+        // If we're near the end, jump to the beginning seamlessly
+        if (nextScroll >= maxScroll - 10) { // Small buffer to prevent issues
+          setTimeout(() => {
+            container.scrollLeft = 0;
+          }, 300); // Delay to allow smooth scroll to complete
+        } else {
+          container.scrollTo({
+            left: nextScroll,
+            behavior: 'smooth'
+          });
+        }
+      }
+    }, 4000); // Increased to 4 seconds for smoother experience
 
     return () => clearInterval(interval);
   }, [banners.length]);
 
-  const goToPrevious = () => {
-    setCurrentIndex(currentIndex === 0 ? banners.length - 1 : currentIndex - 1);
-  };
-
-  const goToNext = () => {
-    setCurrentIndex(currentIndex === banners.length - 1 ? 0 : currentIndex + 1);
-  };
-
-  const goToSlide = (index: number) => {
-    setCurrentIndex(index);
-  };
+  // Initialize scroll position to beginning for LTR
+  useEffect(() => {
+    if (banners.length > 1 && scrollContainerRef.current) {
+      setTimeout(() => {
+        const container = scrollContainerRef.current;
+        if (container) {
+          container.scrollLeft = 0; // Start at beginning for LTR
+        }
+      }, 100);
+    }
+  }, [banners]);
 
   if (loading) {
     return (
-      <div className="w-full h-64 bg-gray-200 animate-pulse rounded-lg"></div>
+      <div className="py-8">
+        <div className="flex gap-4 px-4 overflow-x-auto">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex-shrink-0 w-[calc(100vw-80px)] md:w-[calc(100vw-120px)] h-32 bg-gray-200 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      </div>
     );
   }
 
   if (banners.length === 0) {
-    return null; // Don't render anything if no banners
+    return null;
   }
 
-  const currentBanner = banners[currentIndex];
+  // Create infinite loop by duplicating banners
+  const infiniteBanners = banners.length > 1 ? [...banners, ...banners, ...banners] : banners;
 
   return (
-    <div className="relative w-full h-64 md:h-80 lg:h-96 overflow-hidden rounded-lg group">
-      {/* Banner Image and Content */}
+    <div className="py-8">
       <div 
-        className="relative w-full h-full flex items-center justify-center text-center"
-        style={{ backgroundColor: currentBanner.background_color }}
+        ref={scrollContainerRef}
+        className="flex gap-4 px-4 overflow-x-auto snap-x snap-mandatory"
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        }}
       >
-        {/* Background Image */}
-        <div className="absolute inset-0">
-          <Image
-            src={currentBanner.mobile_image_url && typeof window !== 'undefined' && window.innerWidth < 768 
-              ? currentBanner.mobile_image_url 
-              : currentBanner.image_url}
-            alt={currentBanner.title}
-            fill
-            className="object-cover"
-            priority={currentIndex === 0}
-          />
-          {/* Overlay for better text readability */}
-          <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-        </div>
-
-        {/* Content */}
-        <div 
-          className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
-          style={{ color: currentBanner.text_color }}
-        >
-          <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4">
-            {currentBanner.title}
-          </h2>
-          
-          {currentBanner.subtitle && (
-            <h3 className="text-lg md:text-xl lg:text-2xl font-medium mb-2 md:mb-4 opacity-90">
-              {currentBanner.subtitle}
-            </h3>
-          )}
-          
-          {currentBanner.description && (
-            <p className="text-sm md:text-base lg:text-lg mb-4 md:mb-6 opacity-80 max-w-2xl mx-auto">
-              {currentBanner.description}
-            </p>
-          )}
-          
-          {currentBanner.link_text && (
-            <Link href={currentBanner.link_url}>
-              <Button 
-                size="lg"
-                className="text-white font-semibold px-6 py-3 md:px-8 md:py-4"
-                style={{ 
-                  backgroundColor: currentBanner.button_color,
-                  borderColor: currentBanner.button_color
-                }}
-              >
-                {currentBanner.link_text}
-              </Button>
-            </Link>
-          )}
-        </div>
+        <style jsx>{`
+          div::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
+        
+        {infiniteBanners.map((banner, index) => (
+          <div
+            key={`${banner.id}-${index}`}
+            className={`flex-shrink-0 rounded-lg overflow-hidden relative snap-center ${
+              banners.length === 1 
+                ? 'w-[calc(100vw-32px)] md:w-[calc(100vw-64px)]' 
+                : 'w-[calc(100vw-80px)] md:w-[calc(100vw-120px)]'
+            }`}
+          >
+            {banner.link_url ? (
+              <Link href={banner.link_url} className="block w-full">
+                <BannerContent banner={banner} />
+              </Link>
+            ) : (
+              <BannerContent banner={banner} />
+            )}
+          </div>
+        ))}
       </div>
+    </div>
+  );
+}
 
-      {/* Navigation Arrows */}
-      {banners.length > 1 && (
-        <>
-          <button
-            onClick={goToPrevious}
-            className="absolute left-2 md:left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100"
-            aria-label="Previous banner"
-          >
-            <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
-          </button>
-          
-          <button
-            onClick={goToNext}
-            className="absolute right-2 md:right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100"
-            aria-label="Next banner"
-          >
-            <ChevronRight className="h-5 w-5 md:h-6 md:w-6" />
-          </button>
-        </>
-      )}
-
-      {/* Dots Indicator */}
-      {banners.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-          {banners.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => goToSlide(index)}
-              className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-200 ${
-                index === currentIndex 
-                  ? 'bg-white' 
-                  : 'bg-white bg-opacity-50 hover:bg-opacity-75'
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Slide Transition Effect */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div 
-          className="w-full h-full transition-opacity duration-500"
-          style={{ 
-            opacity: 1,
-            background: `linear-gradient(45deg, ${currentBanner.background_color}00, ${currentBanner.background_color}20)`
-          }}
+function BannerContent({ banner }: { banner: SecondaryHeroBanner }) {
+  return (
+    <div className="relative w-full">
+      {/* Background Image - Desktop */}
+      <div className="hidden md:block">
+        <Image
+          src={banner.image_url}
+          alt={banner.title}
+          width={1200}
+          height={0}
+          className="w-full h-auto"
+          sizes="(min-width: 1024px) 100vw, 100vw"
+          quality={100}
+          priority
+          style={{ height: 'auto' }}
+        />
+      </div>
+      
+      {/* Background Image - Mobile */}
+      <div className="block md:hidden">
+        <Image
+          src={banner.mobile_image_url || banner.image_url}
+          alt={banner.title}
+          width={800}
+          height={0}
+          className="w-full h-auto"
+          sizes="100vw"
+          quality={100}
+          priority
+          style={{ height: 'auto' }}
         />
       </div>
     </div>

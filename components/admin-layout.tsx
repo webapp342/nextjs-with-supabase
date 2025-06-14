@@ -66,6 +66,12 @@ const sidebarItems = [
     description: 'Ana sayfa ikinci hero banner\'ları (slide edilebilen)'
   },
   {
+    title: 'Grid Banner Yönetimi',
+    href: '/protected/grid-banners',
+    icon: ImageIcon,
+    description: 'Ana sayfa grid banner\'ları'
+  },
+  {
     title: 'Hızlı Erişim Butonları',
     href: '/protected/quick-access-buttons',
     icon: Tag,

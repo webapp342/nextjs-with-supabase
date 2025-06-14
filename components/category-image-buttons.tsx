@@ -23,6 +23,7 @@ export function CategoryImageButtons() {
 
   useEffect(() => {
     fetchButtons();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchButtons = async () => {
@@ -72,7 +73,7 @@ export function CategoryImageButtons() {
       while (currentCategory.parent_id) {
         const { data: parentCategory, error: parentError } = await supabase
           .from('categories_new')
-          .select('id, slug, parent_id')
+          .select('id, slug, parent_id, level')
           .eq('id', currentCategory.parent_id)
           .single();
 
@@ -95,12 +96,19 @@ export function CategoryImageButtons() {
 
   return (
     <div className="w-full py-4 px-4 bg-white">
-      <div className="flex items-center overflow-x-auto scrollbar-hide gap-4 pb-2">
+      <div 
+        className="flex items-center overflow-x-auto scrollbar-hide gap-4 pb-2"
+        style={{
+          direction: 'rtl',
+          scrollBehavior: 'smooth'
+        }}
+      >
         {buttons.map((button) => (
           <Link
             key={button.id}
             href={button.link_url}
             className="flex flex-col items-center gap-2 flex-shrink-0 min-w-[80px]"
+            style={{ direction: 'ltr' }}
           >
             <div className="relative w-16 h-16 rounded-full overflow-hidden bg-pink-50 border-2 border-pink-200 hover:border-pink-300 transition-colors duration-200">
               <Image
@@ -111,7 +119,7 @@ export function CategoryImageButtons() {
                 unoptimized
               />
             </div>
-            <span className="text-xs text-center text-gray-700 font-medium leading-tight max-w-[80px] line-clamp-2">
+            <span className="text-xs text-center text-gray-700 font-medium leading-tight w-[80px] break-words hyphens-auto min-h-[32px] flex items-center justify-center">
               {button.title}
             </span>
           </Link>

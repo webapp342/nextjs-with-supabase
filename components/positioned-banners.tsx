@@ -34,6 +34,7 @@ export function PositionedBanners({ position, className = '' }: PositionedBanner
 
   useEffect(() => {
     fetchBanners();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [position]);
 
   const fetchBanners = async () => {
@@ -63,51 +64,39 @@ export function PositionedBanners({ position, className = '' }: PositionedBanner
       {banners.map((banner, index) => (
         <div key={banner.id} className={index > 0 ? 'mt-4' : ''}>
           <Link href={banner.link_url}>
-            <div 
-              className="relative w-full h-48 md:h-64 rounded-lg overflow-hidden group cursor-pointer"
-              style={{ backgroundColor: banner.background_color }}
-            >
+            <div className="relative w-full h-auto rounded-lg overflow-hidden cursor-pointer">
               {/* Desktop Image */}
-              <div className="hidden md:block relative w-full h-full">
+              <div className="hidden md:block relative w-full">
                 <Image
                   src={banner.image_url}
                   alt={banner.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  unoptimized
+                  width={800}
+                  height={400}
+                  className="w-full h-auto"
+                  sizes="100vw"
+                  quality={100}
+                  style={{ 
+                    objectFit: 'contain',
+                    objectPosition: 'center'
+                  }}
                 />
               </div>
               
               {/* Mobile Image */}
-              <div className="block md:hidden relative w-full h-full">
+              <div className="block md:hidden relative w-full">
                 <Image
                   src={banner.mobile_image_url || banner.image_url}
                   alt={banner.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  unoptimized
+                  width={400}
+                  height={200}
+                  className="w-full h-auto"
+                  sizes="100vw"
+                  quality={100}
+                  style={{ 
+                    objectFit: 'contain',
+                    objectPosition: 'center'
+                  }}
                 />
-              </div>
-
-              {/* Content Overlay */}
-              <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
-                <div className="text-center p-6" style={{ color: banner.text_color }}>
-                  <h2 className="text-2xl md:text-3xl font-bold mb-2">{banner.title}</h2>
-                  {banner.subtitle && (
-                    <p className="text-lg md:text-xl mb-2">{banner.subtitle}</p>
-                  )}
-                  {banner.description && (
-                    <p className="text-sm md:text-base mb-4 max-w-md mx-auto">{banner.description}</p>
-                  )}
-                  {banner.link_text && (
-                    <span 
-                      className="inline-block px-6 py-2 rounded-full text-white font-medium hover:opacity-90 transition-opacity"
-                      style={{ backgroundColor: banner.button_color }}
-                    >
-                      {banner.link_text}
-                    </span>
-                  )}
-                </div>
               </div>
             </div>
           </Link>

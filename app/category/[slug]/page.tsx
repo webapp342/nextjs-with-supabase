@@ -87,7 +87,7 @@ export default function CategoryPage() {
       <CategoryBanners categoryId={category.id} />
 
       {/* Category Page Sections */}
-      <CategoryPageSections categoryId={category.id} />
+        <CategoryPageSections categoryId={category.id} />
     </div>
   );
 } 

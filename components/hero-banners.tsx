@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -24,6 +24,7 @@ interface HeroBanner {
 export default function HeroBanners() {
   const [banners, setBanners] = useState<HeroBanner[]>([])
   const [loading, setLoading] = useState(true)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
   const fetchBanners = useCallback(async () => {
@@ -51,12 +52,55 @@ export default function HeroBanners() {
     fetchBanners()
   }, [fetchBanners])
 
+  // Auto-slide functionality
+  useEffect(() => {
+    if (banners.length <= 1) return
+
+    const interval = setInterval(() => {
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current
+        const currentScroll = container.scrollLeft
+        const bannerWidth = container.clientWidth
+        const maxScroll = container.scrollWidth - container.clientWidth
+        
+        // Move to next banner (LTR) - more smoothly
+        const nextScroll = currentScroll + bannerWidth
+        
+        // If we're near the end, jump to the beginning seamlessly
+        if (nextScroll >= maxScroll - 10) { // Small buffer to prevent issues
+          setTimeout(() => {
+            container.scrollLeft = 0
+          }, 300) // Delay to allow smooth scroll to complete
+        } else {
+          container.scrollTo({
+            left: nextScroll,
+            behavior: 'smooth'
+          })
+        }
+      }
+    }, 4000) // Increased to 4 seconds for smoother experience
+
+    return () => clearInterval(interval)
+  }, [banners.length])
+
+  // Initialize scroll position to beginning for LTR
+  useEffect(() => {
+    if (banners.length > 1 && scrollContainerRef.current) {
+      setTimeout(() => {
+        const container = scrollContainerRef.current
+        if (container) {
+          container.scrollLeft = 0 // Start at beginning for LTR
+        }
+      }, 100)
+    }
+  }, [banners])
+
   if (loading) {
     return (
       <div className="py-8">
         <div className="flex gap-4 px-4 overflow-x-auto">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex-shrink-0 w-80 h-44 md:w-96 md:h-56 bg-gray-200 rounded-lg animate-pulse" />
+            <div key={i} className="flex-shrink-0 w-[calc(100vw-80px)] md:w-[calc(100vw-120px)] h-32 bg-gray-200 rounded-lg animate-pulse" />
           ))}
         </div>
       </div>
@@ -67,10 +111,14 @@ export default function HeroBanners() {
     return null
   }
 
+  // Create infinite loop by duplicating banners
+  const infiniteBanners = banners.length > 1 ? [...banners, ...banners, ...banners] : banners
+
   return (
     <div className="py-8">
       <div 
-        className="flex gap-4 px-4 overflow-x-auto"
+        ref={scrollContainerRef}
+        className="flex gap-4 px-4 overflow-x-auto snap-x snap-mandatory"
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none'
@@ -82,13 +130,17 @@ export default function HeroBanners() {
           }
         `}</style>
         
-        {banners.map((banner) => (
+        {infiniteBanners.map((banner, index) => (
           <div
-            key={banner.id}
-            className="flex-shrink-0 w-80 h-44 md:w-96 md:h-56 rounded-lg overflow-hidden shadow-lg relative"
+            key={`${banner.id}-${index}`}
+            className={`flex-shrink-0 rounded-lg overflow-hidden relative snap-center ${
+              banners.length === 1 
+                ? 'w-[calc(100vw-32px)] md:w-[calc(100vw-64px)]' 
+                : 'w-[calc(100vw-80px)] md:w-[calc(100vw-120px)]'
+            }`}
           >
             {banner.link_url ? (
-              <Link href={banner.link_url} className="block w-full h-full">
+              <Link href={banner.link_url} className="block w-full">
                 <BannerContent banner={banner} />
               </Link>
             ) : (
@@ -103,34 +155,34 @@ export default function HeroBanners() {
 
 function BannerContent({ banner }: { banner: HeroBanner }) {
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full">
       {/* Background Image - Desktop */}
-      <div className="absolute inset-0 hidden md:block">
+      <div className="hidden md:block">
         <Image
           src={banner.image_url}
           alt={banner.title}
-          fill
-          className="object-cover w-full h-full"
-          sizes="(max-width: 768px) 100vw, 384px"
+          width={1200}
+          height={0}
+          className="w-full h-auto"
+          sizes="(min-width: 1024px) 100vw, 100vw"
           quality={100}
           priority
-          unoptimized
-          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+          style={{ height: 'auto' }}
         />
       </div>
       
       {/* Background Image - Mobile */}
-      <div className="absolute inset-0 block md:hidden">
+      <div className="block md:hidden">
         <Image
           src={banner.mobile_image_url || banner.image_url}
           alt={banner.title}
-          fill
-          className="object-cover w-full h-full"
-          sizes="(max-width: 768px) 100vw, 384px"
+          width={800}
+          height={0}
+          className="w-full h-auto"
+          sizes="100vw"
           quality={100}
           priority
-          unoptimized
-          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+          style={{ height: 'auto' }}
         />
       </div>
     </div>
