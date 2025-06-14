@@ -297,10 +297,12 @@ export function Breadcrumb() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-end space-x-2 py-2 text-sm text-muted-foreground" dir="rtl">
-        <div className="animate-pulse h-4 w-20 bg-muted rounded"></div>
-        <ChevronLeft className="h-4 w-4" />
-        <div className="animate-pulse h-4 w-24 bg-muted rounded"></div>
+      <div className="flex items-center justify-end space-x-2 py-2 text-sm text-muted-foreground w-full" dir="rtl">
+        <div className="mr-4 flex items-center space-x-2 space-x-reverse">
+          <div className="animate-pulse h-4 w-20 bg-muted rounded"></div>
+          <ChevronLeft className="h-4 w-4" />
+          <div className="animate-pulse h-4 w-24 bg-muted rounded"></div>
+        </div>
       </div>
     );
   }
@@ -310,8 +312,8 @@ export function Breadcrumb() {
   }
 
   return (
-    <nav className="flex items-center justify-end py-2 text-sm" aria-label="Breadcrumb" dir="rtl">
-      <ol className="flex items-center space-x-1 space-x-reverse">
+    <nav className="flex items-center justify-start py-0 text-sm w-full" aria-label="Breadcrumb" dir="rtl">
+      <ol className="flex items-center space-x-1 space-x-reverse ">
         {breadcrumbs.map((item, index) => (
           <li key={item.href} className="flex items-center">
             {index > 0 && (

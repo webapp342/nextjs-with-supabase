@@ -38,10 +38,6 @@ export function ProductManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
@@ -58,6 +54,10 @@ export function ProductManagement() {
       setLoading(false);
     }
   }, [supabase]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const toggleProductStatus = async (productId: string, currentStatus: boolean) => {
     try {

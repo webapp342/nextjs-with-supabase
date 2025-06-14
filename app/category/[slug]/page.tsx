@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { toPersianNumber } from '@/lib/utils';
-import { CategoryBanners } from '@/components/category-banners';
-import { CategoryPageSections } from '@/components/category-page-sections';
+import { Breadcrumb } from '@/components/breadcrumb';
+import { Button } from '@/components/ui/button';
+import { Filter, ArrowUpDown } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -39,8 +40,7 @@ export default function CategoryPage() {
   
   const [products, setProducts] = useState<Product[]>([]);
   const [category, setCategory] = useState<Category | null>(null);
-  const [, setChildCategories] = useState<Category[]>([]);
-  const [, setTotalProductCount] = useState(0);
+  const [childCategories, setChildCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -122,24 +122,6 @@ export default function CategoryPage() {
 
         setProducts(productsWithBrands || []);
 
-        // Toplam ürün sayısını hesapla (bu kategori + alt kategoriler)
-        let totalCount = productsData?.length || 0;
-        
-        if (childData && childData.length > 0) {
-          // Alt kategorilerdeki ürün sayılarını da ekle
-          for (const child of childData) {
-            const { count } = await supabase
-              .from('products')
-              .select('*', { count: 'exact', head: true })
-              .eq('category_id', child.id)
-              .eq('is_active', true);
-            
-            totalCount += count || 0;
-          }
-        }
-        
-        setTotalProductCount(totalCount);
-
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Bir hata oluştu');
       } finally {
@@ -175,52 +157,75 @@ export default function CategoryPage() {
   }
 
   return (
-    <div className="w-full px-0 py-8">
-      {/* Category Banners */}
-      <CategoryBanners categoryId={category.id} />
-
-      {/* Category Page Sections */}
-      <div className="px-4 mb-8">
-        <CategoryPageSections categoryId={category.id} />
+    <div className="w-full py-4 px-2">
+      {/* Breadcrumb - moved to right as requested */}
+      <div className="flex justify-end mb-0">
+        <Breadcrumb />
+      </div>
+      
+      {/* Category Title with Product Count on left side */}
+      <div className="flex justify-end items-start mb-4">
+        <div className="flex items-center gap-2 ">
+          <h1 className="text-xl font-bold text-right">
+            {category.name}
+          </h1>
+          <span className="text-sm text-gray-500">
+            ({toPersianNumber(products.length)} کالا)
+          </span>
         </div>
+      </div>
 
-      {/* Ürünler */}
-      {products.length > 0 && (
-        <div className="px-4">
-          <div className="flex justify-end mb-6 px-0">
-            <h1 className="text-xl font-bold text-right">
-              {category.name} ({toPersianNumber(products.length)} کالا)
-            </h1>
-          </div>
-          
-          {/* Sort and Filter Controls */}
-          <div className="flex items-center justify-between mb-6 border-b pb-4">
-            <div className="flex items-center gap-2">
-              <button className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                </svg>
-                مرتب سازی
-              </button>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <button className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                </svg>
-                فیلترها
-              </button>
-            </div>
+      {/* Subcategory buttons - compact design below title on right side */}
+      {childCategories.length > 0 && (
+        <div className="flex justify-end mb-6">
+          <div className="flex flex-wrap gap-2 max-w-md">
+            {childCategories.map((child) => (
+              <Link
+                key={child.id}
+                href={`/category/${child.slug}`}
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs px-3 py-1 h-8 rounded-full border-gray-300 hover:bg-gray-50"
+                >
+                  {child.name}
+                </Button>
+              </Link>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Products Grid with Separators */}
+      {/* Sort and Filter Controls - removed bottom border */}
+      <div className="flex items-center justify-between mb-6 pb-4">
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="text-sm"
+          >
+            <ArrowUpDown className="w-4 h-4 mr-2" />
+            مرتب سازی
+          </Button>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="text-sm"
+          >
+            <Filter className="w-4 h-4 mr-2" />
+            فیلترها
+          </Button>
+        </div>
+      </div>
+
+      {/* Product Grid */}
       {products.length > 0 && (
         <div className="grid grid-cols-2">
           {products.map((product, index) => {
-            // Only show discount if product actually has compare_price
             const hasDiscount = product.compare_price && product.compare_price > product.price;
             const discountPercentage = hasDiscount 
               ? Math.round(((product.compare_price! - product.price) / product.compare_price!) * 100)
@@ -228,25 +233,16 @@ export default function CategoryPage() {
 
             return (
               <div key={product.id} className="relative">
-                {/* Vertical separator line (except for right column) */}
+                {/* Vertical separator line */}
                 {index % 2 === 0 && (
                   <div className="absolute top-0 right-0 w-px h-full bg-gray-200 z-10"></div>
                 )}
                 
-                {/* Horizontal separator line at bottom of each product */}
+                {/* Horizontal separator line at bottom */}
                 <div className="absolute bottom-0 left-0 w-full h-px bg-gray-200 z-10"></div>
 
                 <Link href={`/product-details?id=${product.id}`}>
                   <div className="bg-white p-4 hover:bg-gray-50 transition-colors duration-200 relative">
-                    {/* Discount Badge */}
-                    {hasDiscount && (
-                      <div className="absolute top-2 left-2 z-20">
-                        <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-                          {toPersianNumber(discountPercentage)}%
-                        </div>
-                      </div>
-                    )}
-
                     {/* Product Image */}
                     <div className="relative w-full bg-gray-50 rounded-lg mb-3">
                       {product.image_urls && product.image_urls.length > 0 ? (
@@ -317,7 +313,13 @@ export default function CategoryPage() {
         </div>
       )}
 
-
+      {products.length === 0 && (
+        <div className="text-center py-16">
+          <p className="text-lg text-muted-foreground">
+            Bu kategoride henüz ürün bulunmuyor
+          </p>
+        </div>
+      )}
     </div>
   );
 } 
