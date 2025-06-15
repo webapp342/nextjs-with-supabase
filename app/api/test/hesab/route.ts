@@ -3,70 +3,109 @@ import { testHesabConnection, createHesabPayment } from '@/lib/hesab-payment';
 
 export async function GET() {
   try {
-    console.log('Testing Hesab.com API connectivity...');
+    console.log('=== Hesab.com API Test Started ===');
     
+    // Test 1: Check environment variables
+    const apiKey = process.env['HESAB_API_KEY'];
+    console.log('API Key configured:', !!apiKey);
+    console.log('API Key preview:', apiKey ? `${apiKey.substring(0, 10)}...` : 'Not found');
+    
+    // Test 2: Test API connectivity
+    console.log('\n=== Testing API Connectivity ===');
     const connectionTest = await testHesabConnection();
+    console.log('Connection test result:', connectionTest);
     
+    // Test 3: Try creating a test payment (if connection works)
+    let paymentTest = null;
+    if (connectionTest.success) {
+      console.log('\n=== Testing Payment Creation ===');
+      try {
+        paymentTest = await createHesabPayment({
+          items: [
+            {
+              id: 'test-item-1',
+              name: 'Test Product',
+              price: 100,
+              quantity: 1
+            }
+          ],
+          email: 'test@example.com'
+        });
+        console.log('Payment test result:', paymentTest);
+      } catch (error) {
+        console.error('Payment test failed:', error);
+        paymentTest = {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    }
+    
+    // Return comprehensive test results
     return NextResponse.json({
       success: true,
-      connection: connectionTest,
-      api_key_configured: !!process.env['HESAB_API_KEY'],
-      api_key_preview: process.env['HESAB_API_KEY']?.substring(0, 10) + '...',
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('Hesab API test error:', error);
-    return NextResponse.json(
-      { 
-        error: error instanceof Error ? error.message : 'Test failed',
-        api_key_configured: !!process.env['HESAB_API_KEY']
+      timestamp: new Date().toISOString(),
+      environment: {
+        api_key_configured: !!apiKey,
+        api_key_preview: apiKey ? `${apiKey.substring(0, 10)}...` : null,
+        site_url: process.env['NEXT_PUBLIC_SITE_URL'],
+        node_env: process.env['NODE_ENV']
       },
-      { status: 500 }
-    );
+      connectivity_test: connectionTest,
+      payment_test: paymentTest,
+      message: 'Hesab.com API test completed'
+    });
+    
+  } catch (error) {
+    console.error('Hesab test error:', error);
+    
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    }, { status: 500 });
   }
 }
 
+// POST method for testing with custom parameters
 export async function POST(request: NextRequest) {
   try {
-    console.log('Testing Hesab.com payment creation...');
-    
     const body = await request.json();
-    const { test_amount = 100 } = body;
-
-    // Test payment creation with minimal data
-    const testPaymentData = {
-      amount: test_amount,
-      currency: 'AFN',
-      order_id: `TEST-${Date.now()}`,
-      description: 'Test payment from NextJS app',
-      customer_email: 'test@example.com',
-      customer_phone: '+93700000000',
-      customer_name: 'Test Customer',
-      return_url: 'https://nextjs-with-supabase-liart-mu.vercel.app/payment/success',
-      cancel_url: 'https://nextjs-with-supabase-liart-mu.vercel.app/payment/cancel',
-      webhook_url: 'https://nextjs-with-supabase-liart-mu.vercel.app/api/payment/hesab/webhook/success'
-    };
-
-    console.log('Creating test payment with data:', testPaymentData);
-
-    const result = await createHesabPayment(testPaymentData);
-
+    console.log('Custom Hesab test with parameters:', body);
+    
+    // Convert body parameters to new format
+    const items = body.items || [
+      {
+        id: body.item_id || 'test-item-1',
+        name: body.item_name || body.description || 'Custom test product',
+        price: body.amount || 100,
+        quantity: 1
+      }
+    ];
+    
+    const testPayment = await createHesabPayment({
+      items,
+      email: body.customer_email || body.email || 'test@example.com'
+    });
+    
     return NextResponse.json({
       success: true,
-      test_payment: result,
-      request_data: testPaymentData,
+      test_parameters: body,
+      converted_request: {
+        items,
+        email: body.customer_email || body.email || 'test@example.com'
+      },
+      payment_result: testPayment,
       timestamp: new Date().toISOString()
     });
-
+    
   } catch (error) {
-    console.error('Hesab payment test error:', error);
-    return NextResponse.json(
-      { 
-        error: error instanceof Error ? error.message : 'Payment test failed',
-        timestamp: new Date().toISOString()
-      },
-      { status: 500 }
-    );
+    console.error('Custom Hesab test error:', error);
+    
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    }, { status: 500 });
   }
 } 

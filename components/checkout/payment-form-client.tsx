@@ -54,36 +54,93 @@ export function PaymentFormClient({ cart }: PaymentFormClientProps) {
 
     setLoading(true);
     try {
+      // Prepare items for Hesab API
+      const items = cart.cart_items.map(item => ({
+        name: item.product?.name || 'محصول',
+        price: item.price,
+        quantity: item.quantity,
+        product_id: item.product?.id
+      }));
+
+      // Get user email from auth
+      const { data: { user } } = await fetch('/api/auth/user').then(res => res.json()).catch(() => ({ data: { user: null } }));
+      
+      const paymentData = {
+        items,
+        shipping_info: {
+          full_name: selectedAddress.full_name,
+          phone_number: selectedAddress.phone_number,
+          address: `${selectedAddress.address_line_1}${selectedAddress.address_line_2 ? ', ' + selectedAddress.address_line_2 : ''}`,
+          city: selectedAddress.city,
+          state: selectedAddress.state,
+          zip_code: selectedAddress.zip_code
+        },
+        customer_email: user?.email || 'customer@example.com',
+        total_amount: cart.total_amount
+      };
+
+      console.log('Creating Hesab payment with data:', paymentData);
+
       // Create Hesab payment
       const response = await fetch('/api/payment/hesab/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          shipping_address: {
-            full_name: selectedAddress.full_name,
-            phone_number: selectedAddress.phone_number,
-            address: `${selectedAddress.address_line_1}${selectedAddress.address_line_2 ? ', ' + selectedAddress.address_line_2 : ''}`,
-            city: selectedAddress.city,
-            state: selectedAddress.state,
-            zip_code: selectedAddress.zip_code
-          },
-          customer_notes: 'پرداخت از طریق درگاه Hesab.com'
-        }),
+        body: JSON.stringify(paymentData),
       });
 
       const result = await response.json();
+      console.log('Payment creation result:', result);
 
       if (!response.ok) {
         throw new Error(result.error || 'ایجاد پرداخت ناموفق بود');
       }
 
-      // Clear session storage
-      sessionStorage.removeItem('selectedAddressId');
-      
-      // Redirect to Hesab payment page
-      window.location.href = result.payment_url;
+      if (result.success && result.payment_url) {
+        // Store temp order ID for later reference
+        if (result.temp_order_id) {
+          sessionStorage.setItem('hesab_temp_order_id', result.temp_order_id);
+        }
+
+        // Clear address selection
+        sessionStorage.removeItem('selectedAddressId');
+
+        // Add event listener for payment success before redirecting
+        const handlePaymentSuccess = (event: MessageEvent) => {
+          console.log('Payment success event received:', event);
+          
+          // Check if event is from Hesab.com
+          if (event.origin !== 'https://api.hesab.com' && event.origin !== 'https://hesab.com') {
+            console.log('Ignoring event from unknown origin:', event.origin);
+            return;
+          }
+
+          if (event.data && event.data.type === 'paymentSuccess') {
+            console.log('Payment successful, processing...', event.data);
+            
+            // Remove event listener
+            window.removeEventListener('message', handlePaymentSuccess);
+            
+            // Redirect to success page
+            const tempOrderId = sessionStorage.getItem('hesab_temp_order_id');
+            const successUrl = `/payment/success?temp_order_id=${tempOrderId}&transaction_id=${event.data.data?.transaction_id || ''}`;
+            
+            console.log('Redirecting to success page:', successUrl);
+            window.location.href = successUrl;
+          }
+        };
+
+        // Listen for payment success events
+        window.addEventListener('message', handlePaymentSuccess);
+        
+        console.log('Redirecting to Hesab payment page:', result.payment_url);
+        
+        // Redirect to Hesab payment page
+        window.location.href = result.payment_url;
+      } else {
+        throw new Error(result.error || 'Payment URL not received');
+      }
 
     } catch (error) {
       console.error('Failed to create payment:', error);

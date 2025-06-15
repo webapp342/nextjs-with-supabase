@@ -2,168 +2,206 @@
 // API Documentation: https://developers.hesab.com/dashboard/developer/docs
 
 const HESAB_API_KEY = process.env['HESAB_API_KEY'] || 'ZTNlMWUyNmEtNGFmMi00ZGY2LWFlYWMtY2QyY2MzOTVjMTQ3X19hY2EzN2VkMDgzNzE3NDhkN2RlMg==';
-const HESAB_BASE_URL = 'https://api.hesab.com';
+
+// Correct API endpoint from documentation
+const HESAB_API_ENDPOINT = 'https://api.hesab.com/api/v1/payment/create-session';
+
+export interface HesabPaymentItem {
+  id: string; // Required by Hesab API
+  name: string;
+  price: number;
+  quantity: number;
+}
 
 export interface HesabPaymentRequest {
-  amount: number; // Amount in AFN (Afghani)
-  currency: string; // 'AFN'
-  order_id: string; // Your internal order ID
-  description: string;
-  customer_email?: string;
-  customer_phone?: string;
-  customer_name?: string;
-  return_url: string; // Success redirect URL
-  cancel_url: string; // Cancel redirect URL
-  webhook_url: string; // Webhook endpoint for payment notifications
+  items: HesabPaymentItem[];
+  email: string;
 }
 
 export interface HesabPaymentResponse {
   success: boolean;
-  payment_id: string;
-  payment_url: string; // URL to redirect user for payment
-  status: string;
+  payment_url?: string;
+  session_id?: string;
   message?: string;
+  error?: string;
 }
 
 export interface HesabWebhookPayload {
-  payment_id: string;
-  order_id: string;
-  status: 'completed' | 'failed' | 'pending' | 'cancelled';
-  amount: number;
-  currency: string;
-  transaction_id?: string;
-  timestamp: string;
-  signature: string; // For webhook verification
+  type: 'paymentSuccess';
+  data: {
+    success: boolean;
+    message: string;
+    transaction_id: string;
+    [key: string]: any;
+  };
 }
 
-// Create payment session
+// Create payment session using official API structure
 export async function createHesabPayment(paymentData: HesabPaymentRequest): Promise<HesabPaymentResponse> {
   try {
-    console.log('Creating Hesab payment with data:', {
-      ...paymentData,
-      webhook_url: paymentData.webhook_url
-    });
+    console.log('Creating Hesab payment session with official API structure');
+    console.log('Endpoint:', HESAB_API_ENDPOINT);
+    console.log('Payment data:', paymentData);
 
-    // Hesab.com API structure based on documentation
-    const requestBody = {
-      amount: paymentData.amount,
-      currency: paymentData.currency,
-      order_reference: paymentData.order_id,
-      description: paymentData.description,
-      customer: {
-        email: paymentData.customer_email || '',
-        phone: paymentData.customer_phone || '',
-        name: paymentData.customer_name || ''
-      },
-      redirect_urls: {
-        success: paymentData.return_url,
-        cancel: paymentData.cancel_url
-      },
-      webhook_url: paymentData.webhook_url
+    const headers = {
+      'Authorization': `API-KEY ${HESAB_API_KEY}`,
+      'accept': 'application/json',
+      'Content-Type': 'application/json'
     };
 
-    console.log('Hesab API Request:', {
-      url: `${HESAB_BASE_URL}/v1/payments`,
-      headers: {
-        'Authorization': `Bearer ${HESAB_API_KEY.substring(0, 10)}...`,
-        'Content-Type': 'application/json'
-      },
-      body: requestBody
-    });
+    const payload = {
+      items: paymentData.items,
+      email: paymentData.email
+    };
 
-    const response = await fetch(`${HESAB_BASE_URL}/v1/payments`, {
+    console.log('Request headers:', {
+      'Authorization': `API-KEY ${HESAB_API_KEY.substring(0, 10)}...`,
+      'accept': 'application/json',
+      'Content-Type': 'application/json'
+    });
+    console.log('Request payload:', payload);
+
+    const response = await fetch(HESAB_API_ENDPOINT, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${HESAB_API_KEY}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'User-Agent': 'NextJS-Ecommerce/1.0'
-      },
-      body: JSON.stringify(requestBody)
+      headers,
+      body: JSON.stringify(payload)
     });
 
-    console.log('Hesab API Response Status:', response.status);
-    console.log('Hesab API Response Headers:', Object.fromEntries(response.headers.entries()));
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
     const responseText = await response.text();
-    console.log('Hesab API Raw Response:', responseText);
+    console.log('Raw response:', responseText);
 
     let result;
     try {
       result = JSON.parse(responseText);
     } catch (parseError) {
-      console.error('Failed to parse Hesab API response as JSON:', parseError);
-      console.error('Raw response:', responseText);
+      console.error('Failed to parse JSON response:', parseError);
       
-      // If response is HTML, it might be an error page
       if (responseText.includes('<!DOCTYPE') || responseText.includes('<html>')) {
-        throw new Error('Hesab API returned HTML instead of JSON. This usually indicates an authentication or endpoint error.');
+        return {
+          success: false,
+          error: 'API returned HTML instead of JSON - likely authentication or endpoint error',
+          message: responseText.substring(0, 200)
+        };
       }
       
-      throw new Error(`Invalid JSON response from Hesab API: ${responseText.substring(0, 100)}...`);
+      return {
+        success: false,
+        error: 'Invalid JSON response',
+        message: responseText.substring(0, 200)
+      };
     }
 
-    if (!response.ok) {
-      console.error('Hesab API Error Response:', result);
-      throw new Error(result.message || result.error || `HTTP ${response.status}: ${response.statusText}`);
+    if (response.status === 200) {
+      console.log('Payment session created successfully:', result);
+      return {
+        success: true,
+        payment_url: result.payment_url || result.checkout_url || result.url,
+        session_id: result.session_id || result.id,
+        message: result.message || 'Payment session created successfully'
+      };
+    } else {
+      console.error('API Error Response:', result);
+      return {
+        success: false,
+        error: result.error || `HTTP Error: ${response.status}`,
+        message: result.message || response.statusText
+      };
     }
-
-    console.log('Hesab API Success Response:', result);
-
-    return {
-      success: true,
-      payment_id: result.payment_id || result.id,
-      payment_url: result.payment_url || result.checkout_url,
-      status: result.status || 'pending',
-      message: result.message
-    };
 
   } catch (error) {
     console.error('Hesab payment creation error:', error);
     return {
       success: false,
-      payment_id: '',
-      payment_url: '',
-      status: 'failed',
-      message: error instanceof Error ? error.message : 'Payment creation failed'
+      error: 'Request Exception',
+      message: error instanceof Error ? error.message : 'Unknown error occurred'
     };
   }
 }
 
-// Verify payment status
-export async function verifyHesabPayment(paymentId: string) {
+// Handle paymentSuccess event from frontend
+export function handlePaymentSuccessEvent(eventData: any) {
+  console.log('Payment success event received:', eventData);
+  
+  if (eventData.type === 'paymentSuccess' && eventData.data) {
+    return {
+      success: eventData.data.success,
+      transaction_id: eventData.data.transaction_id,
+      message: eventData.data.message
+    };
+  }
+  
+  return null;
+}
+
+// Test API connectivity with correct endpoint
+export async function testHesabConnection(): Promise<{ success: boolean; message: string; endpoint?: string }> {
   try {
-    const response = await fetch(`${HESAB_BASE_URL}/v1/payments/${paymentId}`, {
-      method: 'GET',
+    console.log(`Testing Hesab API endpoint: ${HESAB_API_ENDPOINT}`);
+    
+    // Test with minimal payload to check connectivity
+    const testPayload = {
+      items: [{ name: 'Test Item', price: 100, quantity: 1 }],
+      email: 'test@example.com'
+    };
+
+    const response = await fetch(HESAB_API_ENDPOINT, {
+      method: 'POST',
       headers: {
-        'Authorization': `Bearer ${HESAB_API_KEY}`,
-        'Accept': 'application/json'
-      }
+        'Authorization': `API-KEY ${HESAB_API_KEY}`,
+        'accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(testPayload)
     });
 
-    const result = await response.json();
+    console.log(`API responded with status: ${response.status}`);
+    
+    const responseText = await response.text();
+    console.log(`API response preview:`, responseText.substring(0, 200));
 
-    if (!response.ok) {
-      throw new Error(result.message || 'Payment verification failed');
+    if (response.status === 200) {
+      return {
+        success: true,
+        message: `Successfully connected to Hesab API`,
+        endpoint: HESAB_API_ENDPOINT
+      };
+    } else if (response.status === 401 || response.status === 403) {
+      return {
+        success: false,
+        message: `Authentication failed - please check your API key`,
+        endpoint: HESAB_API_ENDPOINT
+      };
+    } else {
+      return {
+        success: false,
+        message: `API returned status ${response.status}: ${responseText.substring(0, 100)}`,
+        endpoint: HESAB_API_ENDPOINT
+      };
     }
 
-    return result;
-
   } catch (error) {
-    console.error('Hesab payment verification error:', error);
-    throw error;
+    console.error('Connection test failed:', error);
+    return {
+      success: false,
+      message: `Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
   }
 }
 
-// Verify webhook signature (for security)
-export function verifyHesabWebhook(_payload: string, _signature: string): boolean {
-  // Hesab.com doesn't provide webhook secrets in some cases
-  // For now, we'll skip signature verification
-  console.log('Webhook signature verification skipped - no secret provided by Hesab.com');
-  return true;
+// Convert our order data to Hesab items format
+export function convertOrderToHesabItems(orderItems: any[]): HesabPaymentItem[] {
+  return orderItems.map((item, index) => ({
+    id: item.product_id || item.id || `item-${index + 1}`, // Use product ID or generate one
+    name: item.name || item.title || 'Product',
+    price: Math.round(item.price * (item.quantity || 1)), // Total price for this item
+    quantity: 1 // Hesab expects quantity 1 with total price
+  }));
 }
 
-// Generate order reference for Hesab
+// Generate order reference for tracking
 export function generateHesabOrderRef(orderId: string): string {
   return `ORDER-${orderId}-${Date.now()}`;
 }
@@ -171,56 +209,23 @@ export function generateHesabOrderRef(orderId: string): string {
 // Parse order ID from Hesab order reference
 export function parseHesabOrderRef(orderRef: string): string | null {
   try {
-    // Format: ORDER-{orderId}-{timestamp}
+    // Format: ORDER-{orderId}-{timestamp} or TEMP-{timestamp}-{random}
     const parts = orderRef.split('-');
-    if (parts.length >= 3 && parts[0] === 'ORDER') {
-      return parts[1] || null; // Return the order ID part
+    if (parts.length >= 3) {
+      if (parts[0] === 'ORDER') {
+        return parts[1] || null; // Return the order ID part
+      } else if (parts[0] === 'TEMP') {
+        return orderRef; // Return the full temp order reference
+      }
     }
-    return null;
+    return orderRef; // Return as-is if format is unknown
   } catch (error) {
     console.error('Failed to parse order reference:', error);
     return null;
   }
 }
 
-// Alternative API endpoints to try if main one fails
+// Alternative endpoints (keeping for fallback, but main one should work)
 export const HESAB_ALTERNATIVE_ENDPOINTS = [
-  'https://api.hesab.com/v1/payments',
-  'https://gateway.hesab.com/api/v1/payments',
-  'https://pay.hesab.com/api/v1/payments'
-];
-
-// Test API connectivity
-export async function testHesabConnection(): Promise<{ success: boolean; message: string; endpoint?: string }> {
-  for (const endpoint of HESAB_ALTERNATIVE_ENDPOINTS) {
-    try {
-      console.log(`Testing Hesab endpoint: ${endpoint}`);
-      
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${HESAB_API_KEY}`,
-          'Accept': 'application/json'
-        }
-      });
-
-      console.log(`Endpoint ${endpoint} responded with status: ${response.status}`);
-      
-      if (response.status !== 404) {
-        return {
-          success: true,
-          message: `Connected to Hesab API at ${endpoint}`,
-          endpoint
-        };
-      }
-    } catch (error) {
-      console.log(`Endpoint ${endpoint} failed:`, error);
-      continue;
-    }
-  }
-
-  return {
-    success: false,
-    message: 'Could not connect to any Hesab API endpoint'
-  };
-} 
+  'https://api.hesab.com/api/v1/payment/create-session'
+]; 
