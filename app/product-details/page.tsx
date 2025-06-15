@@ -114,17 +114,18 @@ function ProductDetailsContent() {
         {/* Product Images */}
         <div className="space-y-4">
           <div className="relative w-full h-96 bg-gray-50 rounded-lg overflow-hidden">
-            {product.image_urls && product.image_urls.length > 0 ? (
+            {product.image_urls && product.image_urls.length > 0 && product.image_urls[0] ? (
               <Image 
                 src={product.image_urls[0]} 
                 alt={product.name} 
-                fill
-                className="object-cover" 
-                unoptimized 
+                width={600}
+                height={600}
+                className="w-full h-auto object-contain rounded-lg"
+                unoptimized
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400">
-                <span>تصویر موجود نیست</span>
+              <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+                <span className="text-gray-400">تصویر موجود نیست</span>
               </div>
             )}
           </div>

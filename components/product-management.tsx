@@ -275,16 +275,18 @@ export function ProductManagement() {
                       <td className="px-4 py-4">
                         <div className="flex items-center space-x-3">
                           <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                            {product.image_urls && product.image_urls.length > 0 ? (
-                              <Image
-                                src={product.image_urls[0]}
-                                alt={product.name}
-                                fill
-                                className="object-cover"
+                            {product.image_urls && product.image_urls.length > 0 && product.image_urls[0] ? (
+                              <Image 
+                                src={product.image_urls[0]} 
+                                alt={product.name} 
+                                width={100}
+                                height={100}
+                                className="w-full h-full object-cover rounded"
+                                unoptimized
                               />
                             ) : (
-                              <div className="flex items-center justify-center h-full">
-                                <Package className="h-6 w-6 text-gray-400" />
+                              <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
+                                <span className="text-gray-400 text-xs">تصویر موجود نیست</span>
                               </div>
                             )}
                           </div>

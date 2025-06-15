@@ -200,17 +200,15 @@ export function BannerManagement() {
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    const file = e.target.files[0];
+    const fileName = `banners/${Date.now()}-${file.name}`;
     setUploading(true);
 
     try {
-      // Upload to 'images' bucket (standard bucket name)
-      const fileName = `banners/${Date.now()}-${file.name}`;
-      const { error } = await supabase
-        .storage
-        .from('images')
+      const { error } = await supabase.storage
+        .from('banners')
         .upload(fileName, file);
 
       if (error) throw error;

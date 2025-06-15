@@ -1,922 +1,234 @@
-# Next.js + Supabase E-Ticaret Projesi - Kapsamlı Dokümantasyon
+# E-Commerce Platform - Performance Optimized
 
-Bu proje, **Next.js 15** ve **Supabase** kullanılarak geliştirilmiş modern bir e-ticaret platformudur. Kapsamlı marka, kategori ve ürün yönetimi sistemi ile Fars dili desteği sunan gelişmiş bir sistemdir.
+A high-performance e-commerce platform built with Next.js 15, TypeScript, Supabase, and Redis caching.
 
-## 🎯 Ana Özellikler
-- ✅ **Gelişmiş Kategori Sistemi**: Hierarchical kategori yapısı (3 seviye)
-- ✅ **Marka Yönetimi**: Brand-specific ürün tipleri ve filtreleme
-- ✅ **Dual-Level Breadcrumb**: Kategori + Marka navigasyonu (khanoumi.com benzeri)
-- ✅ **RTL Desteği**: Fars dili için right-to-left layout
-- ✅ **Professional Upload Form**: Gelişmiş ürün yükleme sistemi
-- ✅ **Real-time Data**: Supabase ile canlı veri senkronizasyonu
-- ✅ **Responsive Design**: Mobile-first yaklaşım
-- ✅ **Theme Support**: Dark/Light mode
+## 🚀 Performance Features
 
-## 🗄 Database Schema - Detaylı
+### 1. **Strict TypeScript Configuration**
+- Full TypeScript strict mode enabled
+- No implicit any types allowed
+- Comprehensive type definitions for database schema
+- Proper error handling with typed responses
 
-### 1. `brands` - Marka Yönetimi
-```sql
-CREATE TABLE brands (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name varchar NOT NULL UNIQUE,           -- "NIVEA", "اینترافارم"
-  slug varchar NOT NULL UNIQUE,           -- "nivea", "intrapharm"
-  description text,                       -- Marka açıklaması
-  logo_url text,                         -- Marka logosu URL
-  website_url text,                      -- Marka web sitesi
-  is_active boolean DEFAULT true,        -- Aktif/pasif durumu
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
+### 2. **Advanced Caching System**
+- **Redis Integration**: Configurable Redis caching with hierarchical key structure
+- **Smart TTL Management**: Different cache durations for different data types
+- **Tag-based Invalidation**: Precise cache clearing with dependency tracking
+- **Cache Hit/Miss Logging**: Color-coded logging for monitoring cache performance
+
+### 3. **Image Optimization**
+- **Multi-format Support**: WebP primary, JPEG fallback for compatibility
+- **Responsive Images**: 5 size variants (thumbnail to original)
+- **Lazy Loading**: Intersection Observer-based lazy loading
+- **Cache Headers**: 1-year cache headers for optimized delivery
+- **Sharp Processing**: Server-side image optimization
+
+### 4. **Database Optimization**
+- **Supabase Integration**: Typed database client with logging
+- **Query Optimization**: Parallel queries to minimize read operations
+- **Connection Pooling**: Efficient database connection management
+- **Read Monitoring**: Track and log all database operations
+
+### 5. **Comprehensive Logging System**
+- **Color-coded Console Logs**: Different colors for cache hits/misses, errors, etc.
+- **Performance Tracking**: Monitor load times and cache efficiency
+- **Browser DevTools Integration**: Detailed logging visible in developer tools
+- **Startup Diagnostics**: Application configuration and capability detection
+
+## 📊 Performance Metrics
+
+### Cache Performance
+- **Cache Hit Rate**: Track percentage of cache hits vs misses
+- **Response Time**: Monitor API response times
+- **Memory Usage**: Redis memory usage tracking
+
+### Image Optimization
+- **Compression Ratio**: Automatic compression reporting
+- **Format Detection**: Browser capability detection for optimal format
+- **Load Time Monitoring**: Track image load performance
+
+### Database Efficiency
+- **Read Count Tracking**: Monitor Supabase read operations
+- **Query Performance**: Log slow queries and optimization opportunities
+
+## 🛠️ Technical Stack
+
+- **Frontend**: Next.js 15 (App Router), React 19, TypeScript
+- **Backend**: Supabase (PostgreSQL, Auth, Storage)
+- **Caching**: Redis (Upstash compatible)
+- **Image Processing**: Sharp
+- **Styling**: Tailwind CSS
+- **Code Quality**: ESLint, Prettier, TypeScript strict mode
+
+## 📁 Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router pages
+├── components/            # React components
+│   ├── OptimizedImage.tsx # Advanced image component
+│   └── StartupLogger.tsx  # Application startup logging
+├── lib/                   # Core utilities
+│   ├── redis.ts          # Redis connection and utilities
+│   ├── image-processor.ts # Image optimization pipeline
+│   └── supabase/         # Supabase client configuration
+├── types/                # TypeScript type definitions
+│   ├── database.ts       # Database schema types
+│   └── index.ts         # Type exports
+├── utils/                # Utility functions
+│   ├── cache.ts         # Caching utilities
+│   └── logger.ts        # Logging system
+└── schema.sql           # Database schema
 ```
 
-### 2. `categories_new` - Hierarchical Kategori Sistemi
-```sql
-CREATE TABLE categories_new (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name varchar NOT NULL,                 -- "مکمل غذایی و ورزشی"
-  slug varchar NOT NULL UNIQUE,          -- "supplements-sports"
-  description text,                      -- Kategori açıklaması
-  icon varchar,                         -- İkon ismi
-  parent_id uuid REFERENCES categories_new(id), -- Parent kategori
-  level integer NOT NULL DEFAULT 0,     -- Kategori seviyesi (1,2,3)
-  sort_order integer DEFAULT 0,         -- Sıralama
-  is_active boolean DEFAULT true,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
+## 🔧 Configuration
+
+### Environment Variables
+
+```env
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# Redis Configuration (Optional - falls back to memory cache)
+REDIS_URL=your-redis-url
+
+# Development
+NODE_ENV=development
 ```
 
-**Kategori Hiyerarşi Örneği:**
-```
-مکمل غذایی و ورزشی (Level 1)
-├── ویتامین و مواد معدنی (Level 2)
-│   ├── آهن و فولیک اسید (Level 3)
-│   └── ویتامین D (Level 3)
-└── پروتئین و آمینو اسید (Level 2)
-    ├── پروتئین وی (Level 3)
-    └── آمینو اسید (Level 3)
-```
-
-### 3. `product_types` - Marka-Specific Ürün Tipleri
-```sql
-CREATE TABLE product_types (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name varchar NOT NULL,                 -- "کپسول ففول"
-  slug varchar NOT NULL,                 -- "fefol-capsules"
-  description text,                      -- Ürün tipi açıklaması
-  brand_id uuid REFERENCES brands(id),   -- Hangi markaya ait
-  category_id uuid REFERENCES categories_new(id), -- Hangi kategoride
-  is_active boolean DEFAULT true,
-  sort_order integer DEFAULT 0,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
-```
-
-### 4. `products` - Ana Ürün Tablosu
-```sql
-CREATE TABLE products (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name text NOT NULL,                    -- "کپسول ففول اینترافارم بسته 50 عددی"
-  description text,                      -- Ürün detay açıklaması
-  price numeric NOT NULL,               -- Fiyat
-  image_urls text[],                    -- Ürün görselleri array
-  brand_id uuid REFERENCES brands(id), -- Yeni marka sistemi
-  category_id uuid REFERENCES categories_new(id), -- Yeni kategori sistemi
-  product_type_id uuid REFERENCES product_types(id), -- Ürün tipi
-  user_id uuid REFERENCES auth.users(id), -- Satıcı ID
-  stock_quantity integer DEFAULT 0,    -- Stok miktarı
-  short_description text,              -- Kısa açıklama
-  compare_price numeric,               -- Karşılaştırma fiyatı
-  sku varchar,                         -- Stok kodu
-  weight numeric,                      -- Ağırlık
-  tags text[],                         -- Etiketler array
-  is_active boolean DEFAULT true,      -- Aktif/pasif
-  is_featured boolean DEFAULT false,   -- Öne çıkan ürün
-  is_bestseller boolean DEFAULT false, -- En çok satan
-  sales_count integer DEFAULT 0,      -- Satış sayısı
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
-```
-
-### 5. `users` - Kullanıcı Profil Sistemi
-```sql
-CREATE TABLE users (
-  id uuid PRIMARY KEY REFERENCES auth.users(id),
-  user_type text NOT NULL              -- "buyer" | "seller"
-);
-```
-
-## 🍞 Breadcrumb Sistemi
-
-### Dual-Level Breadcrumb Konsepti (khanoumi.com benzeri)
-
-Sistem iki seviyeli breadcrumb kullanır:
-
-#### 1. **Kategori Breadcrumb** (Üst seviye)
-```
-مکمل غذایی و ورزشی ← ویتامین و مواد معدنی ← آهن و فولیک اسید ← کپسول ففول
-```
-
-#### 2. **Marka + Ürün Tipi Breadcrumb** (Alt seviye)  
-```
-اینترافارم ← کپسول ففول
-```
-
-### `EnhancedBreadcrumb` Bileşeni Modları
+### Cache Configuration
 
 ```typescript
-interface EnhancedBreadcrumbProps {
-  showOnlyCategory?: boolean;      // Sadece kategori breadcrumb
-  showOnlyBrand?: boolean;         // Sadece marka breadcrumb
-  showBrandProductType?: boolean;  // Marka + ürün tipi özel mod
-  brandName?: string;             // Marka adı (dışarıdan)
-  brandSlug?: string;             // Marka slug
-  productTypeName?: string;       // Ürün tipi adı
-  productTypeSlug?: string;       // Ürün tipi slug
-  categoryId?: string;            // Kategori ID (dışarıdan)
-}
+// lib/redis.ts
+export const CacheTTL = {
+  SHORT: 60,        // 1 minute
+  MEDIUM: 300,      // 5 minutes
+  LONG: 1800,       // 30 minutes
+  PRODUCT: 600,     // 10 minutes
+  HOMEPAGE: 180,    // 3 minutes
+  BANNERS: 900,     // 15 minutes
+  SEARCH: 300,      // 5 minutes
+};
 ```
 
-## 🏷️ Marka ve Ürün Tipi Sistemi
+## 🚀 Getting Started
 
-### Marka-Specific Ürün Tipleri
+### Installation
 
-Her marka kendi ürün tiplerine sahip:
-
-#### Intrapharm Markası:
-- `فولیک اسید` → `/brand/intrapharm/folic-acid`
-- `کپسول ففول` → `/brand/intrapharm/fefol-capsules`
-- `کپسول ویتامین` → `/brand/intrapharm/vitamin-capsules`
-
-#### NIVEA Markası:
-- `کرم مرطوب کننده صورت` → `/brand/nivea/face-moisturizer`
-- `کرم ضد آفتاب` → `/brand/nivea/sunscreen-cream`
-- `لوسیون بدن` → `/brand/nivea/body-lotion`
-
-### SEO-Friendly URL Yapısı
-
-```
-/brand/[brand-slug]                     # Tüm marka ürünleri
-/brand/[brand-slug]/[product-type-slug] # Belirli ürün tipi
-```
-
-**Örnekler:**
-- `/brand/intrapharm` → "اینترافارم (4 کالا)"
-- `/brand/intrapharm/fefol-capsules` → "اینترافارم کپسول ففول (2 کالا)"
-- `/brand/nivea/face-moisturizer` → "نیویا کرم مرطوب کننده صورت (2 کالا)"
-
-## 🧩 Bileşenler ve İşlevleri
-
-### 📄 `ProfessionalProductUploadForm` - Gelişmiş Ürün Yükleme
-
-#### Yeni Özellikler:
-- ✅ **Marka Seçimi**: Dropdown ile marka seçimi
-- ✅ **Kategori Seçimi**: Hierarchical kategori seçimi  
-- ✅ **Ürün Tipi Seçimi**: Seçilen markaya göre dinamik filtreleme
-- ✅ **Form Validation**: Tüm alanlar için doğrulama
-- ✅ **Real-time Updates**: Seçimlere göre otomatik güncelleme
-
-### 📄 `ProductList` - Gelişmiş Ürün Listesi
-
-#### Yeni Props:
-```typescript
-interface ProductListProps {
-  filters?: {
-    brand_id?: string;
-    category_id?: string;
-    product_type_id?: string;
-  };
-  showFilters?: boolean;    // Filter UI göster/gizle
-  showHeader?: boolean;     // Header göster/gizle
-}
-```
-
-### 📄 `EnhancedBreadcrumb` - Akıllı Breadcrumb Sistemi
-
-#### RTL Layout Support:
-```tsx
-<div className="text-sm text-gray-600 text-right" dir="rtl">
-  <div className="flex items-center gap-2 justify-end">
-    {/* Breadcrumb items */}
-  </div>
-</div>
-```
-
-## 🎨 UI/UX Özellikleri
-
-### RTL (Right-to-Left) Desteği:
-- Fars rakamları: `toPersianNumber()` fonksiyonu
-- RTL layout: `dir="rtl"`, `flex-row-reverse`
-- Text alignment: `text-right`, `justify-end`
-- Arrow direction: `←` (left arrow for Persian)
-
-### Responsive Design:
-```css
-/* Mobile */
-grid-cols-2        /* 2 sütun */
-
-/* Tablet */
-md:grid-cols-3     /* 3 sütun */
-
-/* Desktop */
-lg:grid-cols-4     /* 4 sütun */
-```
-
-## 🚀 Kurulum ve Çalıştırma
-
-### 1. Environment Setup:
 ```bash
-# .env.local dosyası oluştur
-NEXT_PUBLIC_SUPABASE_URL=your-project-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-```
+# Clone the repository
+git clone <repository-url>
+cd e-commerce-platform
 
-### 2. Database Setup:
-```bash
-# SQL Editor'da çalıştır:
-# create_nivea_database_compatible.sql (örnek veri için)
-```
-
-### 3. Installation:
-```bash
+# Install dependencies
 npm install
+
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your configuration
+
+# Run database migrations
+npm run db:migrate
+
+# Start development server
 npm run dev
 ```
 
-### 4. Test URLs:
-- `http://localhost:3000` - Ana sayfa
-- `http://localhost:3000/brand/intrapharm` - Intrapharm markası
-- `http://localhost:3000/brand/intrapharm/fefol-capsules` - Fefol kapsülleri
-- `http://localhost:3000/brand/nivea/face-moisturizer` - NIVEA yüz kremleri
-- `http://localhost:3000/protected` - Ürün yükleme (seller only)
+### Development Scripts
 
-## 📁 Proje Dosya Yapısı
-
-### Kalan SQL Dosyaları:
-- ✅ `create_nivea_database_compatible.sql` - NIVEA örnek sistemi
-- ✅ `database_setup.sql` - Ana database kurulumu
-- ✅ `sample_data.sql` - Örnek veriler
-- ✅ `bestsellers_data.sql` - En çok satanlar
-- ✅ `hero_banners_data.sql` - Ana sayfa banner'ları
-
-### Temizlenen Dosyalar:
-- ❌ `test_*.sql` - Test verileri
-- ❌ `debug_*.sql` - Debug sorguları
-- ❌ `fix_*.sql` - Geçici düzeltmeler
-- ❌ `BREADCRUMB_SETUP_INSTRUCTIONS.md` - Eski talimatlar
-
-## 🔧 Sorun Giderme
-
-### Database İlişki Sorunları:
-```sql
--- Foreign key constraint hatası
--- Çözüm: İlişkili tabloları doğru sırada oluşturun:
--- 1. brands
--- 2. categories_new  
--- 3. product_types
--- 4. products
-```
-
-### RTL Layout Bozukluğu:
-```css
-/* Problem: Fars metinler yanlış yönde */
-/* Çözüm: dir="rtl" ve flex-row-reverse kullanın */
-.breadcrumb {
-  direction: rtl;
-  display: flex;
-  flex-direction: row-reverse;
-  justify-content: flex-end;
-}
-```
-
-Bu dokümantasyon projenin mevcut durumunu tamamen yansıtır ve gelecekteki geliştirmeler için referans sağlar.
-
-## 📋 İçindekiler
-- [Proje Genel Bakış](#proje-genel-bakış)
-- [Teknoloji Stack](#teknoloji-stack)
-- [Proje Yapısı](#proje-yapısı)
-- [Database Schema - Detaylı](#database-schema---detaylı)
-- [Breadcrumb Sistemi](#breadcrumb-sistemi)
-- [Marka ve Ürün Tipi Sistemi](#marka-ve-ürün-tipi-sistemi)
-- [Bileşenler ve İşlevleri](#bileşenler-ve-işlevleri)
-- [Kimlik Doğrulama Sistemi](#kimlik-doğrulama-sistemi)
-- [Yönlendirme ve Middleware](#yönlendirme-ve-middleware)
-- [UI/UX Bileşenleri](#uiux-bileşenleri)
-- [Kurulum ve Çalıştırma](#kurulum-ve-çalıştırma)
-- [Sorun Giderme](#sorun-giderme)
-
-## 🎯 Proje Genel Bakış
-
-Bu proje, **Next.js 15** ve **Supabase** kullanılarak geliştirilmiş modern bir e-ticaret platformudur. Kapsamlı marka, kategori ve ürün yönetimi sistemi ile Fars dili desteği sunan gelişmiş bir sistemdir.
-
-### Ana Özellikler:
-- ✅ **Gelişmiş Kategori Sistemi**: Hierarchical kategori yapısı (3 seviye)
-- ✅ **Marka Yönetimi**: Brand-specific ürün tipleri ve filtreleme
-- ✅ **Dual-Level Breadcrumb**: Kategori + Marka navigasyonu (khanoumi.com benzeri)
-- ✅ **RTL Desteği**: Fars dili için right-to-left layout
-- ✅ **Kullanıcı Sistemi**: Buyer/Seller rol tabanlı erişim
-- ✅ **Professional Upload Form**: Gelişmiş ürün yükleme sistemi
-- ✅ **Real-time Data**: Supabase ile canlı veri senkronizasyonu
-- ✅ **Responsive Design**: Mobile-first yaklaşım
-- ✅ **Theme Support**: Dark/Light mode
-
-## 🛠 Teknoloji Stack
-
-### Frontend
-- **Next.js 15**: React framework (App Router)
-- **React 19**: UI kütüphanesi
-- **TypeScript**: Type safety
-- **Tailwind CSS**: Styling
-- **shadcn/ui**: UI bileşenleri
-- **Lucide React**: İkonlar
-- **next-themes**: Theme yönetimi
-
-### Backend & Database
-- **Supabase**: Backend-as-a-Service
-  - PostgreSQL veritabanı
-  - Real-time subscriptions
-  - Authentication
-  - File storage
-  - Row Level Security (RLS)
-  - Views for complex queries
-
-### Development Tools
-- **ESLint**: Code linting
-- **Autoprefixer**: CSS vendor prefixes
-- **PostCSS**: CSS processing
-- **uuid**: Unique ID generation
-
-## 📁 Proje Yapısı
-
-```
-with-supabase-app/
-├── 📁 app/                          # Next.js App Router
-│   ├── 📄 layout.tsx               # Ana layout (font, theme provider)
-│   ├── 📄 page.tsx                 # Ana sayfa (ürün listesi)
-│   ├── 📄 globals.css              # Global CSS stilleri
-│   ├── 📁 auth/                    # Kimlik doğrulama sayfaları
-│   │   ├── 📁 login/               # Giriş sayfası
-│   │   ├── 📁 sign-up/             # Kayıt sayfası
-│   │   └── 📁 [diğer auth routes]/ # Auth flow sayfaları
-│   ├── 📁 protected/               # Korumalı alan (sadece satıcılar)
-│   │   ├── 📄 layout.tsx           # Protected layout
-│   │   ├── 📄 page.tsx             # Gelişmiş ürün yükleme formu
-│   │   └── 📁 delete-products/     # Ürün silme sayfası
-│   ├── 📁 product-details/         # Ürün detay sayfası (Enhanced Breadcrumb)
-│   ├── 📁 brand/                   # Marka sayfaları
-│   │   └── 📁 [slug]/              # Dinamik marka sayfası
-│   │       ├── 📄 page.tsx         # Marka ürün listesi
-│   │       └── 📁 [productType]/   # Dinamik ürün tipi sayfası
-│   │           └── 📄 page.tsx     # Marka + ürün tipi ürünleri
-│   └── 📁 category/                # Kategori sayfaları (future)
-├── 📁 components/                   # UI bileşenleri
-│   ├── 📁 ui/                      # shadcn/ui bileşenleri
-│   ├── 📄 product-list.tsx         # Gelişmiş ürün listesi (filtering)
-│   ├── 📄 professional-product-upload-form.tsx # Professional upload form
-│   ├── 📄 enhanced-breadcrumb.tsx  # Dual-level breadcrumb sistemi
-│   ├── 📄 auth-button.tsx          # Dinamik auth button
-│   └── 📄 [diğer bileşenler]       # Çeşitli UI bileşenleri
-├── 📁 lib/                         # Yardımcı kütüphaneler
-│   ├── 📄 utils.ts                 # Fars sayı formatı ve yardımcılar
-│   └── 📁 supabase/                # Supabase konfigürasyonu
-└── 📄 create_nivea_database_compatible.sql # Database setup script
-```
-
-## 🗄 Database Schema - Detaylı
-
-### 📊 Ana Tablolar
-
-#### 1. `brands` - Marka Yönetimi
-```sql
-CREATE TABLE brands (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name varchar NOT NULL UNIQUE,           -- "NIVEA", "اینترافارم"
-  slug varchar NOT NULL UNIQUE,           -- "nivea", "intrapharm"
-  description text,                       -- Marka açıklaması
-  logo_url text,                         -- Marka logosu URL
-  website_url text,                      -- Marka web sitesi
-  is_active boolean DEFAULT true,        -- Aktif/pasif durumu
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
-```
-
-#### 2. `categories_new` - Hierarchical Kategori Sistemi
-```sql
-CREATE TABLE categories_new (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name varchar NOT NULL,                 -- "مکمل غذایی و ورزشی"
-  slug varchar NOT NULL UNIQUE,          -- "supplements-sports"
-  description text,                      -- Kategori açıklaması
-  icon varchar,                         -- İkon ismi
-  parent_id uuid REFERENCES categories_new(id), -- Parent kategori
-  level integer NOT NULL DEFAULT 0,     -- Kategori seviyesi (1,2,3)
-  sort_order integer DEFAULT 0,         -- Sıralama
-  is_active boolean DEFAULT true,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
-```
-
-**Kategori Hiyerarşi Örneği:**
-```
-مکمل غذایی و ورزشی (Level 1)
-├── ویتامین و مواد معدنی (Level 2)
-│   ├── آهن و فولیک اسید (Level 3)
-│   └── ویتامین D (Level 3)
-└── پروتئین و آمینو اسید (Level 2)
-    ├── پروتئین وی (Level 3)
-    └── آمینو اسید (Level 3)
-```
-
-#### 3. `product_types` - Marka-Specific Ürün Tipleri
-```sql
-CREATE TABLE product_types (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name varchar NOT NULL,                 -- "کپسول ففول"
-  slug varchar NOT NULL,                 -- "fefol-capsules"
-  description text,                      -- Ürün tipi açıklaması
-  brand_id uuid REFERENCES brands(id),   -- Hangi markaya ait
-  category_id uuid REFERENCES categories_new(id), -- Hangi kategoride
-  is_active boolean DEFAULT true,
-  sort_order integer DEFAULT 0,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
-```
-
-#### 4. `products` - Ana Ürün Tablosu
-```sql
-CREATE TABLE products (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name text NOT NULL,                    -- "کپسول ففول اینترافارم بسته 50 عددی"
-  description text,                      -- Ürün detay açıklaması
-  price numeric NOT NULL,               -- Fiyat
-  image_urls text[],                    -- Ürün görselleri array
-  created_at timestamptz DEFAULT now(),
-  user_id uuid REFERENCES auth.users(id), -- Satıcı ID
-  category text,                        -- Legacy kategori (nullable)
-  brand text,                          -- Legacy marka (nullable)
-  main_category_id uuid,               -- Legacy (nullable)
-  sub_category_id uuid,                -- Legacy (nullable)
-  brand_id uuid REFERENCES brands(id), -- Yeni marka sistemi
-  short_description text,              -- Kısa açıklama
-  compare_price numeric,               -- Karşılaştırma fiyatı
-  sku varchar,                         -- Stok kodu
-  barcode varchar,                     -- Barkod
-  weight numeric,                      -- Ağırlık
-  length numeric,                      -- Uzunluk
-  width numeric,                       -- Genişlik
-  height numeric,                      -- Yükseklik
-  stock_quantity integer DEFAULT 0,    -- Stok miktarı
-  min_stock_level integer DEFAULT 0,   -- Minimum stok seviyesi
-  tags text[],                         -- Etiketler array
-  seo_title varchar,                   -- SEO başlığı
-  seo_description text,                -- SEO açıklaması
-  is_active boolean DEFAULT true,      -- Aktif/pasif
-  is_featured boolean DEFAULT false,   -- Öne çıkan ürün
-  is_on_sale boolean DEFAULT false,    -- İndirimde
-  updated_at timestamptz DEFAULT now(),
-  category_id uuid REFERENCES categories_new(id), -- Yeni kategori sistemi
-  is_bestseller boolean DEFAULT false, -- En çok satan
-  sales_count integer DEFAULT 0,      -- Satış sayısı
-  product_type_id uuid REFERENCES product_types(id) -- Ürün tipi
-);
-```
-
-#### 5. `users` - Kullanıcı Profil Sistemi
-```sql
-CREATE TABLE users (
-  id uuid PRIMARY KEY REFERENCES auth.users(id),
-  user_type text NOT NULL              -- "buyer" | "seller"
-);
-```
-
-### 🔍 Database Views
-
-#### `breadcrumb_data` - Breadcrumb Verilerini Optimize Eden View
-```sql
-CREATE VIEW breadcrumb_data AS
-SELECT 
-  p.id as product_id,
-  p.name as product_name,
-  b.name as brand_name,
-  b.slug as brand_slug,
-  pt.name as product_type_name,
-  pt.slug as product_type_slug,
-  c.name as category_name,
-  c.slug as category_slug,
-  c.level as category_level,
-  pc.name as parent_category_name,
-  pc.slug as parent_category_slug,
-  gc.name as grandparent_category_name,
-  gc.slug as grandparent_category_slug
-FROM products p
-LEFT JOIN brands b ON p.brand_id = b.id
-LEFT JOIN product_types pt ON p.product_type_id = pt.id
-LEFT JOIN categories_new c ON p.category_id = c.id
-LEFT JOIN categories_new pc ON c.parent_id = pc.id
-LEFT JOIN categories_new gc ON pc.parent_id = gc.id
-WHERE p.is_active = true;
-```
-
-### 📈 İlişkiler ve Constraints
-
-```sql
--- Foreign Key İlişkileri:
-products.brand_id → brands.id
-products.category_id → categories_new.id
-products.product_type_id → product_types.id
-products.user_id → auth.users.id
-product_types.brand_id → brands.id
-product_types.category_id → categories_new.id
-categories_new.parent_id → categories_new.id (self-reference)
-users.id → auth.users.id
-
--- Unique Constraints:
-brands.name (UNIQUE)
-brands.slug (UNIQUE)  
-categories_new.slug (UNIQUE)
-
--- Not Null Constraints:
-brands.name (NOT NULL)
-categories_new.name (NOT NULL)
-products.name (NOT NULL)
-products.price (NOT NULL)
-users.user_type (NOT NULL)
-```
-
-## 🍞 Breadcrumb Sistemi
-
-### Dual-Level Breadcrumb Konsepti (khanoumi.com benzeri)
-
-Sistem iki seviyeli breadcrumb kullanır:
-
-#### 1. **Kategori Breadcrumb** (Üst seviye)
-```
-مکمل غذایی و ورزشی ← ویتامین و مواد معدنی ← آهن و فولیک اسید ← کپسول ففول
-```
-
-#### 2. **Marka + Ürün Tipi Breadcrumb** (Alt seviye)  
-```
-اینترافارم ← کپسول ففول
-```
-
-### `EnhancedBreadcrumb` Bileşeni Modları
-
-```typescript
-interface EnhancedBreadcrumbProps {
-  showOnlyCategory?: boolean;      // Sadece kategori breadcrumb
-  showOnlyBrand?: boolean;         // Sadece marka breadcrumb
-  showBrandProductType?: boolean;  // Marka + ürün tipi özel mod
-  brandName?: string;             // Marka adı (dışarıdan)
-  brandSlug?: string;             // Marka slug
-  productTypeName?: string;       // Ürün tipi adı
-  productTypeSlug?: string;       // Ürün tipi slug
-  categoryId?: string;            // Kategori ID (dışarıdan)
-}
-```
-
-### Kullanım Senaryoları
-
-#### 1. **Ürün Detay Sayfası** (`/product-details?id=xxx`)
-```tsx
-<EnhancedBreadcrumb /> // Default mod - her iki breadcrumb da
-```
-**Sonuç:**
-- Üstte: Kategori hiyerarşisi
-- Altta: Marka + ürün tipi
-
-#### 2. **Marka Sayfası** (`/brand/nivea`)
-```tsx
-<EnhancedBreadcrumb showOnlyBrand={true} />
-```
-**Sonuç:** Sadece `NIVEA ← [ürün tipi]` (tıklanabilir linkler)
-
-#### 3. **Marka + Ürün Tipi Sayfası** (`/brand/nivea/face-moisturizer`)
-```tsx
-<EnhancedBreadcrumb 
-  showBrandProductType={true}
-  brandName="NIVEA"
-  brandSlug="nivea"
-  productTypeName="کرم مرطوب کننده صورت"
-  productTypeSlug="face-moisturizer"
-  categoryId="xxx-category-id"
-/>
-```
-**Sonuç:**
-- Üstte: Kategori hiyerarşisi (categoryId'den oluşur)
-- Altta: `NIVEA ← کرم مرطوب کننده صورت`
-
-### RTL Layout Desteği
-
-```css
-/* Fars dili için RTL düzeni */
-dir="rtl"
-flex-row-reverse
-justify-end
-text-right
-```
-
-**Ok yönü:** `←` (soldan sağa Fars okları)
-
-## 🏷️ Marka ve Ürün Tipi Sistemi
-
-### Marka-Specific Ürün Tipleri
-
-Her marka kendi ürün tiplerine sahip:
-
-#### Intrapharm Markası:
-- `فولیک اسید` → `/brand/intrapharm/folic-acid`
-- `کپسول ففول` → `/brand/intrapharm/fefol-capsules`
-- `کپسول ویتامین` → `/brand/intrapharm/vitamin-capsules`
-
-#### NIVEA Markası:
-- `کرم مرطوب کننده صورت` → `/brand/nivea/face-moisturizer`
-- `کرم ضد آفتاب` → `/brand/nivea/sunscreen-cream`
-- `لوسیون بدن` → `/brand/nivea/body-lotion`
-
-### SEO-Friendly URL Yapısı
-
-```
-/brand/[brand-slug]                     # Tüm marka ürünleri
-/brand/[brand-slug]/[product-type-slug] # Belirli ürün tipi
-```
-
-**Örnekler:**
-- `/brand/intrapharm` → "اینترافارم (4 کالا)"
-- `/brand/intrapharm/fefol-capsules` → "اینترافارم کپسول ففول (2 کالا)"
-- `/brand/nivea/face-moisturizer` → "نیویا کرم مرطوب کننده صورت (2 کالا)"
-
-### Marka Sayfası Özellikleri
-
-#### Simple Brand Layout (khanoumi.com benzeri):
-- Temiz, minimal tasarım
-- Sadece marka adı + ürün sayısı header
-- Filter ve sıralama kontrolleri
-- Full-width layout (`px-2`)
-- Responsive ürün grid'i
-
-## 🧩 Bileşenler ve İşlevleri
-
-### 📄 `ProfessionalProductUploadForm` - Gelişmiş Ürün Yükleme
-
-#### Yeni Özellikler:
-- ✅ **Marka Seçimi**: Dropdown ile marka seçimi
-- ✅ **Kategori Seçimi**: Hierarchical kategori seçimi  
-- ✅ **Ürün Tipi Seçimi**: Seçilen markaya göre dinamik filtreleme
-- ✅ **Form Validation**: Tüm alanlar için doğrulama
-- ✅ **Real-time Updates**: Seçimlere göre otomatik güncelleme
-
-#### Form Alanları:
-```typescript
-interface FormData {
-  name: string;                // Ürün adı
-  description: string;         // Ürün açıklaması
-  shortDescription: string;    // Kısa açıklama
-  price: number;              // Fiyat
-  comparePrice?: number;      // Karşılaştırma fiyatı
-  brandId: string;            // Seçilen marka ID
-  categoryId: string;         // Seçilen kategori ID
-  productTypeId: string;      // Seçilen ürün tipi ID
-  stockQuantity: number;      // Stok miktarı
-  sku?: string;              // Stok kodu
-  weight?: number;           // Ağırlık
-  tags: string[];            // Etiketler
-  images: File[];            // Yüklenen görseller
-}
-```
-
-#### Dynamic Filtering Logic:
-```typescript
-// Seçilen markaya göre ürün tiplerini filtrele
-const filteredProductTypes = productTypes.filter(
-  pt => pt.brand_id === selectedBrandId && 
-        pt.category_id === selectedCategoryId
-);
-```
-
-### 📄 `ProductList` - Gelişmiş Ürün Listesi
-
-#### Yeni Props:
-```typescript
-interface ProductListProps {
-  filters?: {
-    brand_id?: string;
-    category_id?: string;
-    product_type_id?: string;
-  };
-  showFilters?: boolean;    // Filter UI göster/gizle
-  showHeader?: boolean;     // Header göster/gizle
-}
-```
-
-#### Kullanım Örnekleri:
-```tsx
-// Ana sayfa - tüm ürünler
-<ProductList />
-
-// Marka sayfası - sadece marka ürünleri
-<ProductList 
-  filters={{ brand_id: "xxx" }}
-  showFilters={false}
-  showHeader={false}
-/>
-
-// Marka + ürün tipi sayfası
-<ProductList 
-  filters={{ 
-    brand_id: "xxx", 
-    product_type_id: "yyy" 
-  }}
-  showFilters={false}
-  showHeader={false}
-/>
-```
-
-### 📄 `EnhancedBreadcrumb` - Akıllı Breadcrumb Sistemi
-
-#### Automatic Data Fetching:
-- URL'den otomatik veri çekimi
-- `breadcrumb_data` view'ından optimize edilmiş sorgular
-- Category ID'den hiyerarşi oluşturma
-- Real-time güncellemeler
-
-#### RTL Layout Support:
-```tsx
-<div className="text-sm text-gray-600 text-right" dir="rtl">
-  <div className="flex items-center gap-2 justify-end">
-    {/* Breadcrumb items */}
-  </div>
-</div>
-```
-
-## 🔐 Kimlik Doğrulama Sistemi
-
-### Auth Flow:
-1. **Kayıt**: Email + şifre + user_type seçimi
-2. **Email Onayı**: Supabase otomatik email
-3. **User Profile**: `users` tablosunda `user_type` kaydı
-4. **Session Management**: Cookie-based session
-5. **Route Protection**: Middleware ile kontrol
-
-### User Types:
-- **buyer**: Ürün görüntüleme, satın alma
-- **seller**: Ürün ekleme, yönetme, satış
-
-### Protected Routes:
-- `/protected/*`: Sadece `seller` kullanıcıları
-- `/auth/*`: Sadece anonymous kullanıcılar
-- Marka sayfaları: Herkese açık
-- Admin sayfaları: Future enhancement
-
-## 🛣️ Yönlendirme ve Middleware
-
-### Route Structure:
-```
-/                           # Ana sayfa (ürün listesi)
-/auth/login                 # Giriş
-/auth/sign-up              # Kayıt
-/protected/                 # Ürün yükleme (seller only)
-/brand/[slug]              # Marka sayfası
-/brand/[slug]/[productType] # Marka + ürün tipi
-/product-details?id=xxx     # Ürün detay
-/category/[...slug]         # Kategori sayfaları (future)
-```
-
-### Middleware Logic:
-```typescript
-// User authentication kontrolü
-const user = await createClient().auth.getUser();
-
-// Route-based access control
-if (pathname.startsWith('/protected/')) {
-  // Sadece seller kullanıcıları
-  if (userType !== 'seller') {
-    return NextResponse.redirect('/auth/login');
-  }
-}
-```
-
-## 🎨 UI/UX Bileşenleri
-
-### RTL (Right-to-Left) Desteği:
-- Fars rakamları: `toPersianNumber()` fonksiyonu
-- RTL layout: `dir="rtl"`, `flex-row-reverse`
-- Text alignment: `text-right`, `justify-end`
-- Arrow direction: `←` (left arrow for Persian)
-
-### Responsive Design:
-```css
-/* Mobile */
-grid-cols-2        /* 2 sütun */
-
-/* Tablet */
-md:grid-cols-3     /* 3 sütun */
-
-/* Desktop */
-lg:grid-cols-4     /* 4 sütun */
-```
-
-### Theme Support:
-- **CSS Variables**: `globals.css`'de theme-aware renkler
-- **Theme Provider**: `next-themes` ile automatic system detection
-- **Dark/Light Toggle**: Header'da theme switcher
-
-### Typography:
-- **Font**: Geist (optimal for Persian + English)
-- **Size Scale**: Tailwind utilities
-- **Color System**: Theme-aware CSS variables
-
-## 🚀 Kurulum ve Çalıştırma
-
-### Ön Gereksinimler:
-- Node.js 18+
-- npm/yarn/pnpm
-- Supabase account
-
-### 1. Environment Setup:
 ```bash
-# .env.local dosyası oluştur
-NEXT_PUBLIC_SUPABASE_URL=your-project-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+# Development
+npm run dev              # Start development server
+npm run build           # Build for production
+npm run start           # Start production server
+
+# Code Quality
+npm run lint            # Run ESLint
+npm run lint:fix        # Fix ESLint issues
+npm run type-check      # TypeScript type checking
+npm run format          # Format code with Prettier
+npm run format:check    # Check code formatting
 ```
 
-### 2. Database Setup:
-```bash
-# SQL Editor'da çalıştır:
-# 1. create_nivea_database_compatible.sql (örnek veri için)
-# 2. Veya kendi database_setup.sql'inizi çalıştırın
+## 📈 Performance Monitoring
+
+### Console Logging
+
+The application provides comprehensive logging visible in the browser console:
+
+- 🟢 **Cache Hits**: Green logs for successful cache retrievals
+- 🟡 **Cache Misses**: Yellow logs for cache misses
+- 🔵 **Supabase Reads**: Blue logs for database read operations
+- 🟣 **Supabase Writes**: Purple logs for database write operations
+- 🟢 **Image Optimization**: Green logs for successful image processing
+- 🔴 **Errors**: Red logs for errors and failures
+
+### Performance Stats
+
+Access performance statistics in development:
+
+```javascript
+// In browser console
+window.__ecommerce_logger.getCacheStats()
+window.__ecommerce_logger.getSupabaseStats()
+window.__ecommerce_logger.exportLogs()
 ```
 
-### 3. Installation:
-```bash
-npm install
-npm run dev
-```
+## 🎯 Best Practices
 
-### 4. Test URLs:
-- `http://localhost:3000` - Ana sayfa
-- `http://localhost:3000/brand/intrapharm` - Intrapharm markası
-- `http://localhost:3000/brand/intrapharm/fefol-capsules` - Fefol kapsülleri
-- `http://localhost:3000/brand/nivea/face-moisturizer` - NIVEA yüz kremleri
-- `http://localhost:3000/protected` - Ürün yükleme (seller only)
+### Caching Strategy
+- **Homepage**: 3-minute TTL for dynamic content
+- **Products**: 10-minute TTL with tag-based invalidation
+- **Categories**: 30-minute TTL (less frequent changes)
+- **Search Results**: 5-minute TTL for query results
 
-## 🔧 Sorun Giderme
+### Image Optimization
+- Always provide alt text for accessibility
+- Use WebP format for modern browsers
+- Implement lazy loading for below-the-fold images
+- Serve appropriate image sizes for different viewports
 
-### Database İlişki Sorunları:
-```sql
--- Foreign key constraint hatası
--- Çözüm: İlişkili tabloları doğru sırada oluşturun:
--- 1. brands
--- 2. categories_new  
--- 3. product_types
--- 4. products
-```
+### Database Queries
+- Use typed queries with proper error handling
+- Implement connection pooling for high-traffic scenarios
+- Monitor query performance with logging
+- Use indexed columns for filtering and sorting
 
-### Breadcrumb Görünmeme:
-```typescript
-// Problem: breadcrumb_data view'ı bulunamıyor
-// Çözüm: View'ı manuel oluşturun veya products'a join'li sorgu yazın
-```
+## 🔒 Security
 
-### RTL Layout Bozukluğu:
-```css
-/* Problem: Fars metinler yanlış yönde */
-/* Çözüm: dir="rtl" ve flex-row-reverse kullanın */
-.breadcrumb {
-  direction: rtl;
-  display: flex;
-  flex-direction: row-reverse;
-  justify-content: flex-end;
-}
-```
+- **Environment Variables**: Never commit sensitive keys
+- **Type Safety**: Strict TypeScript prevents runtime errors
+- **Input Validation**: Validate all user inputs
+- **CORS Configuration**: Properly configured for production
 
-### Marka Filtreleme Çalışmıyor:
-```typescript
-// Problem: ProductList'te brand filter çalışmıyor
-// Çözüm: filters prop'unu doğru geçtiğinizden emin olun
-<ProductList filters={{ brand_id: brandId }} />
-```
+## 📱 Browser Compatibility
 
-## 📊 Database Maintenance
+- **Modern Browsers**: Full feature support
+- **WebP Fallback**: Automatic JPEG fallback for older browsers
+- **Progressive Enhancement**: Graceful degradation for limited features
+- **Responsive Design**: Mobile-first approach
 
-### Temizlik Scripti:
-Gereksiz SQL dosyalarını temizlemek için bu dosyalar silinebilir:
-- `test_*.sql` - Test verileri
-- `debug_*.sql` - Debug sorguları
-- `fix_*.sql` - Geçici düzeltmeler
-- `update_*.sql` - Eski güncellemeler
+## 🤝 Contributing
 
-### Backup Strategy:
-```sql
--- Kritik tabloları yedekle:
-pg_dump --table=brands > brands_backup.sql
-pg_dump --table=categories_new > categories_backup.sql
-pg_dump --table=product_types > product_types_backup.sql
-pg_dump --table=products > products_backup.sql
-```
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
-Bu dokümantasyon projenin mevcut durumunu tamamen yansıtır ve gelecekteki geliştirmeler için referans sağlar. 
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🔗 Links
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Supabase Documentation](https://supabase.com/docs)
+- [Redis Documentation](https://redis.io/docs)
+- [TypeScript Documentation](https://www.typescriptlang.org/docs)
+
+---
+
+Built with ❤️ for optimal performance and developer experience. 

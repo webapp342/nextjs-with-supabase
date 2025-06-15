@@ -25,7 +25,7 @@ interface ProductType {
 
 export default function BrandPage() {
   const params = useParams();
-  const brandSlug = params.slug as string;
+  const brandSlug = params['slug'] as string;
   const [brand, setBrand] = useState<Brand | null>(null);
   const [, setProductTypes] = useState<ProductType[]>([]);
   const [loading, setLoading] = useState(true);

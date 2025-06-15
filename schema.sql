@@ -41,13 +41,13 @@ CREATE TABLE public.categories_new (
   slug character varying NOT NULL UNIQUE,
   description text,
   icon character varying,
-  image_url text,
   parent_id uuid,
   level integer NOT NULL DEFAULT 0,
   sort_order integer DEFAULT 0,
   is_active boolean DEFAULT true,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
+  image_url text,
   CONSTRAINT categories_new_pkey PRIMARY KEY (id),
   CONSTRAINT categories_new_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.categories_new(id)
 );
@@ -68,9 +68,9 @@ CREATE TABLE public.category_banners (
   link_url text,
   link_type text CHECK (link_type = ANY (ARRAY['category'::text, 'brand'::text, 'url'::text, 'tag'::text])),
   CONSTRAINT category_banners_pkey PRIMARY KEY (id),
-  CONSTRAINT category_banners_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories_new(id),
   CONSTRAINT category_banners_link_category_id_fkey FOREIGN KEY (link_category_id) REFERENCES public.categories_new(id),
-  CONSTRAINT category_banners_link_brand_id_fkey FOREIGN KEY (link_brand_id) REFERENCES public.brands(id)
+  CONSTRAINT category_banners_link_brand_id_fkey FOREIGN KEY (link_brand_id) REFERENCES public.brands(id),
+  CONSTRAINT category_banners_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories_new(id)
 );
 CREATE TABLE public.category_image_buttons (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -118,11 +118,11 @@ CREATE TABLE public.category_page_sections (
   created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
   updated_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
   CONSTRAINT category_page_sections_pkey PRIMARY KEY (id),
+  CONSTRAINT category_page_sections_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories_new(id),
+  CONSTRAINT category_page_sections_link_category_id_fkey FOREIGN KEY (link_category_id) REFERENCES public.categories_new(id),
   CONSTRAINT category_page_sections_link_brand_id_fkey FOREIGN KEY (link_brand_id) REFERENCES public.brands(id),
   CONSTRAINT category_page_sections_filter_category_id_fkey FOREIGN KEY (filter_category_id) REFERENCES public.categories_new(id),
-  CONSTRAINT category_page_sections_filter_brand_id_fkey FOREIGN KEY (filter_brand_id) REFERENCES public.brands(id),
-  CONSTRAINT category_page_sections_link_category_id_fkey FOREIGN KEY (link_category_id) REFERENCES public.categories_new(id),
-  CONSTRAINT category_page_sections_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories_new(id)
+  CONSTRAINT category_page_sections_filter_brand_id_fkey FOREIGN KEY (filter_brand_id) REFERENCES public.brands(id)
 );
 CREATE TABLE public.category_section_products (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -131,8 +131,8 @@ CREATE TABLE public.category_section_products (
   sort_order integer DEFAULT 0,
   created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
   CONSTRAINT category_section_products_pkey PRIMARY KEY (id),
-  CONSTRAINT category_section_products_section_id_fkey FOREIGN KEY (section_id) REFERENCES public.category_page_sections(id),
-  CONSTRAINT category_section_products_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id)
+  CONSTRAINT category_section_products_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id),
+  CONSTRAINT category_section_products_section_id_fkey FOREIGN KEY (section_id) REFERENCES public.category_page_sections(id)
 );
 CREATE TABLE public.grid_banners (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -173,8 +173,8 @@ CREATE TABLE public.hero_banners (
   link_category_id uuid,
   link_brand_id uuid,
   CONSTRAINT hero_banners_pkey PRIMARY KEY (id),
-  CONSTRAINT hero_banners_link_brand_id_fkey FOREIGN KEY (link_brand_id) REFERENCES public.brands(id),
-  CONSTRAINT hero_banners_link_category_id_fkey FOREIGN KEY (link_category_id) REFERENCES public.categories_new(id)
+  CONSTRAINT hero_banners_link_category_id_fkey FOREIGN KEY (link_category_id) REFERENCES public.categories_new(id),
+  CONSTRAINT hero_banners_link_brand_id_fkey FOREIGN KEY (link_brand_id) REFERENCES public.brands(id)
 );
 CREATE TABLE public.positioned_banners (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -211,9 +211,9 @@ CREATE TABLE public.product_attributes (
   custom_value text,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT product_attributes_pkey PRIMARY KEY (id),
-  CONSTRAINT product_attributes_attribute_value_id_fkey FOREIGN KEY (attribute_value_id) REFERENCES public.attribute_values(id),
   CONSTRAINT product_attributes_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id),
-  CONSTRAINT product_attributes_attribute_id_fkey FOREIGN KEY (attribute_id) REFERENCES public.attributes(id)
+  CONSTRAINT product_attributes_attribute_id_fkey FOREIGN KEY (attribute_id) REFERENCES public.attributes(id),
+  CONSTRAINT product_attributes_attribute_value_id_fkey FOREIGN KEY (attribute_value_id) REFERENCES public.attribute_values(id)
 );
 CREATE TABLE public.product_types (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -267,9 +267,9 @@ CREATE TABLE public.products (
   is_recommended boolean DEFAULT false,
   is_new boolean DEFAULT false,
   CONSTRAINT products_pkey PRIMARY KEY (id),
-  CONSTRAINT products_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories_new(id),
+  CONSTRAINT products_product_type_id_fkey FOREIGN KEY (product_type_id) REFERENCES public.product_types(id),
   CONSTRAINT products_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
-  CONSTRAINT products_product_type_id_fkey FOREIGN KEY (product_type_id) REFERENCES public.product_types(id)
+  CONSTRAINT products_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories_new(id)
 );
 CREATE TABLE public.quick_access_buttons (
   id uuid NOT NULL DEFAULT gen_random_uuid(),

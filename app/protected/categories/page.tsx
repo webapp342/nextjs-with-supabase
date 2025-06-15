@@ -91,7 +91,7 @@ export default function CategoriesPage() {
       slug: '',
       description: '',
       icon: '',
-      image_url: hasImageColumn ? '' : undefined,
+      image_url: '',
       level: 0,
       sort_order: 0,
       is_active: true

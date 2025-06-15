@@ -6,13 +6,13 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // This check can be removed, it is just for tutorial purposes
-export const hasEnvVars =
-  process.env.NEXT_PUBLIC_SUPABASE_URL &&
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+export const isSupabaseConfigured = 
+  process.env['NEXT_PUBLIC_SUPABASE_URL'] &&
+  process.env['NEXT_PUBLIC_SUPABASE_ANON_KEY'];
 
 export function toPersianNumber(num: number | string): string {
   const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-  return num.toString().replace(/\d/g, (digit) => persianDigits[parseInt(digit)]);
+  return num.toString().replace(/\d/g, (digit) => persianDigits[parseInt(digit)] || digit);
 }
 
 export function truncateText(text: string, maxLines: number): string {
@@ -29,7 +29,8 @@ export function truncateText(text: string, maxLines: number): string {
 
   // Ensure each line has at least a non-breaking space if it's empty
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].trim() === '') {
+    const line = lines[i];
+    if (line !== undefined && line.trim() === '') {
       lines[i] = '\u00A0';
     }
   }

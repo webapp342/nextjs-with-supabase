@@ -128,23 +128,18 @@ export function Breadcrumb() {
               break;
 
             case 'auth':
-              items.push({
-                label: 'Giriş / Kayıt',
-                href: '/auth'
-              });
-              
               if (i + 1 < pathSegments.length) {
                 const authType = pathSegments[i + 1];
-                const authLabels: { [key: string]: string } = {
-                  'login': 'Giriş Yap',
+                const authLabels: Record<string, string> = {
+                  'sign-in': 'Giriş Yap',
                   'sign-up': 'Kayıt Ol',
                   'forgot-password': 'Şifremi Unuttum',
                   'sign-up-success': 'Kayıt Başarılı'
                 };
                 
-                if (authLabels[authType]) {
+                if (authType && authType in authLabels) {
                   items.push({
-                    label: authLabels[authType],
+                    label: authLabels[authType]!,
                     href: currentPath
                   });
                   i++; // Skip the next segment
@@ -160,13 +155,13 @@ export function Breadcrumb() {
               
               if (i + 1 < pathSegments.length) {
                 const protectedType = pathSegments[i + 1];
-                const protectedLabels: { [key: string]: string } = {
+                const protectedLabels: Record<string, string> = {
                   'delete-products': 'Ürün Yönetimi'
                 };
                 
-                if (protectedLabels[protectedType]) {
+                if (protectedType && protectedType in protectedLabels) {
                   items.push({
-                    label: protectedLabels[protectedType],
+                    label: protectedLabels[protectedType]!,
                     href: currentPath
                   });
                   i++; // Skip the next segment
@@ -239,15 +234,17 @@ export function Breadcrumb() {
 
             default:
               // Generic fallback for unknown routes
-              const formattedLabel = segment
-                .split('-')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ');
-              
-              items.push({
-                label: formattedLabel,
-                href: currentPath
-              });
+              if (segment) {
+                const formattedLabel = segment
+                  .split('-')
+                  .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                  .join(' ');
+                
+                items.push({
+                  label: formattedLabel,
+                  href: currentPath
+                });
+              }
               break;
           }
         }
@@ -350,7 +347,7 @@ export function BreadcrumbJsonLd({ breadcrumbs }: { breadcrumbs: BreadcrumbItem[
       "@type": "ListItem",
       "position": index + 1,
       "name": item.label,
-      "item": `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}${item.href}`
+      "item": `${process.env['NEXT_PUBLIC_SITE_URL'] || 'http://localhost:3000'}${item.href}`
     }))
   };
 

@@ -34,7 +34,7 @@ interface Product {
 
 export default function DynamicCategoryPage() {
   const params = useParams();
-  const slugArray = Array.isArray(params.slug) ? params.slug : [params.slug];
+  const slugArray = Array.isArray(params['slug']) ? params['slug'] : [params['slug']];
   const currentSlug = slugArray[slugArray.length - 1];
   const parentSlug = slugArray.length > 1 ? slugArray[slugArray.length - 2] : null;
   
@@ -304,7 +304,7 @@ export default function DynamicCategoryPage() {
                   <div className="bg-white p-4 hover:bg-gray-50 transition-colors duration-200">
                     {/* Product Image */}
                     <div className="relative w-full bg-gray-50 rounded-lg mb-3">
-                      {product.image_urls && product.image_urls.length > 0 ? (
+                      {product.image_urls && product.image_urls.length > 0 && product.image_urls[0] ? (
                         <Image 
                           src={product.image_urls[0]} 
                           alt={product.name} 

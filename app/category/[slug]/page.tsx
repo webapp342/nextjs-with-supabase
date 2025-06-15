@@ -19,7 +19,7 @@ interface Category {
 
 export default function CategoryPage() {
   const params = useParams();
-  const slug = params.slug as string;
+  const slug = params['slug'] as string;
   
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);

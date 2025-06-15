@@ -63,6 +63,26 @@ interface Brand {
   slug: string;
 }
 
+interface FormData {
+  title: string;
+  subtitle: string;
+  description: string;
+  image_url: string;
+  mobile_image_url: string;
+  link_text: string;
+  link_type: 'category' | 'brand' | 'custom' | 'tag';
+  link_category_id: string;
+  link_brand_id: string;
+  link_tag: string;
+  link_url: string;
+  background_color: string;
+  text_color: string;
+  button_color: string;
+  start_date: string;
+  end_date: string;
+  is_active: boolean;
+}
+
 export default function SecondaryHeroBannersPage() {
   const [banners, setBanners] = useState<SecondaryHeroBanner[]>([]);
   const [, setCategories] = useState<Category[]>([]);
@@ -73,25 +93,7 @@ export default function SecondaryHeroBannersPage() {
   const [uploading, setUploading] = useState(false);
   
   // Form state
-  const [formData, setFormData] = useState<{
-    title: string;
-    subtitle: string;
-    description: string;
-    image_url: string;
-    mobile_image_url: string;
-    link_text: string;
-    link_type: 'category' | 'brand' | 'custom' | 'tag';
-    link_category_id: string;
-    link_brand_id: string;
-    link_tag: string;
-    link_url: string;
-    background_color: string;
-    text_color: string;
-    button_color: string;
-    start_date: string;
-    end_date: string;
-    is_active: boolean;
-  }>({
+  const [formData, setFormData] = useState<FormData>({
     title: '',
     subtitle: '',
     description: '',
@@ -348,8 +350,8 @@ export default function SecondaryHeroBannersPage() {
       background_color: banner.background_color,
       text_color: banner.text_color,
       button_color: banner.button_color,
-      start_date: banner.start_date ? banner.start_date.split('T')[0] : '',
-      end_date: banner.end_date ? banner.end_date.split('T')[0] : '',
+      start_date: banner.start_date?.split('T')[0] ?? '',
+      end_date: banner.end_date?.split('T')[0] ?? '',
       is_active: banner.is_active
     });
     setDialogOpen(true);

@@ -346,7 +346,7 @@ export function CategoryPageSections({ categoryId }: CategoryPageSectionsProps) 
               </div>
 
               {/* Products Display */}
-              {sectionProducts[section.id] && sectionProducts[section.id].length > 0 && (
+              {sectionProducts[section.id] && sectionProducts[section.id]!.length > 0 && (
                 <div className={
                   section.display_style === 'horizontal_scroll' 
                     ? "flex gap-4 px-4 overflow-x-auto pb-4"
@@ -360,7 +360,7 @@ export function CategoryPageSections({ categoryId }: CategoryPageSectionsProps) 
                     }
                   `}</style>
                   
-                  {sectionProducts[section.id].map((product) => (
+                  {sectionProducts[section.id]!.map((product) => (
                     <ProductCard
                       key={product.id}
                       product={product}
@@ -377,7 +377,7 @@ export function CategoryPageSections({ categoryId }: CategoryPageSectionsProps) 
               )}
 
               {/* Empty State */}
-              {(!sectionProducts[section.id] || sectionProducts[section.id].length === 0) && (
+              {(!sectionProducts[section.id] || sectionProducts[section.id]!.length === 0) && (
                 <div className="text-center py-8 text-gray-500">
                   Bu section için ürün bulunamadı.
                 </div>

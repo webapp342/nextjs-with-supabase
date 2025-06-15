@@ -143,11 +143,9 @@ export function MobileMenu() {
     fetchCategories();
   }, [fetchCategories]);
 
-
-
-  const getIconForCategory = (slug: string, icon?: string): string => {
-    if (icon) return icon;
-    return categoryIcons[slug] || categoryIcons['default'];
+  const getCategoryIcon = (slug: string): string => {
+    const icon = categoryIcons[slug as keyof typeof categoryIcons];
+    return icon || categoryIcons['default'] || '📦';
   };
 
   return (
@@ -229,7 +227,7 @@ export function MobileMenu() {
                         ) : (
                           <div className="w-16 h-16 bg-gray-50 rounded-lg flex items-center justify-center mb-3 group-hover:bg-gray-100 transition-colors duration-300">
                             <span className="text-2xl">
-                              {getIconForCategory(category.slug, category.icon)}
+                              {getCategoryIcon(category.slug)}
                             </span>
                           </div>
                         )}

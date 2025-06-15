@@ -88,17 +88,18 @@ export function ProductCard({
     >
       {/* Product Image */}
       <div className={cn("relative w-full bg-gray-50", config.image, imageClassName)}>
-        {product.image_urls && product.image_urls.length > 0 ? (
+        {product.image_urls && product.image_urls.length > 0 && product.image_urls[0] ? (
           <Image 
             src={product.image_urls[0]} 
             alt={product.name} 
-            fill
-            className="object-contain"
+            width={300}
+            height={300}
+            className="w-full h-auto object-contain rounded-lg"
             unoptimized
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
-            <span className={config.text}>تصویر موجود نیست</span>
+          <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+            <span className="text-gray-400">تصویر موجود نیست</span>
           </div>
         )}
 

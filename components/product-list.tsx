@@ -229,18 +229,18 @@ export function ProductList({
                 <div className="bg-white p-4 hover:bg-gray-50 transition-colors duration-200 relative">
                   {/* Product Image */}
                   <div className="relative w-full bg-gray-50 rounded-lg mb-3">
-                    {product.image_urls && product.image_urls.length > 0 ? (
+                    {product.image_urls && product.image_urls.length > 0 && product.image_urls[0] ? (
                       <Image 
                         src={product.image_urls[0]} 
                         alt={product.name} 
-                        width={400}
-                        height={400}
+                        width={300}
+                        height={300}
                         className="w-full h-auto object-contain rounded-lg"
                         unoptimized
                       />
                     ) : (
-                      <div className="w-full h-48 flex items-center justify-center text-gray-400 rounded-lg">
-                        <span>تصویر موجود نیست</span>
+                      <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <span className="text-gray-400">تصویر موجود نیست</span>
                       </div>
                     )}
                   </div>

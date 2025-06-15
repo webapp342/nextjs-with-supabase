@@ -28,8 +28,8 @@ interface Category {
 
 export default function BrandCategoryPage() {
   const params = useParams();
-  const brandSlug = params.slug as string;
-  const categorySlug = params.productType as string;
+  const brandSlug = params['slug'] as string;
+  const categorySlug = params['productType'] as string;
   
   const [brand, setBrand] = useState<Brand | null>(null);
   const [category, setCategory] = useState<Category | null>(null);

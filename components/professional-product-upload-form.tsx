@@ -156,9 +156,9 @@ export function ProfessionalProductUploadForm() {
       const [parent, child] = field.split('.');
       setFormData(prev => ({
         ...prev,
-        [parent]: {
-          ...prev[parent as keyof typeof prev] as Record<string, unknown>,
-          [child]: value
+        [parent as keyof typeof prev]: {
+          ...(prev[parent as keyof typeof prev] as Record<string, unknown>),
+          [child as string]: value
         }
       }));
     } else {

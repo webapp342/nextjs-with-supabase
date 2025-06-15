@@ -513,15 +513,19 @@ export function CategorySectionsManagement() {
                                 className="rounded"
                               />
                               <div className="flex items-center space-x-3 flex-1">
-                                {product.image_urls && product.image_urls.length > 0 && (
-                                  <Image
-                                    src={product.image_urls[0]}
-                                    alt={product.name}
-                                    width={40}
-                                    height={40}
-                                    className="rounded object-cover"
+                                {product.image_urls && product.image_urls.length > 0 && product.image_urls[0] ? (
+                                  <Image 
+                                    src={product.image_urls[0]} 
+                                    alt={product.name} 
+                                    width={100}
+                                    height={100}
+                                    className="w-full h-full object-cover rounded"
                                     unoptimized
                                   />
+                                ) : (
+                                  <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
+                                    <span className="text-gray-400 text-xs">تصویر موجود نیست</span>
+                                  </div>
                                 )}
                                 <div className="flex-1">
                                   <p className="text-sm font-medium">{product.name}</p>

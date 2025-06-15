@@ -70,7 +70,6 @@ export function HeroBannerManagement() {
   const [editingBanner, setEditingBanner] = useState<HeroBanner | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [uploadingMobile, setUploadingMobile] = useState(false);
 
   const [formData, setFormData] = useState<FormData>({
     title: '',
@@ -168,17 +167,15 @@ export function HeroBannerManagement() {
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, isMobile = false) => {
-    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    const file = e.target.files[0];
-    const setUploadState = isMobile ? setUploadingMobile : setUploading;
-    setUploadState(true);
+    setUploading(true);
 
     try {
       const fileName = `hero-banners/${isMobile ? 'mobile-' : ''}${Date.now()}-${file.name}`;
-      const { error } = await supabase
-        .storage
-        .from('products')
+      const { error } = await supabase.storage
+        .from('banners')
         .upload(fileName, file);
 
       if (error) throw error;
@@ -194,7 +191,7 @@ export function HeroBannerManagement() {
       console.error('Resim yükleme hatası:', error);
       alert('Resim yükleme hatası: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
     } finally {
-      setUploadState(false);
+      setUploading(false);
     }
   };
 
@@ -380,15 +377,15 @@ export function HeroBannerManagement() {
                       type="file"
                       accept="image/*"
                       onChange={(e) => handleImageUpload(e, true)}
-                      disabled={uploadingMobile}
+                      disabled={uploading}
                     />
                     <Button
                       type="button"
                       variant="outline"
-                      disabled={uploadingMobile}
+                      disabled={uploading}
                     >
                       <Upload className="w-4 h-4 mr-2" />
-                      {uploadingMobile ? 'Yükleniyor...' : 'Mobil Resim Yükle'}
+                      {uploading ? 'Yükleniyor...' : 'Mobil Resim Yükle'}
                     </Button>
                   </div>
                   <Input

@@ -396,13 +396,12 @@ export default function PositionedBannersPage() {
   }
 
   // Group banners by position
-  const bannersByPosition = banners.reduce((acc, banner) => {
-    if (!acc[banner.position]) {
-      acc[banner.position] = [];
-    }
-    acc[banner.position].push(banner);
+  const bannersByPosition = banners.reduce<Record<string, PositionedBanner[]>>((acc, banner) => {
+    const list = acc[banner.position] ?? [];
+    list.push(banner);
+    acc[banner.position] = list;
     return acc;
-  }, {} as Record<string, PositionedBanner[]>);
+  }, {});
 
   return (
     <div className="space-y-6">
@@ -707,7 +706,7 @@ export default function PositionedBannersPage() {
               {bannersByPosition[position.value]?.length === 0 || !bannersByPosition[position.value] ? (
                 <p className="text-muted-foreground text-center py-8">Bu pozisyonda banner bulunmuyor</p>
               ) : (
-                bannersByPosition[position.value].map((banner) => (
+                (bannersByPosition[position.value] ?? []).map((banner) => (
                   <Card key={banner.id} className={!banner.is_active ? 'opacity-50' : ''}>
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
