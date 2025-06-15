@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { CacheUtils, CacheInvalidator } from '@/utils/cache';
-import { CacheKeys } from '@/lib/redis';
 
 interface Category {
   id: string;
@@ -309,41 +308,14 @@ function generateCategoryCacheKey(
   includeHierarchy?: boolean,
   includeProductCount?: boolean
 ): string {
-  const params = [
-    parentId ? `parent:${parentId}` : 'root',
-    includeHierarchy ? 'hierarchy' : 'flat',
-    includeProductCount ? 'with_count' : 'no_count'
-  ].join(':');
+  const parts = ['categories'];
   
-  return CacheKeys.categories() + ':' + params;
+  if (parentId) parts.push(`parent:${parentId}`);
+  if (includeHierarchy) parts.push('hierarchy');
+  if (includeProductCount) parts.push('count');
+  
+  return parts.join(':');
 }
 
-// Get category breadcrumb trail
-export async function getCategoryBreadcrumb(categoryId: string): Promise<Category[]> {
-  const cacheKey = `${CacheKeys.category(categoryId)}:breadcrumb`;
-  
-  return CacheUtils.getCategory(cacheKey, async () => {
-    const supabase = await createClient();
-    const breadcrumb: Category[] = [];
-    let currentCategoryId: string | null = categoryId;
-
-    while (currentCategoryId) {
-      const { data: categoryRowData, error } = await supabase
-        .from('categories_new')
-        .select('id, name, slug, parent_id, level')
-        .eq('id', currentCategoryId)
-        .single();
-
-      const categoryRow = categoryRowData as unknown as Category;
-
-      if (error || !categoryRow) {
-        break;
-      }
-
-      breadcrumb.unshift(categoryRow);
-      currentCategoryId = categoryRow.parent_id ?? null;
-    }
-
-    return breadcrumb;
-  });
-} 
+// Note: getCategoryBreadcrumb moved to utils/category-helpers.ts
+// to comply with Next.js 15 App Router export restrictions 

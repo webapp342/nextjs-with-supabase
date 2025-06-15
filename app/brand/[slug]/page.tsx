@@ -1,8 +1,7 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { notFound } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
+import { CacheUtils } from '@/utils/cache';
+import { CacheKeys } from '@/lib/redis';
 import { ProductList } from '@/components/product-list';
 import { Button } from '@/components/ui/button';
 import { Filter, ArrowUpDown } from 'lucide-react';
@@ -16,137 +15,77 @@ interface Brand {
   logo_url?: string;
 }
 
-interface ProductType {
-  id: string;
-  name: string;
-  slug: string;
-  product_count: number;
+interface BrandPageProps {
+  params: Promise<{ slug: string }>;
 }
 
-export default function BrandPage() {
-  const params = useParams();
-  const brandSlug = params['slug'] as string;
-  const [brand, setBrand] = useState<Brand | null>(null);
-  const [, setProductTypes] = useState<ProductType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [totalProductCount, setTotalProductCount] = useState(0);
-  const supabase = createClient();
+async function getBrandBySlug(slug: string): Promise<Brand | null> {
+  const cacheKey = CacheKeys.brandBySlug(slug);
+  
+  return CacheUtils.getBrand(cacheKey, async () => {
+    const supabase = await createClient();
+    
+    const { data: brandData, error } = await supabase
+      .from('brands')
+      .select('*')
+      .eq('slug', slug)
+      .eq('is_active', true)
+      .single();
 
-  useEffect(() => {
-    const fetchBrandData = async () => {
-      setLoading(true);
-      try {
-        // Fetch brand info
-        const { data: brandData, error: brandError } = await supabase
-          .from('brands')
-          .select('*')
-          .eq('slug', brandSlug)
-          .eq('is_active', true)
-          .single();
-
-        if (brandError) throw brandError;
-        setBrand(brandData);
-
-        // Fetch product types with product counts
-        const { data: productTypesData, error: productTypesError } = await supabase
-          .from('product_types')
-          .select(`
-            *,
-            product_count:products(count)
-          `)
-          .eq('brand_id', brandData.id)
-          .eq('is_active', true)
-          .order('sort_order');
-
-        if (productTypesError) throw productTypesError;
-        
-        // Transform the data to get actual counts
-        const typesWithCounts = await Promise.all(
-          (productTypesData || []).map(async (type: { id: string; name: string; slug: string }) => {
-            const { count } = await supabase
-              .from('products')
-              .select('*', { count: 'exact', head: true })
-              .eq('product_type_id', type.id)
-              .eq('is_active', true);
-
-            return {
-              id: type.id,
-              name: type.name,
-              slug: type.slug,
-              product_count: count || 0
-            };
-          })
-        );
-
-        setProductTypes(typesWithCounts);
-
-      } catch (error: unknown) {
-        console.error('Error fetching brand data:', error);
-        setError(error instanceof Error ? error.message : 'Bir hata oluştu');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (brandSlug) {
-      fetchBrandData();
+    if (error || !brandData) {
+      return null;
     }
-  }, [brandSlug, supabase]);
 
-  useEffect(() => {
-    const fetchProductCount = async () => {
-      if (brand?.id) {
-        const { count } = await supabase
-          .from('products')
-          .select('*', { count: 'exact', head: true })
-          .eq('brand_id', brand.id)
-          .eq('is_active', true);
-        
-        setTotalProductCount(count || 0);
-      }
-    };
+    return brandData as Brand;
+  });
+}
 
-    fetchProductCount();
-  }, [brand?.id, supabase]);
+async function getBrandProductCount(brandId: string): Promise<number> {
+  const cacheKey = `brand:${brandId}:product_count`;
+  
+  return CacheUtils.getProducts(cacheKey, async () => {
+    const supabase = await createClient();
+    
+    const { count } = await supabase
+      .from('products')
+      .select('*', { count: 'exact', head: true })
+      .eq('brand_id', brandId)
+      .eq('is_active', true);
+    
+    return count || 0;
+  });
+}
 
-  if (loading) {
-    return (
-      <div className="w-full max-w-6xl mx-auto px-4 py-8">
-        <div className="animate-pulse space-y-4">
-          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+export default async function BrandPage({ params }: BrandPageProps) {
+  const { slug } = await params;
+  
+  // Fetch brand data with Redis caching
+  const brand = await getBrandBySlug(slug);
+  
+  if (!brand) {
+    notFound();
   }
 
-  if (error || !brand) {
-    return (
-      <div className="w-full max-w-6xl mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Marka Bulunamadı</h1>
-          <p className="text-gray-600">Aradığınız marka mevcut değil veya kaldırılmış.</p>
-        </div>
-      </div>
-    );
-  }
+  // Fetch product count with caching
+  const totalProductCount = await getBrandProductCount(brand.id);
 
   return (
-    <div className="w-full py-6 px-2 ">
-      {/* Simple Brand Header - RTL aligned */}
-      <div className="flex items-center justify-end mb-6 px-0 ">
+    <div className="w-full py-6 px-2">
+      {/* Brand Header - RTL aligned */}
+      <div className="flex items-center justify-end mb-6 px-0">
         <h1 className="text-xl text-right font-lalezar">
           {brand.name} ({toPersianNumber(totalProductCount)} کالا)
         </h1>
       </div>
 
-      {/* Sort and Filter Controls - Same as main page */}
+      {/* Brand Description */}
+      {brand.description && (
+        <div className="px-4 py-4 mb-6">
+          <p className="text-gray-600 text-right">{brand.description}</p>
+        </div>
+      )}
+
+      {/* Sort and Filter Controls */}
       <div className="flex items-center justify-between mb-6 border-b pb-4">
         <div className="flex items-center gap-2">
           <Button 
@@ -171,7 +110,7 @@ export default function BrandPage() {
         </div>
       </div>
 
-      {/* Products List - Clean and simple */}
+      {/* Products List */}
       <ProductList 
         filters={{ brand_id: brand.id }}
         showFilters={false}
@@ -179,4 +118,21 @@ export default function BrandPage() {
       />
     </div>
   );
+}
+
+// Generate metadata for SEO
+export async function generateMetadata({ params }: BrandPageProps) {
+  const { slug } = await params;
+  const brand = await getBrandBySlug(slug);
+  
+  if (!brand) {
+    return {
+      title: 'Brand Not Found',
+    };
+  }
+
+  return {
+    title: `${brand.name} - فروشگاه`,
+    description: brand.description || `Browse ${brand.name} products`,
+  };
 } 
