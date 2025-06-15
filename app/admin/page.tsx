@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, Image, BarChart3, Users } from 'lucide-react';
+import { Package, Image, BarChart3, Users, ShoppingBag } from 'lucide-react';
 
 export default function AdminDashboard() {
   const quickActions = [
@@ -31,6 +31,13 @@ export default function AdminDashboard() {
       href: '/admin/brands',
       icon: Users,
       color: 'bg-orange-500'
+    },
+    {
+      title: 'Sipariş Yönetimi',
+      description: 'Siparişleri görüntüle ve yönet',
+      href: '/admin/orders',
+      icon: ShoppingBag,
+      color: 'bg-pink-500'
     }
   ];
 
@@ -41,7 +48,7 @@ export default function AdminDashboard() {
         <p className="text-gray-600 mt-2">E-ticaret sitenizi yönetin</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {quickActions.map((action) => (
           <Link key={action.title} href={action.href}>
             <Card className="hover:shadow-lg transition-shadow duration-200 cursor-pointer">

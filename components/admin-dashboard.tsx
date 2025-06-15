@@ -11,7 +11,8 @@ import {
   Activity,
   Image as ImageIcon,
   Tag,
-  Star
+  Star,
+  ShoppingCart
 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,8 @@ interface DashboardStats {
   activeProducts: number;
   totalBanners: number;
   totalBrands: number;
+  totalOrders: number;
+  pendingOrders: number;
 }
 
 interface RecentActivity {
@@ -40,7 +43,9 @@ export function AdminDashboard() {
     featuredProducts: 0,
     activeProducts: 0,
     totalBanners: 0,
-    totalBrands: 0
+    totalBrands: 0,
+    totalOrders: 0,
+    pendingOrders: 0
   });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,11 +58,18 @@ export function AdminDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      setRecentActivity([]); // Reset activity
 
       // Fetch products stats
       const { data: products, error: productsError } = await supabase
         .from('products')
         .select('id, is_featured, is_active, price, created_at, name')
+        .limit(1000);
+
+      // Fetch orders stats
+      const { data: orders, error: ordersError } = await supabase
+        .from('simple_orders')
+        .select('id, status, created_at, customer_name')
         .limit(1000);
 
       // Fetch banners count
@@ -87,7 +99,7 @@ export function AdminDashboard() {
         // Create recent activity from products
         const recentProducts = products
           .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-          .slice(0, 5)
+          .slice(0, 3)
           .map(product => ({
             id: product.id,
             type: 'product' as const,
@@ -97,7 +109,33 @@ export function AdminDashboard() {
             status: product.is_active ? 'Aktif' : 'Pasif'
           }));
 
-        setRecentActivity(recentProducts);
+        setRecentActivity(prev => [...prev, ...recentProducts]);
+      }
+
+      if (orders && !ordersError) {
+        const totalOrders = orders.length;
+        const pendingOrders = orders.filter(o => o.status === 'pending').length;
+
+        setStats(prev => ({
+          ...prev,
+          totalOrders,
+          pendingOrders
+        }));
+
+        // Create recent activity from orders
+        const recentOrders = orders
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .slice(0, 2)
+          .map(order => ({
+            id: order.id,
+            type: 'order' as const,
+            title: 'Yeni Sipariş',
+            description: `${order.customer_name} tarafından`,
+            timestamp: order.created_at,
+            status: order.status === 'pending' ? 'Bekliyor' : 'Tamamlandı'
+          }));
+
+        setRecentActivity(prev => [...prev, ...recentOrders]);
       }
 
       if (banners && !bannersError) {
@@ -115,22 +153,27 @@ export function AdminDashboard() {
     }
   };
 
-
-
   const quickActions = [
+    {
+      title: 'Sipariş Yönetimi',
+      description: 'Siparişleri görüntüle ve yönet',
+      href: '/admin/orders',
+      icon: ShoppingCart,
+      color: 'bg-blue-500'
+    },
     {
       title: 'Yeni Ürün Ekle',
       description: 'Hızlı ürün ekleme',
       href: '/protected/products/add',
       icon: Package,
-      color: 'bg-blue-500'
+      color: 'bg-green-500'
     },
     {
       title: 'Banner Yönet',
       description: 'Ana sayfa banner\'ları',
       href: '/protected/banners',
       icon: ImageIcon,
-      color: 'bg-green-500'
+      color: 'bg-purple-500'
     },
     {
       title: 'En İyi Markalar',
@@ -144,14 +187,14 @@ export function AdminDashboard() {
       description: 'Yeni kategori oluştur',
       href: '/protected/categories',
       icon: Tag,
-      color: 'bg-purple-500'
+      color: 'bg-orange-500'
     },
     {
       title: 'İstatistikleri Gör',
       description: 'Detaylı raporlar',
       href: '/protected/analytics',
       icon: TrendingUp,
-      color: 'bg-orange-500'
+      color: 'bg-red-500'
     }
   ];
 
@@ -171,7 +214,7 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards - Sadece Toplam Ürün */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="hover:shadow-lg transition-shadow">
           <CardContent className="p-6">
@@ -195,6 +238,42 @@ export function AdminDashboard() {
               <div className="flex items-center text-xs font-medium text-green-600 dark:text-green-400">
                 <ArrowUpRight className="h-3 w-3 mr-1" />
                 +12%
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Toplam Banner
+                </p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {stats.totalBanners}
+                </p>
+              </div>
+              <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
+                <ImageIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Toplam Marka
+                </p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {stats.totalBrands}
+                </p>
+              </div>
+              <div className="p-3 rounded-full bg-purple-100 dark:bg-purple-900">
+                <Tag className="h-6 w-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </CardContent>
@@ -251,8 +330,12 @@ export function AdminDashboard() {
               {recentActivity.length > 0 ? (
                 recentActivity.map((activity) => (
                   <div key={activity.id} className="flex items-start space-x-3 pb-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                    <div className="p-1 bg-blue-100 dark:bg-blue-900 rounded-full">
-                      <Package className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                    <div className={`p-1 rounded-full ${activity.type === 'order' ? 'bg-green-100 dark:bg-green-900' : 'bg-blue-100 dark:bg-blue-900'}`}>
+                      {activity.type === 'order' ? (
+                        <ShoppingCart className="h-3 w-3 text-green-600 dark:text-green-400" />
+                      ) : (
+                        <Package className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
@@ -289,13 +372,13 @@ export function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Toplam Banner
+                  Toplam Sipariş
                 </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stats.totalBanners}
+                  {stats.totalOrders}
                 </p>
               </div>
-              <ImageIcon className="h-8 w-8 text-blue-600" />
+              <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse"></div>
             </div>
           </CardContent>
         </Card>
@@ -305,13 +388,13 @@ export function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Toplam Marka
+                  Bekleyen Sipariş
                 </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stats.totalBrands}
+                  {stats.pendingOrders}
                 </p>
               </div>
-              <Tag className="h-8 w-8 text-green-600" />
+              <div className="h-3 w-3 bg-yellow-500 rounded-full animate-pulse"></div>
             </div>
           </CardContent>
         </Card>

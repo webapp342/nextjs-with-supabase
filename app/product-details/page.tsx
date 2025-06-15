@@ -5,8 +5,11 @@ import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { ChevronLeft } from 'lucide-react';
 import { toPersianNumber } from '@/lib/utils';
-import { EnhancedBreadcrumb } from '@/components/enhanced-breadcrumb';
-import { useSearchParams } from 'next/navigation';
+import { Breadcrumb } from '@/components/breadcrumb';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { cartClientActions } from '@/lib/cart-client';
+import { Button } from '@/components/ui/button';
+import { useCart } from '@/contexts/cart-context';
 
 interface Product {
   id: string;
@@ -39,8 +42,23 @@ function ProductDetailsContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
+  const router = useRouter();
   const productId = searchParams.get('id');
+  const [quantity, setQuantity] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const { refreshCart } = useCart();
+  
   const supabase = createClient();
+
+  useEffect(() => {
+    // Check authentication
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, [supabase.auth]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -93,6 +111,40 @@ function ProductDetailsContent() {
     fetchProduct();
   }, [productId, supabase]);
 
+  const handleAddToCart = async () => {
+    if (!user) {
+      router.push('/auth/login?redirect=' + encodeURIComponent(`/product-details?id=${productId}`));
+      return;
+    }
+
+    if (!product) return;
+
+    setAddingToCart(true);
+    try {
+      await cartClientActions.addToCart(product.id, quantity);
+      
+      // Refresh cart count in navbar
+      await refreshCart();
+      
+      // Show success message or redirect
+      alert('محصول با موفقیت به سبد خرید اضافه شد');
+      
+      // Optionally redirect to cart
+      // router.push('/cart');
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+      alert('خطا در افزودن محصول به سبد خرید');
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  const updateQuantity = (newQuantity: number) => {
+    if (newQuantity >= 1) {
+      setQuantity(newQuantity);
+    }
+  };
+
   if (loading) {
     return <p>Ürün detayları yükleniyor...</p>;
   }
@@ -108,7 +160,7 @@ function ProductDetailsContent() {
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-8">
       {/* Kategori Breadcrumb - Fotoğrafın Üstünde */}
-      <EnhancedBreadcrumb showOnlyCategory={true} />
+      <Breadcrumb />
       
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Product Images */}
@@ -212,20 +264,44 @@ function ProductDetailsContent() {
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-right">تعداد:</h3>
             <div className="flex items-center justify-end gap-3">
-              <button className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-50">
+              <button 
+                className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-50"
+                onClick={() => updateQuantity(quantity + 1)}
+              >
                 +
               </button>
-              <span className="text-lg font-medium">۱</span>
-              <button className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-50">
+              <span className="text-lg font-medium">{toPersianNumber(quantity)}</span>
+              <button 
+                className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-50"
+                onClick={() => updateQuantity(quantity - 1)}
+                disabled={quantity <= 1}
+              >
                 -
               </button>
             </div>
           </div>
 
           {/* Add to Cart Button */}
-          <button className="w-full bg-pink-500 text-white py-3 rounded-lg font-medium hover:bg-pink-600 transition-colors">
-            افزودن به سبد خرید
-          </button>
+          <Button 
+            className="w-full bg-pink-500 text-white py-3 rounded-lg font-medium hover:bg-pink-600 transition-colors"
+            onClick={handleAddToCart}
+            disabled={addingToCart}
+          >
+            {addingToCart ? 'در حال افزودن...' : 'افزودن به سبد خرید'}
+          </Button>
+
+          {/* Auth Notice */}
+          {!user && (
+            <p className="text-sm text-gray-600 text-center">
+              برای افزودن به سبد خرید، ابتدا 
+              <button 
+                onClick={() => router.push('/auth/login')}
+                className="text-pink-500 hover:text-pink-600 mx-1"
+              >
+                وارد شوید
+              </button>
+            </p>
+          )}
 
           {/* Product Features */}
           <div className="space-y-4 pt-6 border-t">

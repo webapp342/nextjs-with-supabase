@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { ClientLayout } from "@/components/client-layout";
+import { CartProvider } from "@/contexts/cart-context";
 import StartupLogger from "@/components/StartupLogger";
 import "./globals.css";
 
@@ -36,9 +37,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ClientLayout>
-            {children}
-          </ClientLayout>
+          <CartProvider>
+            <ClientLayout>
+              {children}
+            </ClientLayout>
+          </CartProvider>
         </ThemeProvider>
       </body>
     </html>
