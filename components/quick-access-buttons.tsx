@@ -95,7 +95,7 @@ export function QuickAccessButtons() {
   }
 
   return (
-    <div className="w-full py-3 px-4 bg-white border-b border-gray-100">
+    <div className="w-full py-3 px-4 bg-white">
       <div 
         className="flex items-center overflow-x-auto scrollbar-hide gap-2 pb-1"
         style={{
@@ -109,7 +109,7 @@ export function QuickAccessButtons() {
               href={button.link_url}
               className="flex items-center justify-center min-w-0 flex-shrink-0"
             >
-              <div className="bg-pink-50 border border-pink-200 rounded-full px-4 py-2 text-sm font-medium text-pink-700 hover:bg-pink-100 transition-colors duration-200 whitespace-nowrap">
+              <div className="bg-pink-50 border border-pink-200 rounded-2xl px-4 py-2 text-sm text-pink-700 hover:bg-pink-100 transition-colors duration-200 whitespace-nowrap font-lalezar">
                 {button.title}
               </div>
             </Link>

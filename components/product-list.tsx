@@ -171,7 +171,7 @@ export function ProductList({
       {/* Page Header */}
       {showHeader && (
         <div className="flex items-center justify-between mb-6 px-0">
-          <h1 className="text-xl font-bold text-right">
+          <h1 className="text-xl text-right font-lalezar">
             آرایشی ({toPersianNumber(products.length)} کالا)
           </h1>
         </div>
@@ -248,12 +248,12 @@ export function ProductList({
                   {/* Product Info */}
                   <div className="space-y-2">
                     {/* Brand - gray color at top */}
-                    <div className="text-sm text-gray-500 text-right mr-0">
+                    <div className="text-sm text-gray-500 text-right mr-0 font-lalezar">
                       {product.brand_name || 'مارک مشخص نشده'}
                     </div>
 
                     {/* Product Name - main product info */}
-                    <h3 className="font-medium text-sm mr-0 text-right leading-tight line-clamp-2">
+                    <h3 className="text-sm mr-0 text-right leading-tight line-clamp-2 font-lalezar">
                       {product.name}
                     </h3>
 
@@ -262,19 +262,19 @@ export function ProductList({
                       <div className="pt-4">
                         <div className="flex items-center gap-3">
                           {/* Discount Badge */}
-                          <div className="bg-red-500 font-sans text-white text-sm px-2 py-1 rounded ">
+                          <div className="bg-red-500 text-white text-sm px-2 py-1 rounded font-far-akbar">
                             {toPersianNumber(discountPercentage)}%
                           </div>
                           
                           {/* Price Stack */}
                           <div className="flex flex-col">
                             {/* Original Price (crossed out) */}
-                            <div className="text-sm text-gray-400 line-through">
-                              <span className="font-sans text-left">{toPersianNumber(product.compare_price!.toLocaleString())}</span>
+                            <div className="text-sm text-gray-400 line-through font-far-akbar">
+                              <span className="text-left">{toPersianNumber(product.compare_price!.toLocaleString())}</span>
                             </div>
                             {/* Sale Price */}
-                            <div className="text-m font-bold">
-                              <span className="font-sans text-left">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
+                            <div className="text-m font-bold font-far-akbar">
+                              <span className="text-left">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
                             </div>
                           </div>
                         </div>
@@ -282,8 +282,8 @@ export function ProductList({
                     ) : (
                       <div className="pt-4">
                         <div className="flex items-end min-h-[44px]">
-                          <div className="text-m font-bold">
-                            <span className="font-sans text-left">؋ &lrm; <span className="font-bold">{toPersianNumber(product.price.toLocaleString())}</span></span>
+                          <div className="text-m font-bold font-far-akbar">
+                            <span className="text-left">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
                           </div>
                         </div>
                       </div>

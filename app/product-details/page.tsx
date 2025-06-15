@@ -155,14 +155,14 @@ function ProductDetailsContent() {
                 <div className="flex items-center gap-2 ">
                   <a 
                     href={`/brand/${brand.slug}`}
-                    className="text-gray-700 hover:text-gray-900 transition-colors"
+                    className="text-gray-700 hover:text-gray-900 transition-colors font-lalezar"
                   >
                     {brand.name}
                   </a>
                   <ChevronLeft className="w-4 h-4 text-gray-400" />
                   <a 
                     href={`/brand/${brand.slug}/${category.slug}`}
-                    className="text-gray-900 font-medium hover:text-gray-700 transition-colors"
+                    className="text-gray-900 hover:text-gray-700 transition-colors font-lalezar"
                   >
                     {category.name} {brand.name}
                   </a>
@@ -178,14 +178,14 @@ function ProductDetailsContent() {
           
 
           {/* Product Name */}
-          <h1 className="text-2xl font-bold text-right leading-tight">
+          <h1 className="text-2xl text-right leading-tight font-lalezar">
             {product.name}
           </h1>
 
           {/* Price */}
           <div className="space-y-2">
             <div className="text-2xl font-bold text-right">
-              <span className="font-sans text-left">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
+              <span className="text-left font-far-akbar font-bold">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
             </div>
             <div className="text-sm text-gray-500 text-right">
               شامل مالیات بر ارزش افزوده
@@ -241,7 +241,7 @@ function ProductDetailsContent() {
 
       {/* Product Description */}
       <div className="mt-12">
-        <h2 className="text-xl font-bold mb-4 text-right">توضیحات محصول</h2>
+        <h2 className="text-xl mb-4 text-right font-lalezar">توضیحات محصول</h2>
         <div className="bg-gray-50 rounded-lg p-6">
           <p className="text-gray-700 leading-relaxed text-right whitespace-pre-wrap">
             {product.description}
@@ -251,7 +251,7 @@ function ProductDetailsContent() {
 
       {/* Related Products Section */}
       <div className="mt-12">
-        <h2 className="text-xl font-bold mb-6 text-right">محصولات مشابه</h2>
+        <h2 className="text-xl mb-6 text-right font-lalezar">محصولات مشابه</h2>
         <div className="text-center py-8 text-gray-500">
           محصولات مشابه به زودی...
         </div>

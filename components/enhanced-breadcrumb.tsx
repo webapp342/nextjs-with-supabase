@@ -226,14 +226,14 @@ export function EnhancedBreadcrumb({
   }
 
   const renderBreadcrumbItems = (items: BreadcrumbItem[], allowAllLinks = false) => (
-    <div className="flex items-center gap-2 text-sm" dir="rtl">
+    <div className="flex items-center gap-2 text-sm font-lalezar" dir="rtl">
       {items.map((item, index) => (
         <div key={index} className="flex items-center gap-2">
           {allowAllLinks || index !== items.length - 1 ? (
             <>
               <Link 
                 href={item.href}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
+                className="text-gray-500 hover:text-gray-700 transition-colors font-lalezar"
               >
                 {item.label}
               </Link>
@@ -243,7 +243,7 @@ export function EnhancedBreadcrumb({
             <>
               <Link 
                 href={item.href}
-                className="text-gray-900 font-medium hover:text-gray-700 transition-colors"
+                className="text-gray-900 hover:text-gray-700 transition-colors font-lalezar"
               >
                 {item.label}
               </Link>

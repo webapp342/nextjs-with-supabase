@@ -107,10 +107,10 @@ export default function SecondaryHeroBanners() {
 
   if (loading) {
     return (
-      <div className="py-8">
-        <div className="flex gap-4 px-4 overflow-x-auto">
+      <div className="py-6">
+        <div className="flex gap-3 px-4 overflow-x-auto">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex-shrink-0 w-[calc(100vw-80px)] md:w-[calc(100vw-120px)] h-32 bg-gray-200 rounded-lg animate-pulse" />
+            <div key={i} className="flex-shrink-0 w-[calc(100vw-80px)] md:w-[calc(100vw-120px)] h-32 bg-gray-200 rounded-xl animate-pulse" />
           ))}
         </div>
       </div>
@@ -125,10 +125,10 @@ export default function SecondaryHeroBanners() {
   const infiniteBanners = banners.length > 1 ? [...banners, ...banners, ...banners] : banners;
 
   return (
-    <div className="py-8">
+    <div className="py-6">
       <div 
         ref={scrollContainerRef}
-        className="flex gap-4 px-4 overflow-x-auto snap-x snap-mandatory"
+        className="flex gap-3 px-4 overflow-x-auto snap-x snap-mandatory"
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none'
@@ -143,7 +143,7 @@ export default function SecondaryHeroBanners() {
         {infiniteBanners.map((banner, index) => (
           <div
             key={`${banner.id}-${index}`}
-            className={`flex-shrink-0 rounded-lg overflow-hidden relative snap-center ${
+            className={`flex-shrink-0 rounded-xl overflow-hidden relative snap-center ${
               banners.length === 1 
                 ? 'w-[calc(100vw-32px)] md:w-[calc(100vw-64px)]' 
                 : 'w-[calc(100vw-80px)] md:w-[calc(100vw-120px)]'

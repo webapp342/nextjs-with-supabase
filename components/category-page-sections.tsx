@@ -337,10 +337,10 @@ export function CategoryPageSections({ categoryId }: CategoryPageSectionsProps) 
             <div className="py-8">
               {/* Section Header - Ana sayfa tasarımı */}
               <div className="flex items-center justify-between mb-6 px-4">
-                <Link href="#" className="text-pink-500 text-sm hover:text-pink-600">
+                <Link href="#" className="text-pink-500 text-sm hover:text-pink-600 font-lalezar">
                   مشاهده همه
                 </Link>
-                <h2 className="text-xl font-bold text-right">
+                <h2 className="text-xl text-right font-lalezar">
                   {section.title || 'محصولات'}
                 </h2>
               </div>

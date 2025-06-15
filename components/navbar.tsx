@@ -25,17 +25,19 @@ export function Navbar() {
             </Button>
           </div>
 
-          {/* Center - Logo */}
-          <div className="flex-1 flex justify-center">
+          {/* Right side - Logo next to Menu */}
+          <div className="flex items-center gap-2">
             <Link href="/" className="flex items-center">
-              <div className="text-foreground px-4 py-2 font-bold text-lg">
-                صرافی
+              <div 
+                className="text-pink-600 text-2xl font-bold"
+                style={{ fontFamily: 'Far Akbar, sans-serif' }}
+              >
+                <h1>
+                شاهبانو
+                </h1>
+                
               </div>
             </Link>
-          </div>
-
-          {/* Right side - Mobile menu only */}
-          <div className="flex items-center gap-2">
             <MobileMenu />
           </div>
         </div>

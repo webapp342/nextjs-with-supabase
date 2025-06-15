@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 export function CategoriesGrid() {
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-6">
-      <h2 className="text-xl font-semibold mb-6 text-right">دسته‌بندی‌ها</h2>
+      <h2 className="text-xl mb-6 text-right font-lalezar">دسته‌بندی‌ها</h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-4">
         {categories.map((category) => (
           <Link

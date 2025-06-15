@@ -17,7 +17,9 @@ import {
   Palette,
   FolderTree,
   LogOut,
-  Edit
+  Edit,
+  Star,
+  Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -33,67 +35,19 @@ const sidebarItems = [
     title: 'Dashboard',
     href: '/protected',
     icon: LayoutDashboard,
-    description: 'Genel bakış ve istatistikler'
+    description: 'Genel bakış'
   },
   {
     title: 'Ürün Ekleme',
     href: '/protected/products/add',
     icon: Package,
-    description: 'Yeni ürün ekleme'
+    description: 'Yeni ürün ekle'
   },
   {
     title: 'Ürün Düzenleme',
     href: '/protected/products/manage',
     icon: Edit,
-    description: 'Mevcut ürünleri düzenleme'
-  },
-  {
-    title: 'Banner Yönetimi',
-    href: '/protected/banners',
-    icon: ImageIcon,
-    description: 'Ana sayfa ve kategori banner\'ları'
-  },
-  {
-    title: 'Hero Banner Yönetimi',
-    href: '/protected/hero-banners',
-    icon: Palette,
-    description: 'Ana sayfa hero banner\'ları'
-  },
-  {
-    title: 'İkinci Hero Banner Yönetimi',
-    href: '/protected/secondary-hero-banners',
-    icon: Palette,
-    description: 'Ana sayfa ikinci hero banner\'ları (slide edilebilen)'
-  },
-  {
-    title: 'Grid Banner Yönetimi',
-    href: '/protected/grid-banners',
-    icon: ImageIcon,
-    description: 'Ana sayfa grid banner\'ları'
-  },
-  {
-    title: 'Hızlı Erişim Butonları',
-    href: '/protected/quick-access-buttons',
-    icon: Tag,
-    description: 'Ana sayfa hızlı erişim butonları'
-  },
-  {
-    title: 'Resimli Kategori Butonları',
-    href: '/protected/category-image-buttons',
-    icon: ImageIcon,
-    description: 'Ana sayfa resimli kategori butonları'
-  },
-  {
-    title: 'Pozisyonlu Banner Yönetimi',
-    href: '/protected/positioned-banners',
-    icon: Palette,
-    description: 'Ana sayfa pozisyonlu banner\'ları'
-  },
-  {
-    title: 'Ana Kategori Sayfaları',
-    href: '/protected/category-sections',
-    icon: FolderTree,
-    description: 'Ana kategori sayfası section\'ları'
+    description: 'Ürünleri düzenle'
   },
   {
     title: 'Kategoriler',
@@ -106,6 +60,54 @@ const sidebarItems = [
     href: '/protected/brands',
     icon: Tag,
     description: 'Marka yönetimi'
+  },
+  {
+    title: 'En İyi Markalar',
+    href: '/protected/top-brands',
+    icon: Star,
+    description: 'Top markalar'
+  },
+  {
+    title: 'Hero Banner',
+    href: '/protected/hero-banners',
+    icon: Palette,
+    description: 'Ana hero banner'
+  },
+  {
+    title: 'İkinci Hero Banner',
+    href: '/protected/secondary-hero-banners',
+    icon: Palette,
+    description: 'Slide hero banner'
+  },
+  {
+    title: 'Grid Banner',
+    href: '/protected/grid-banners',
+    icon: ImageIcon,
+    description: 'Grid banner'
+  },
+  {
+    title: 'Pozisyonlu Banner',
+    href: '/protected/positioned-banners',
+    icon: Palette,
+    description: 'Pozisyonlu banner'
+  },
+  {
+    title: 'Hızlı Erişim',
+    href: '/protected/quick-access-buttons',
+    icon: Zap,
+    description: 'Hızlı erişim butonları'
+  },
+  {
+    title: 'Kategori Butonları',
+    href: '/protected/category-image-buttons',
+    icon: ImageIcon,
+    description: 'Resimli kategori butonları'
+  },
+  {
+    title: 'Kategori Sayfaları',
+    href: '/protected/category-sections',
+    icon: FolderTree,
+    description: 'Kategori section\'ları'
   },
   {
     title: 'Siparişler',
@@ -124,12 +126,6 @@ const sidebarItems = [
     href: '/protected/analytics',
     icon: BarChart3,
     description: 'Satış raporları'
-  },
-  {
-    title: 'Tema Ayarları',
-    href: '/protected/theme',
-    icon: Settings,
-    description: 'Site görünüm ayarları'
   },
   {
     title: 'Ayarlar',
@@ -162,10 +158,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Sidebar */}
       <div className={cn(
-        "fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0",
+        "fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">
             Admin Panel
           </h1>
@@ -179,7 +175,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </Button>
         </div>
 
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {sidebarItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -197,14 +193,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 onClick={() => setSidebarOpen(false)}
               >
                 <Icon className={cn(
-                  "h-5 w-5 mr-3",
+                  "h-4 w-4 mr-3 flex-shrink-0",
                   isActive 
                     ? "text-blue-700 dark:text-blue-300" 
                     : "text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-300"
                 )} />
-                <div className="flex-1">
-                  <div className="font-medium">{item.title}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium truncate">{item.title}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                     {item.description}
                   </div>
                 </div>
@@ -213,14 +209,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           })}
         </nav>
 
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-white text-sm font-medium">A</span>
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">Admin</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">admin@example.com</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">Admin</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">admin@example.com</p>
             </div>
           </div>
         </div>
@@ -229,7 +225,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <div className="flex items-center justify-between h-16 px-6">
             <div className="flex items-center space-x-4">
               <Button

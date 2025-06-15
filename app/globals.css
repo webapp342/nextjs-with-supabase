@@ -2,17 +2,32 @@
 
 @font-face {
   font-family: 'Dirooz';
-  src: url('/fonts/Dirooz.ttf') format('truetype');
+  src: url('/fonts/Far_Dinar_Two_Medium.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'Far Yekan';
-  src: url('/fonts/Lalezar-Regular.otf') format('truetype');
+  src: url('/fonts/Far_Dinar_Two_Medium.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
+
+@font-face {
+  font-family: 'Far Akbar';
+  src: url('/fonts/Mj_TV Light_0.ttf') format('truetype');
+  font-weight:normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Lalezar';
+  src: url('/fonts/Far_Dinar_Two_Medium.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
@@ -93,6 +108,14 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+  
+  .font-lalezar {
+    font-family: 'Lalezar', sans-serif;
+  }
+  
+  .font-far-akbar {
+    font-family: 'Far Akbar', sans-serif;
   }
 }
 

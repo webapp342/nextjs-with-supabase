@@ -54,7 +54,7 @@ export default function NewProductsPage() {
     <div className="w-full py-6 px-2">
       {/* Simple Header - RTL aligned */}
       <div className="flex items-center justify-end mb-6 px-0">
-        <h1 className="text-xl font-bold text-right">
+        <h1 className="text-xl text-right font-lalezar">
           جدیدترین محصولات ({toPersianNumber(totalProductCount)} کالا)
         </h1>
       </div>

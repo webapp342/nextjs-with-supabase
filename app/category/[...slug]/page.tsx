@@ -227,7 +227,7 @@ export default function DynamicCategoryPage() {
            
            (کالا &lrm;{toPersianNumber(products.length)})
          </span>
-          <h1 className="text-xl font-bold text-right">
+          <h1 className="text-xl text-right font-lalezar">
             {category.name}
           </h1>
          
@@ -328,7 +328,7 @@ export default function DynamicCategoryPage() {
                       </div>
 
                       {/* Product Name */}
-                      <h3 className="font-medium text-sm mr-0 text-right leading-tight line-clamp-2">
+                      <h3 className="text-sm mr-0 text-right leading-tight line-clamp-2 font-lalezar">
                         {product.name}
                       </h3>
 
@@ -337,19 +337,19 @@ export default function DynamicCategoryPage() {
                         <div className="pt-4">
                           <div className="flex items-center gap-3">
                             {/* Discount Badge */}
-                            <div className="bg-red-500 font-sans text-white text-sm px-2 py-1 rounded">
+                            <div className="bg-red-500 text-white text-sm px-2 py-1 rounded font-far-akbar">
                               {toPersianNumber(discountPercentage)}%
                             </div>
                             
                             {/* Price Stack */}
                             <div className="flex flex-col">
                               {/* Original Price */}
-                              <div className="text-sm text-gray-400 line-through">
-                                <span className="font-sans text-left">{toPersianNumber(product.compare_price!.toLocaleString())}</span>
+                              <div className="text-sm text-gray-400 line-through font-far-akbar">
+                                <span className="text-left">{toPersianNumber(product.compare_price!.toLocaleString())}</span>
                               </div>
                               {/* Sale Price */}
-                              <div className="text-sm font-bold">
-                                <span className="font-sans text-left">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
+                              <div className="text-sm font-bold font-far-akbar">
+                                <span className="text-left">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
                               </div>
                             </div>
                           </div>
@@ -357,8 +357,8 @@ export default function DynamicCategoryPage() {
                       ) : (
                         <div className="pt-4">
                           <div className="flex items-end min-h-[44px]">
-                            <div className="text-sm font-bold">
-                              <span className="font-sans text-left">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
+                            <div className="text-sm font-bold font-far-akbar">
+                              <span className="text-left">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
                             </div>
                           </div>
                         </div>

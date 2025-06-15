@@ -81,10 +81,10 @@ export function BestsellersSection() {
     return (
       <div className="py-8 bg-white">
         <div className="flex items-center justify-between mb-6 px-4">
-        <Link href="/bestsellers" className="text-pink-500 text-sm">
+        <Link href="/bestsellers" className="text-pink-500 text-sm font-lalezar">
             مشاهده همه
           </Link>
-          <h2 className="text-xl font-bold text-right">پرفروش‌ترین‌ها</h2>
+          <h2 className="text-xl text-right font-lalezar">پرفروش‌ترین‌ها</h2>
         </div>
         <div className="flex gap-4 px-4 overflow-x-auto">
           {[...Array(4)].map((_, i) => (
@@ -107,10 +107,10 @@ export function BestsellersSection() {
     <div className="py-8 bg-white">
       {/* Section Header */}
       <div className="flex items-center justify-between mb-6 px-4">
-        <Link href="/tags/bestseller" className="text-pink-500 text-sm hover:text-pink-600">
+        <Link href="/tags/bestseller" className="text-pink-500 text-sm hover:text-pink-600 font-lalezar">
           مشاهده همه
         </Link>
-        <h2 className="text-xl font-bold text-right">پرفروش‌ترین‌ها</h2>
+        <h2 className="text-xl text-right font-lalezar">پرفروش‌ترین‌ها</h2>
       </div>
 
       {/* Horizontal Scroll Products */}

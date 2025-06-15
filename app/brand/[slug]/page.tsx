@@ -141,7 +141,7 @@ export default function BrandPage() {
     <div className="w-full py-6 px-2 ">
       {/* Simple Brand Header - RTL aligned */}
       <div className="flex items-center justify-end mb-6 px-0 ">
-        <h1 className="text-xl font-bold text-right">
+        <h1 className="text-xl text-right font-lalezar">
           {brand.name} ({toPersianNumber(totalProductCount)} کالا)
         </h1>
       </div>

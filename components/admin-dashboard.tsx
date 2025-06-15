@@ -10,7 +10,8 @@ import {
   ArrowUpRight,
   Activity,
   Image as ImageIcon,
-  Tag
+  Tag,
+  Star
 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -130,6 +131,13 @@ export function AdminDashboard() {
       href: '/protected/banners',
       icon: ImageIcon,
       color: 'bg-green-500'
+    },
+    {
+      title: 'En İyi Markalar',
+      description: 'Top markalar yönetimi',
+      href: '/protected/top-brands',
+      icon: Star,
+      color: 'bg-yellow-500'
     },
     {
       title: 'Kategori Ekle',

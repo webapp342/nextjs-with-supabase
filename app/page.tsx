@@ -1,4 +1,3 @@
-
 import { BestsellersSection } from "@/components/bestsellers-section";
 import { RecommendedSection } from "@/components/recommended-section";
 import { NewProductsSection } from "@/components/new-products-section";
@@ -9,6 +8,7 @@ import { CategoryImageButtons } from "@/components/category-image-buttons";
 import { PositionedBanners } from "@/components/positioned-banners";
 import SecondaryHeroBanners from "@/components/secondary-hero-banners";
 import GridBanners from "@/components/grid-banners";
+import { TopBrands } from "@/components/top-brands";
 
 export default function Home() {
   return (
@@ -59,6 +59,11 @@ export default function Home() {
       <div className="w-full px-4 py-6 space-y-4">
         <PositionedBanners position="home_bottom_1" />
         <PositionedBanners position="home_bottom_2" />
+      </div>
+
+      {/* 11. Top Brands Section */}
+      <div className="w-full">
+        <TopBrands />
       </div>
 
       {/* Footer */}

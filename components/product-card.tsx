@@ -50,7 +50,7 @@ export function ProductCard({
       padding: 'p-3',
       text: 'text-xs',
       title: 'text-xs',
-      price: 'text-xs'
+      price: 'text-sm'
     },
     md: {
       container: 'min-w-[200px] max-w-[200px]',
@@ -58,7 +58,7 @@ export function ProductCard({
       padding: 'p-4',
       text: 'text-xs',
       title: 'text-sm',
-      price: 'text-sm'
+      price: 'text-lg'
     },
     lg: {
       container: 'min-w-[240px] max-w-[240px]',
@@ -128,7 +128,7 @@ export function ProductCard({
       <div className={cn(config.padding, "space-y-2")}>
         {/* Brand */}
         {brandName && (
-          <div className={cn(config.text, "text-gray-400 text-right font-medium")}>
+          <div className={cn(config.text, "text-gray-400 text-right font-lalezar")}>
             {brandName}
           </div>
         )}
@@ -136,7 +136,7 @@ export function ProductCard({
         {/* Product Name - Fixed RTL text truncation */}
         <h3 className={cn(
           config.title,
-          "font-medium text-right leading-[1.3] text-gray-800"
+          "text-right leading-[1.3] text-gray-800 font-lalezar"
         )}
         style={{
           display: '-webkit-box',
@@ -157,19 +157,19 @@ export function ProductCard({
           <div className="pt-4">
             <div className="flex items-center gap-3">
               {/* Discount Badge */}
-              <div className="bg-red-500 text-white text-xs px-2 py-1 rounded font-bold">
+              <div className="bg-red-500 text-white text-sm px-2 py-1 rounded font-far-akbar">
                 {toPersianNumber(discountPercentage)}%
               </div>
               
               {/* Price Stack */}
               <div className="flex flex-col">
                 {/* Original Price - no symbol */}
-                <div className="text-xs text-gray-400 line-through">
-                  <span className="font-sans text-left">{toPersianNumber(product.compare_price!.toLocaleString())}</span>
+                <div className="text-sm text-gray-400 line-through font-far-akbar">
+                  <span className="text-left">{toPersianNumber(product.compare_price!.toLocaleString())}</span>
                 </div>
                 {/* Sale Price - symbol on left with &lrm; */}
-                <div className={cn(config.price, "font-bold")}>
-                  <span className="font-sans text-left">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
+                <div className={cn(config.price, "font-bold font-far-akbar")}>
+                  <span className="text-left">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
                 </div>
               </div>
             </div>
@@ -177,8 +177,8 @@ export function ProductCard({
         ) : (
           <div className="pt-4">
             <div className="flex items-end min-h-[44px]">
-              <div className={cn(config.price, "font-bold")}>
-                <span className="font-sans text-left">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
+              <div className={cn(config.price, "font-bold font-far-akbar")}>
+                <span className="text-left">؋ &lrm;{toPersianNumber(product.price.toLocaleString())}</span>
               </div>
             </div>
           </div>

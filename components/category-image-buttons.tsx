@@ -97,7 +97,7 @@ export function CategoryImageButtons() {
   return (
     <div className="w-full py-4 px-4 bg-white">
       <div 
-        className="flex items-center overflow-x-auto scrollbar-hide gap-4 pb-2"
+        className="flex items-start overflow-x-auto scrollbar-hide gap-4 pb-2"
         style={{
           direction: 'rtl',
           scrollBehavior: 'smooth'
@@ -107,7 +107,7 @@ export function CategoryImageButtons() {
           <Link
             key={button.id}
             href={button.link_url}
-            className="flex flex-col items-center gap-2 flex-shrink-0 min-w-[80px]"
+            className="flex flex-col items-center gap-3 flex-shrink-0 min-w-[80px] max-w-[80px]"
             style={{ direction: 'ltr' }}
           >
             <div className="relative w-16 h-16 rounded-full overflow-hidden bg-pink-50 border-2 border-pink-200 hover:border-pink-300 transition-colors duration-200">
@@ -119,9 +119,11 @@ export function CategoryImageButtons() {
                 unoptimized
               />
             </div>
-            <span className="text-xs text-center text-gray-700 font-medium leading-tight w-[80px] break-words hyphens-auto min-h-[32px] flex items-center justify-center">
-              {button.title}
-            </span>
+            <div className="w-full h-8 flex items-center justify-center">
+              <span className="font-lalezar text-xs text-center text-gray-700 leading-tight break-words hyphens-auto">
+                {button.title}
+              </span>
+            </div>
           </Link>
         ))}
       </div>
