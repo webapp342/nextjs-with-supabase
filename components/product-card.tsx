@@ -18,6 +18,7 @@ interface Product {
   is_recommended?: boolean;
   is_new?: boolean;
   sales_count?: number;
+  [key: string]: any; // Allow other properties
 }
 
 interface ProductCardProps {

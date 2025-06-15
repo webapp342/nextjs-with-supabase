@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { ProductCard } from '@/components/product-card';
 
-interface Product {
+interface ProductFromRPC {
   id: string;
   name: string;
   description: string;
@@ -13,12 +13,16 @@ interface Product {
   compare_price?: number;
   image_urls: string[];
   brand: string;
-  brand_name?: string;
+  brand_id: string;
   sales_count: number;
 }
 
+interface ProductWithBrand extends ProductFromRPC {
+  brand_name?: string;
+}
+
 export function BestsellersSection() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductWithBrand[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
@@ -48,9 +52,8 @@ export function BestsellersSection() {
         return;
       }
 
-      // Brand bilgilerini ayrı olarak getir
       const productsWithBrands = await Promise.all(
-        (data || []).map(async (product) => {
+        (data || []).map(async (product: ProductFromRPC) => {
           if (product.brand_id) {
             const { data: brandData } = await supabase
               .from('brands')
@@ -70,7 +73,7 @@ export function BestsellersSection() {
         })
       );
 
-      setProducts(productsWithBrands || []);
+      setProducts(productsWithBrands);
       setLoading(false);
     };
 
