@@ -12,40 +12,116 @@ export async function POST(request: NextRequest) {
     const webhookData = JSON.parse(body);
     console.log('Parsed SUCCESS webhook data:', webhookData);
 
-    const { payment_id, order_id: tempOrderRef, transaction_id } = webhookData;
+    // 🔧 FIXED: Extract data from HesabPay's actual payload format
+    const { 
+      status_code, 
+      success, 
+      message,
+      transaction_id, 
+      amount, 
+      email, 
+      items: webhookItems,
+      timestamp,
+      signature 
+    } = webhookData;
 
-    if (!tempOrderRef) {
-      console.error('Missing temp order reference in SUCCESS webhook');
+    console.log('🎯 HesabPay webhook data extracted:', {
+      status_code,
+      success,
+      transaction_id,
+      amount,
+      email,
+      items_count: webhookItems?.length || 0,
+      timestamp
+    });
+
+    // Validate required fields from HesabPay
+    if (!transaction_id || !email || amount === undefined) {
+      console.error('❌ Missing required fields in HesabPay webhook:', {
+        has_transaction_id: !!transaction_id,
+        has_email: !!email,
+        has_amount: amount !== undefined
+      });
       return NextResponse.json(
-        { error: 'Missing order reference' },
+        { error: 'Missing required webhook data' },
+        { status: 400 }
+      );
+    }
+
+    // Check success status
+    if (status_code !== 10 || !success) {
+      console.error('❌ Payment not successful according to HesabPay:', {
+        status_code,
+        success,
+        message
+      });
+      return NextResponse.json(
+        { error: 'Payment not successful' },
         { status: 400 }
       );
     }
 
     const supabase = await createClient();
 
-    // Get the temporary order data
-    const { data: tempOrder, error: tempOrderError } = await supabase
+    console.log('🔍 Searching for temp order with criteria:', {
+      email,
+      amount,
+      webhook_items_count: webhookItems?.length || 0
+    });
+
+    // 🔧 FIXED: Find temp order by email, amount, and recent timestamp
+    // Since HesabPay doesn't send back order_id, we need to match by other criteria
+    const timeThreshold = new Date();
+    timeThreshold.setHours(timeThreshold.getHours() - 1); // Look for orders from last hour
+
+    const { data: tempOrders, error: tempOrderError } = await supabase
       .from('temp_orders')
       .select('*')
-      .eq('temp_order_ref', tempOrderRef)
-      .single();
+      .eq('customer_email', email)
+      .eq('total_amount', amount)
+      .gte('created_at', timeThreshold.toISOString())
+      .order('created_at', { ascending: false });
 
-    if (tempOrderError || !tempOrder) {
-      console.error('Temporary order not found:', tempOrderRef, tempOrderError);
+    if (tempOrderError) {
+      console.error('❌ Error searching for temp orders:', tempOrderError);
       return NextResponse.json(
-        { error: 'Temporary order not found' },
+        { error: 'Database query failed' },
+        { status: 500 }
+      );
+    }
+
+    if (!tempOrders || tempOrders.length === 0) {
+      console.error('❌ No matching temp orders found:', {
+        email,
+        amount,
+        search_timeframe: 'last 1 hour',
+        webhook_transaction_id: transaction_id
+      });
+      return NextResponse.json(
+        { error: 'Matching temporary order not found' },
         { status: 404 }
       );
     }
 
-    console.log('Temporary order found:', {
+    // If multiple temp orders found, try to find the best match
+    let tempOrder = tempOrders[0]; // Default to most recent
+    
+    if (tempOrders.length > 1) {
+      console.log(`⚠️ Multiple temp orders found (${tempOrders.length}), selecting most recent one`);
+      // In the future, we could add more sophisticated matching logic here
+      // For now, we take the most recent one
+    }
+
+    console.log('✅ Temporary order found:', {
       id: tempOrder.id,
+      temp_order_ref: tempOrder.temp_order_ref,
       user_id: tempOrder.user_id ? `${tempOrder.user_id.substring(0, 8)}...` : 'null (guest)',
       has_cart_data: !!tempOrder.cart_data,
       has_shipping_address: !!tempOrder.shipping_address,
       has_legacy_items: !!tempOrder.items,
-      has_legacy_shipping: !!tempOrder.shipping_info
+      has_legacy_shipping: !!tempOrder.shipping_info,
+      created_at: tempOrder.created_at,
+      matched_criteria: { email, amount }
     });
 
     // Determine which data format to use (prefer new format)
@@ -152,7 +228,7 @@ export async function POST(request: NextRequest) {
       payment_status: 'paid',
       payment_method: 'hesab_gateway',
       customer_notes: tempOrder.customer_notes || '',
-      admin_notes: `Payment completed successfully via Hesab.com - Payment ID: ${payment_id}${transaction_id ? ` - Transaction ID: ${transaction_id}` : ''}`
+      admin_notes: `Payment completed successfully via Hesab.com - Payment ID: ${transaction_id}`
     };
 
     console.log('Creating order with data:', {
@@ -160,8 +236,7 @@ export async function POST(request: NextRequest) {
       user_id: tempOrder.user_id ? `${tempOrder.user_id.substring(0, 8)}...` : 'null (guest)',
       total_amount: tempOrder.total_amount,
       items_count: orderItems.length,
-      payment_id: payment_id,
-      transaction_id: transaction_id
+      payment_id: transaction_id
     });
 
     const { data: order, error: orderError } = await supabase
@@ -261,7 +336,7 @@ export async function POST(request: NextRequest) {
       console.log('Temporary order cleaned up successfully');
     }
 
-    console.log(`SUCCESS: Order ${order.id} (${order.order_number}) created successfully from temp order ${tempOrderRef} - Payment ID: ${payment_id}`);
+    console.log(`SUCCESS: Order ${order.id} (${order.order_number}) created successfully from temp order ${tempOrder.temp_order_ref} - Payment ID: ${transaction_id}`);
 
     return NextResponse.json({ 
       success: true,
