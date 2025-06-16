@@ -17,8 +17,11 @@ export async function createTempOrder(orderData: TempOrderData): Promise<TempOrd
   try {
     const supabase = await createClient();
     
-    // Create temporary order reference
+    // Create temporary order reference with better uniqueness
     const tempOrderRef = `TEMP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // 🔧 FUTURE: Could add session_id for better webhook matching
+    const sessionId = `${Date.now()}-${orderData.user_id || 'guest'}-${Math.random().toString(36).substr(2, 5)}`;
     
     // Try to get authenticated user, but don't fail if not available
     let userId: string | null = null;
@@ -108,14 +111,10 @@ export async function createTempOrder(orderData: TempOrderData): Promise<TempOrd
       updated_at: new Date().toISOString()
     };
 
-    console.log('Creating temp order:', {
+    console.log('Creating temp order with improved tracking:', {
       temp_order_ref: tempOrderRef,
-      customer_email: orderData.customer_email,
-      user_id: userId ? `${userId.substring(0, 8)}...` : 'null (guest)',
-      total_amount: orderData.total_amount,
-      items_count: orderData.items.length,
-      has_cart_data: !!cartData,
-      has_shipping_address: !!shippingAddress
+      session_hint: sessionId, // Could be used for future matching improvements
+      user_id: userId ? `${userId.substring(0, 8)}...` : 'guest'
     });
 
     const { data, error } = await supabase

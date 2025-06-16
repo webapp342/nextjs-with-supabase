@@ -95,10 +95,9 @@ export async function POST(request: NextRequest) {
       webhook_items_count: webhookItems?.length || 0
     });
 
-    // 🔧 FIXED: Find temp order by email, amount, and recent timestamp
-    // Since HesabPay doesn't send back order_id, we need to match by other criteria
+    // 🔧 IMPROVED: More precise temp order matching
     const timeThreshold = new Date();
-    timeThreshold.setHours(timeThreshold.getHours() - 1); // Look for orders from last hour
+    timeThreshold.setMinutes(timeThreshold.getMinutes() - 10); // Reduced from 1 hour to 10 minutes
 
     const { data: tempOrders, error: tempOrderError } = await supabase
       .from('temp_orders')
@@ -106,7 +105,8 @@ export async function POST(request: NextRequest) {
       .eq('customer_email', email)
       .eq('total_amount', amount)
       .gte('created_at', timeThreshold.toISOString())
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(3); // Limit to reduce database load
 
     if (tempOrderError) {
       console.error('❌ Error searching for temp orders:', tempOrderError);
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
       console.error('❌ No matching temp orders found:', {
         email,
         amount,
-        search_timeframe: 'last 1 hour',
+        search_timeframe: 'last 10 minutes',
         webhook_transaction_id: transaction_id
       });
       return NextResponse.json(
@@ -129,13 +129,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // If multiple temp orders found, try to find the best match
-    let tempOrder = tempOrders[0]; // Default to most recent
+    // If multiple temp orders found, select the most recent one and warn
+    let tempOrder = tempOrders[0]; // Most recent
     
     if (tempOrders.length > 1) {
-      console.log(`⚠️ Multiple temp orders found (${tempOrders.length}), selecting most recent one`);
-      // In the future, we could add more sophisticated matching logic here
-      // For now, we take the most recent one
+      console.warn(`⚠️ Multiple temp orders found (${tempOrders.length}) for same email/amount:`, {
+        selected_order: {
+          id: tempOrder.id,
+          ref: tempOrder.temp_order_ref,
+          created_at: tempOrder.created_at
+        },
+        all_orders: tempOrders.map(order => ({
+          id: order.id,
+          ref: order.temp_order_ref,
+          created_at: order.created_at
+        })),
+        recommendation: 'Consider implementing more specific matching or cleaning up old temp orders'
+      });
     }
 
     console.log('✅ Temporary order found:', {
@@ -402,6 +412,27 @@ export async function POST(request: NextRequest) {
       // Don't fail the process for cleanup issues
     } else {
       console.log('Temporary order cleaned up successfully');
+    }
+
+    // 🔧 ADDED: Clean up old temp orders for this user to prevent accumulation
+    if (tempOrders.length > 1) {
+      console.log('🧹 Cleaning up old temp orders to prevent future conflicts...');
+      
+      // Delete other temp orders for this email from the last day (excluding the one we just used)
+      const oldOrderIds = tempOrders.slice(1).map(order => order.id); // Skip the first (used) order
+      
+      if (oldOrderIds.length > 0) {
+        const { error: cleanupError } = await supabase
+          .from('temp_orders')
+          .delete()
+          .in('id', oldOrderIds);
+
+        if (cleanupError) {
+          console.error('Failed to cleanup old temp orders:', cleanupError);
+        } else {
+          console.log(`✅ Cleaned up ${oldOrderIds.length} old temp orders`);
+        }
+      }
     }
 
     console.log(`SUCCESS: Order ${order.id} (${order.order_number}) created successfully from temp order ${tempOrder.temp_order_ref} - Payment ID: ${transaction_id}`);
