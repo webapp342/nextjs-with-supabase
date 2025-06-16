@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Check } from 'lucide-react';
+import { Plus, Check, ArrowRight, MapPin, User, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -90,159 +90,202 @@ export function AddressFormClient({ initialAddresses, cart }: AddressFormClientP
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      {/* Address Selection */}
-      <div className="lg:col-span-2">
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className="p-6 border-b">
-            <h2 className="text-lg font-medium text-right">انتخاب آدرس تحویل</h2>
+    <div className="min-h-screen bg-pink-50" dir="rtl">
+      {/* Main Content */}
+      <div className="pb-32"> {/* Bottom padding for fixed checkout */}
+        <div className="px-4 py-6">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <button 
+              onClick={() => router.back()}
+              className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm"
+            >
+              <ArrowRight className="w-5 h-5 text-gray-600" />
+            </button>
+            <h1 className="text-xl font-bold text-gray-800">آدرس تحویل</h1>
+            <div className="w-10"></div> {/* Spacer */}
           </div>
-          
-          <div className="p-6 space-y-4">
+
+          {/* Progress Steps */}
+          <div className="flex items-center justify-center mb-8">
+            <div className="flex items-center gap-4">
+              {/* Step 1 - Cart */}
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-sm text-gray-600 hidden sm:block">سبد خرید</span>
+              </div>
+              
+              <div className="w-8 h-px bg-pink-300"></div>
+              
+              {/* Step 2 - Address */}
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-bold">2</span>
+                </div>
+                <span className="text-sm font-medium text-gray-800 hidden sm:block">آدرس</span>
+              </div>
+              
+              <div className="w-8 h-px bg-gray-300"></div>
+              
+              {/* Step 3 - Payment */}
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                  <span className="text-gray-600 text-sm font-bold">3</span>
+                </div>
+                <span className="text-sm text-gray-500 hidden sm:block">پرداخت</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Address Selection */}
+          <div className="space-y-4">
             {/* Existing Addresses */}
             {addresses.map((address) => (
               <div
                 key={address.id}
-                className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                className={`bg-white rounded-2xl p-4 shadow-sm cursor-pointer transition-all ${
                   selectedAddressId === address.id
-                    ? 'border-pink-500 bg-pink-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-2 border-pink-500 bg-pink-50'
+                    : 'border border-gray-100'
                 }`}
                 onClick={() => setSelectedAddressId(address.id)}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 text-right">
+                <div className="flex items-start gap-4">
+                  {/* Selection Indicator */}
+                  <div className="flex-shrink-0 mt-1">
+                    {selectedAddressId === address.id ? (
+                      <div className="w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center">
+                        <Check className="w-4 h-4 text-white" />
+                      </div>
+                    ) : (
+                      <div className="w-6 h-6 border-2 border-gray-300 rounded-full"></div>
+                    )}
+                  </div>
+
+                  {/* Address Details */}
+                  <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-medium">{address.full_name}</h3>
+                      <User className="w-4 h-4 text-gray-500" />
+                      <h3 className="font-semibold text-gray-800">{address.full_name}</h3>
                       {address.is_default && (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
                           پیش‌فرض
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-600 mb-1">{address.phone_number}</p>
-                    <p className="text-sm text-gray-600">
-                      {address.address_line_1}
-                      {address.address_line_2 && `, ${address.address_line_2}`}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {address.city}, {address.state} {address.zip_code}
-                    </p>
-                    <p className="text-sm text-gray-600">{address.country}</p>
-                  </div>
-                  
-                  <div className="flex-shrink-0">
-                    {selectedAddressId === address.id ? (
-                      <div className="w-5 h-5 bg-pink-500 rounded-full flex items-center justify-center">
-                        <Check className="w-3 h-3 text-white" />
+                    
+                    <div className="flex items-center gap-2 mb-2">
+                      <Phone className="w-4 h-4 text-gray-500" />
+                      <p className="text-gray-600">{address.phone_number}</p>
+                    </div>
+                    
+                    <div className="flex items-start gap-2">
+                      <MapPin className="w-4 h-4 text-gray-500 mt-0.5" />
+                      <div className="text-gray-600">
+                        <p className="leading-relaxed">
+                          {address.address_line_1}
+                          {address.address_line_2 && `, ${address.address_line_2}`}
+                        </p>
+                        <p className="text-sm">
+                          {address.city}, {address.state} {address.zip_code}
+                        </p>
                       </div>
-                    ) : (
-                      <div className="w-5 h-5 border-2 border-gray-300 rounded-full"></div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
             ))}
 
-            {/* Add New Address Button */}
+            {/* Add New Address */}
             {!showNewAddressForm && (
               <button
                 onClick={() => setShowNewAddressForm(true)}
-                className="w-full border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors"
+                className="w-full bg-white border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:border-pink-300 hover:bg-pink-50 transition-all"
               >
-                <Plus className="mx-auto h-6 w-6 text-gray-400 mb-2" />
-                <span className="text-gray-600">افزودن آدرس جدید</span>
+                <Plus className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                <span className="text-gray-600 font-medium">افزودن آدرس جدید</span>
               </button>
             )}
 
             {/* New Address Form */}
             {showNewAddressForm && (
-              <div className="border rounded-lg p-6 bg-gray-50">
-                <h3 className="text-lg font-medium text-right mb-4">آدرس جدید</h3>
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-bold text-gray-800">آدرس جدید</h3>
+                  <button
+                    onClick={() => setShowNewAddressForm(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
+                </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <div>
-                    <Label htmlFor="full_name" className="text-right block mb-2">نام و نام خانوادگی</Label>
+                    <Label htmlFor="full_name" className="text-gray-700 font-medium mb-2 block">نام و نام خانوادگی</Label>
                     <Input
                       id="full_name"
                       value={formData.full_name}
                       onChange={(e) => handleInputChange('full_name', e.target.value)}
-                      className="text-right"
+                      className="bg-gray-50 border-gray-200 rounded-xl text-right"
                       placeholder="نام کامل خود را وارد کنید"
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="phone_number" className="text-right block mb-2">شماره تلفن</Label>
+                    <Label htmlFor="phone_number" className="text-gray-700 font-medium mb-2 block">شماره تلفن</Label>
                     <Input
                       id="phone_number"
                       value={formData.phone_number}
                       onChange={(e) => handleInputChange('phone_number', e.target.value)}
-                      className="text-right"
+                      className="bg-gray-50 border-gray-200 rounded-xl text-right"
                       placeholder="شماره تلفن همراه"
                     />
                   </div>
                   
-                  <div className="md:col-span-2">
-                    <Label htmlFor="address_line_1" className="text-right block mb-2">آدرس</Label>
+                  <div>
+                    <Label htmlFor="address_line_1" className="text-gray-700 font-medium mb-2 block">آدرس کامل</Label>
                     <Input
                       id="address_line_1"
                       value={formData.address_line_1}
                       onChange={(e) => handleInputChange('address_line_1', e.target.value)}
-                      className="text-right"
-                      placeholder="آدرس کامل"
+                      className="bg-gray-50 border-gray-200 rounded-xl text-right"
+                      placeholder="آدرس کامل محل سکونت"
                     />
                   </div>
-                  
-                  <div>
-                    <Label htmlFor="city" className="text-right block mb-2">شهر</Label>
-                    <Input
-                      id="city"
-                      value={formData.city}
-                      onChange={(e) => handleInputChange('city', e.target.value)}
-                      className="text-right"
-                      placeholder="نام شهر"
-                    />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="city" className="text-gray-700 font-medium mb-2 block">شهر</Label>
+                      <Input
+                        id="city"
+                        value={formData.city}
+                        onChange={(e) => handleInputChange('city', e.target.value)}
+                        className="bg-gray-50 border-gray-200 rounded-xl text-right"
+                        placeholder="شهر"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="state" className="text-gray-700 font-medium mb-2 block">استان</Label>
+                      <Input
+                        id="state"
+                        value={formData.state}
+                        onChange={(e) => handleInputChange('state', e.target.value)}
+                        className="bg-gray-50 border-gray-200 rounded-xl text-right"
+                        placeholder="استان"
+                      />
+                    </div>
                   </div>
-                  
-                  <div>
-                    <Label htmlFor="zip_code" className="text-right block mb-2">کد پستی</Label>
-                    <Input
-                      id="zip_code"
-                      value={formData.zip_code}
-                      onChange={(e) => handleInputChange('zip_code', e.target.value)}
-                      className="text-right"
-                      placeholder="کد پستی"
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2 mt-4">
-                  <input
-                    type="checkbox"
-                    id="is_default"
-                    checked={formData.is_default}
-                    onChange={(e) => handleInputChange('is_default', e.target.checked)}
-                    className="rounded"
-                  />
-                  <Label htmlFor="is_default" className="text-sm">
-                    به عنوان آدرس پیش‌فرض ذخیره شود
-                  </Label>
-                </div>
-                
-                <div className="flex gap-3 mt-6">
+
                   <Button
                     onClick={saveNewAddress}
-                    disabled={loading || !formData.full_name || !formData.phone_number || !formData.address_line_1 || !formData.city}
-                    className="bg-pink-500 hover:bg-pink-600 text-white"
+                    disabled={loading || !formData.full_name || !formData.phone_number || !formData.address_line_1}
+                    className="w-full bg-pink-500 hover:bg-pink-600 text-white py-3 rounded-xl font-semibold"
                   >
                     {loading ? 'در حال ذخیره...' : 'ذخیره آدرس'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowNewAddressForm(false)}
-                  >
-                    انصراف
                   </Button>
                 </div>
               </div>
@@ -251,47 +294,30 @@ export function AddressFormClient({ initialAddresses, cart }: AddressFormClientP
         </div>
       </div>
 
-      {/* Order Summary */}
-      <div className="lg:col-span-1">
-        <div className="bg-white rounded-lg shadow-sm border sticky top-4">
-          <div className="p-6 border-b">
-            <h2 className="text-lg font-medium text-right">خلاصه سفارش</h2>
+      {/* Fixed Bottom Checkout Section */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-lg">
+        <div className="max-w-md mx-auto">
+          {/* Total Amount */}
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-lg font-medium text-gray-700">مجموع قیمت</span>
+            <span className="text-2xl font-bold text-gray-900">
+              ؋ {toPersianNumber(cart.total_amount.toLocaleString())}
+            </span>
           </div>
-          
-          <div className="p-6 space-y-4">
-            <div className="flex justify-between text-sm">
-              <span>قیمت کالاها ({toPersianNumber(cart.total_items)})</span>
-              <span>{toPersianNumber(cart.total_amount.toLocaleString())} ؋</span>
-            </div>
-            
-            <div className="flex justify-between text-sm">
-              <span>هزینه ارسال</span>
-              <span className="text-green-600">رایگان</span>
-            </div>
-            
-            <div className="border-t pt-4">
-              <div className="flex justify-between font-medium">
-                <span>مجموع</span>
-                <span className="text-lg">{toPersianNumber(cart.total_amount.toLocaleString())} ؋</span>
+
+          {/* Continue Button */}
+          <Button 
+            className="w-full bg-pink-500 hover:bg-pink-600 text-white py-4 text-lg font-semibold rounded-2xl shadow-lg"
+            onClick={proceedToPayment}
+            disabled={!selectedAddressId}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <span>ادامه به پرداخت</span>
+              <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <ArrowRight className="w-4 h-4 rotate-180" />
               </div>
             </div>
-            
-            <Button 
-              className="w-full bg-pink-500 hover:bg-pink-600 text-white mt-6"
-              onClick={proceedToPayment}
-              disabled={!selectedAddressId}
-            >
-              ادامه به پرداخت
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={() => router.push('/cart')}
-            >
-              بازگشت به سبد خرید
-            </Button>
-          </div>
+          </Button>
         </div>
       </div>
     </div>

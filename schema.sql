@@ -345,6 +345,7 @@ CREATE TABLE public.products (
   product_type_id uuid,
   is_recommended boolean DEFAULT false,
   is_new boolean DEFAULT false,
+  stock_tracking_link text,
   CONSTRAINT products_pkey PRIMARY KEY (id),
   CONSTRAINT products_product_type_id_fkey FOREIGN KEY (product_type_id) REFERENCES public.product_types(id),
   CONSTRAINT products_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
