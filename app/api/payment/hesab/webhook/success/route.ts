@@ -211,12 +211,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 🔧 FIXED: Handle missing user_id (guest checkout issue)
+    if (!tempOrder.user_id) {
+      console.error('❌ Guest checkout not supported - user_id is required for simple_orders table:', {
+        temp_order_id: tempOrder.id,
+        temp_order_ref: tempOrder.temp_order_ref,
+        customer_email: tempOrder.customer_email
+      });
+      return NextResponse.json(
+        { error: 'Guest checkout is not supported - user authentication required' },
+        { status: 400 }
+      );
+    }
+
     // Create the actual order
     const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     
     // Prepare order data - handle missing fields gracefully
     const orderData = {
-      user_id: tempOrder.user_id,
+      user_id: tempOrder.user_id, // Now guaranteed to exist
       order_number: orderNumber,
       status: 'confirmed',
       subtotal: tempOrder.total_amount,
@@ -227,7 +240,7 @@ export async function POST(request: NextRequest) {
       payment_status: 'paid',
       payment_method: 'hesab_gateway',
       customer_notes: tempOrder.customer_notes || '',
-      admin_notes: `Payment completed successfully via Hesab.com - Payment ID: ${transaction_id}`
+      admin_notes: `Payment completed successfully via Hesab.com - Transaction ID: ${transaction_id}`
     };
 
     console.log('Creating order with data:', {
@@ -238,6 +251,22 @@ export async function POST(request: NextRequest) {
       payment_id: transaction_id
     });
 
+    // 🔧 ADDED: Detailed logging of order data before creation
+    console.log('📊 Full order data being inserted:', {
+      user_id: tempOrder.user_id,
+      order_number: orderNumber,
+      status: 'confirmed',
+      subtotal: tempOrder.total_amount,
+      shipping_cost: 0,
+      tax_amount: 0,
+      total_amount: tempOrder.total_amount,
+      shipping_address: JSON.stringify(shippingAddress, null, 2),
+      payment_status: 'paid',
+      payment_method: 'hesab_gateway',
+      customer_notes: tempOrder.customer_notes || '',
+      admin_notes: `Payment completed successfully via Hesab.com - Transaction ID: ${transaction_id}`
+    });
+
     const { data: order, error: orderError } = await supabase
       .from('simple_orders')
       .insert([orderData])
@@ -245,9 +274,22 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (orderError) {
-      console.error('Failed to create actual order:', orderError);
+      console.error('❌ Failed to create actual order - DETAILED ERROR:', {
+        error: orderError,
+        error_message: orderError.message,
+        error_details: orderError.details,
+        error_hint: orderError.hint,
+        error_code: orderError.code,
+        order_data_summary: {
+          user_id: orderData.user_id,
+          order_number: orderData.order_number,
+          total_amount: orderData.total_amount,
+          shipping_address_type: typeof orderData.shipping_address,
+          shipping_address_keys: orderData.shipping_address ? Object.keys(orderData.shipping_address) : null
+        }
+      });
       return NextResponse.json(
-        { error: 'Failed to create order' },
+        { error: 'Failed to create order', details: orderError.message },
         { status: 500 }
       );
     }
