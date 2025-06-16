@@ -52,11 +52,21 @@ export async function POST(request: NextRequest) {
     
     console.log('Converted items for Hesab:', hesabItems);
 
-    // Create Hesab payment session
-    const paymentResult = await createHesabPayment({
+    // Create Hesab payment session with temp order reference
+    const paymentData: any = {
       items: hesabItems,
       email: customer_email
-    });
+    };
+
+    // Add temp order reference if available
+    if (tempOrderResult.temp_order_id) {
+      paymentData.order_id = tempOrderResult.temp_order_id;
+      console.log('Including temp order reference in HesabPay request:', tempOrderResult.temp_order_id);
+    } else {
+      console.warn('No temp order ID available to pass to HesabPay - webhook tracking may fail');
+    }
+
+    const paymentResult = await createHesabPayment(paymentData);
 
     console.log('Hesab payment result:', paymentResult);
 

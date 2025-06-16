@@ -16,6 +16,7 @@ export interface HesabPaymentItem {
 export interface HesabPaymentRequest {
   items: HesabPaymentItem[];
   email: string;
+  order_id?: string; // ADD: Order reference for webhook tracking
 }
 
 export interface HesabPaymentResponse {
@@ -24,6 +25,7 @@ export interface HesabPaymentResponse {
   session_id?: string;
   message?: string;
   error?: string;
+  temp_order_id?: string; // ADD: To pass temp order reference back
 }
 
 export interface HesabWebhookPayload {
@@ -41,7 +43,10 @@ export async function createHesabPayment(paymentData: HesabPaymentRequest): Prom
   try {
     console.log('Creating Hesab payment session with official API structure');
     console.log('Endpoint:', HESAB_API_ENDPOINT);
-    console.log('Payment data:', paymentData);
+    console.log('Payment data:', {
+      ...paymentData,
+      order_id: paymentData.order_id ? `${paymentData.order_id.substring(0, 10)}...` : 'not provided'
+    });
 
     const headers = {
       'Authorization': `API-KEY ${HESAB_API_KEY}`,
@@ -51,7 +56,9 @@ export async function createHesabPayment(paymentData: HesabPaymentRequest): Prom
 
     const payload = {
       items: paymentData.items,
-      email: paymentData.email
+      email: paymentData.email,
+      // ADD: Include order_id if provided (this is the temp order reference)
+      ...(paymentData.order_id && { order_id: paymentData.order_id })
     };
 
     console.log('Request headers:', {
@@ -59,7 +66,10 @@ export async function createHesabPayment(paymentData: HesabPaymentRequest): Prom
       'accept': 'application/json',
       'Content-Type': 'application/json'
     });
-    console.log('Request payload:', payload);
+    console.log('Request payload:', {
+      ...payload,
+      order_id: payload.order_id ? `${payload.order_id.substring(0, 10)}...` : 'not included'
+    });
 
     const response = await fetch(HESAB_API_ENDPOINT, {
       method: 'POST',
@@ -100,7 +110,8 @@ export async function createHesabPayment(paymentData: HesabPaymentRequest): Prom
         success: true,
         payment_url: result.payment_url || result.checkout_url || result.url,
         session_id: result.session_id || result.id,
-        message: result.message || 'Payment session created successfully'
+        message: result.message || 'Payment session created successfully',
+        temp_order_id: result.temp_order_id || result.id
       };
     } else {
       console.error('API Error Response:', result);
