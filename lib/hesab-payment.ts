@@ -39,14 +39,26 @@ export interface HesabWebhookPayload {
 }
 
 // Create payment session using official API structure
-export async function createHesabPayment(paymentData: HesabPaymentRequest): Promise<HesabPaymentResponse> {
+export async function createHesabPayment(data: HesabPaymentRequest): Promise<HesabPaymentResponse> {
   try {
     console.log('Creating Hesab payment session with official API structure');
     console.log('Endpoint:', HESAB_API_ENDPOINT);
-    console.log('Payment data:', {
-      ...paymentData,
-      order_id: paymentData.order_id ? `${paymentData.order_id.substring(0, 10)}...` : 'not provided'
-    });
+    
+    // 🔧 IMPORTANT: Include order_id (temp_order_ref) in payload for webhook tracking
+    const payloadData: any = {
+      items: data.items,
+      email: data.email
+    };
+    
+    // Add temp order reference if provided - this is crucial for webhook matching
+    if (data.order_id) {
+      payloadData.order_id = data.order_id;
+      console.log('✅ Including temp order reference for webhook tracking:', data.order_id);
+    } else {
+      console.warn('⚠️ No order_id provided - webhook may not be able to match this payment');
+    }
+
+    console.log('Payment data:', payloadData);
 
     const headers = {
       'Authorization': `API-KEY ${HESAB_API_KEY}`,
@@ -54,27 +66,18 @@ export async function createHesabPayment(paymentData: HesabPaymentRequest): Prom
       'Content-Type': 'application/json'
     };
 
-    const payload = {
-      items: paymentData.items,
-      email: paymentData.email,
-      // ADD: Include order_id if provided (this is the temp order reference)
-      ...(paymentData.order_id && { order_id: paymentData.order_id })
-    };
-
     console.log('Request headers:', {
-      'Authorization': `API-KEY ${HESAB_API_KEY.substring(0, 10)}...`,
+      'Authorization': `API-KEY ${HESAB_API_KEY?.substring(0, 10)}...`,
       'accept': 'application/json',
       'Content-Type': 'application/json'
     });
-    console.log('Request payload:', {
-      ...payload,
-      order_id: payload.order_id ? `${payload.order_id.substring(0, 10)}...` : 'not included'
-    });
+
+    console.log('Request payload:', payloadData);
 
     const response = await fetch(HESAB_API_ENDPOINT, {
       method: 'POST',
       headers,
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payloadData)
     });
 
     console.log('Response status:', response.status);
@@ -83,42 +86,33 @@ export async function createHesabPayment(paymentData: HesabPaymentRequest): Prom
     const responseText = await response.text();
     console.log('Raw response:', responseText);
 
-    let result;
-    try {
-      result = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error('Failed to parse JSON response:', parseError);
-      
-      if (responseText.includes('<!DOCTYPE') || responseText.includes('<html>')) {
-        return {
-          success: false,
-          error: 'API returned HTML instead of JSON - likely authentication or endpoint error',
-          message: responseText.substring(0, 200)
-        };
-      }
-      
+    if (!response.ok) {
+      console.error('Hesab API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: responseText
+      });
       return {
         success: false,
-        error: 'Invalid JSON response',
-        message: responseText.substring(0, 200)
+        error: `HTTP ${response.status}: ${responseText}`
       };
     }
 
-    if (response.status === 200) {
-      console.log('Payment session created successfully:', result);
+    const result = JSON.parse(responseText);
+    
+    if (result.url) {
       return {
         success: true,
-        payment_url: result.payment_url || result.checkout_url || result.url,
-        session_id: result.session_id || result.id,
-        message: result.message || 'Payment session created successfully',
-        temp_order_id: result.temp_order_id || result.id
+        payment_url: result.url,
+        session_id: result.session_id,
+        message: 'Payment session created successfully',
+        temp_order_id: data.order_id // Return the temp order ID for reference
       };
     } else {
-      console.error('API Error Response:', result);
+      console.error('Unexpected Hesab API response format:', result);
       return {
         success: false,
-        error: result.error || `HTTP Error: ${response.status}`,
-        message: result.message || response.statusText
+        error: 'Invalid response format from payment gateway'
       };
     }
 
@@ -126,8 +120,7 @@ export async function createHesabPayment(paymentData: HesabPaymentRequest): Prom
     console.error('Hesab payment creation error:', error);
     return {
       success: false,
-      error: 'Request Exception',
-      message: error instanceof Error ? error.message : 'Unknown error occurred'
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
     };
   }
 }

@@ -21,7 +21,8 @@ export async function POST(request: NextRequest) {
       amount, 
       email, 
       items: webhookItems,
-      timestamp
+      timestamp,
+      order_id: tempOrderRef // This is the temp_order_ref we sent to HesabPay
     } = webhookData;
 
     console.log('🎯 HesabPay webhook data extracted:', {
@@ -31,20 +32,38 @@ export async function POST(request: NextRequest) {
       amount,
       email,
       items_count: webhookItems?.length || 0,
-      timestamp
+      timestamp,
+      temp_order_ref: tempOrderRef
     });
 
-    // Validate required fields from HesabPay
-    if (!transaction_id || !email || amount === undefined) {
-      console.error('❌ Missing required fields in HesabPay webhook:', {
-        has_transaction_id: !!transaction_id,
-        has_email: !!email,
-        has_amount: amount !== undefined
+    // Check if we have the temp order reference
+    if (!tempOrderRef) {
+      console.error('❌ Missing temp_order_ref in webhook - cannot match payment to order:', {
+        webhook_data_keys: Object.keys(webhookData),
+        available_ids: {
+          transaction_id,
+          email,
+          amount
+        }
       });
-      return NextResponse.json(
-        { error: 'Missing required webhook data' },
-        { status: 400 }
-      );
+      
+      // Fallback to old matching method if no temp_order_ref
+      console.log('🔄 Falling back to email/amount matching...');
+      
+      // Validate required fields for fallback
+      if (!transaction_id || !email || amount === undefined) {
+        console.error('❌ Missing required fields for fallback matching:', {
+          has_transaction_id: !!transaction_id,
+          has_email: !!email,
+          has_amount: amount !== undefined
+        });
+        return NextResponse.json(
+          { error: 'Missing required webhook data for order matching' },
+          { status: 400 }
+        );
+      }
+    } else {
+      console.log('✅ Temp order reference found in webhook:', tempOrderRef);
     }
 
     // Check success status
@@ -89,76 +108,99 @@ export async function POST(request: NextRequest) {
 
     console.log(`🔑 Using ${isUsingServiceRole ? 'SERVICE ROLE' : 'ANON'} key for webhook authentication`);
 
-    console.log('🔍 Searching for temp order with criteria:', {
-      email,
-      amount,
-      webhook_items_count: webhookItems?.length || 0
-    });
+    let tempOrder: any = null;
+    let tempOrders: any[] = [];
 
-    // 🔧 IMPROVED: More precise temp order matching
-    const timeThreshold = new Date();
-    timeThreshold.setMinutes(timeThreshold.getMinutes() - 10); // Reduced from 1 hour to 10 minutes
+    if (tempOrderRef) {
+      // 🎯 OPTIMAL: Direct matching using temp_order_ref
+      console.log('🔍 Searching for temp order by direct reference:', tempOrderRef);
+      
+      const { data: foundOrder, error: tempOrderError } = await supabase
+        .from('temp_orders')
+        .select('*')
+        .eq('temp_order_ref', tempOrderRef)
+        .single();
 
-    const { data: tempOrders, error: tempOrderError } = await supabase
-      .from('temp_orders')
-      .select('*')
-      .eq('customer_email', email)
-      .eq('total_amount', amount)
-      .gte('created_at', timeThreshold.toISOString())
-      .order('created_at', { ascending: false })
-      .limit(3); // Limit to reduce database load
+      if (tempOrderError || !foundOrder) {
+        console.error('❌ Temp order not found by reference:', {
+          temp_order_ref: tempOrderRef,
+          error: tempOrderError?.message,
+          transaction_id
+        });
+        return NextResponse.json(
+          { error: 'Temporary order not found' },
+          { status: 404 }
+        );
+      }
 
-    if (tempOrderError) {
-      console.error('❌ Error searching for temp orders:', tempOrderError);
-      return NextResponse.json(
-        { error: 'Database query failed' },
-        { status: 500 }
-      );
-    }
-
-    if (!tempOrders || tempOrders.length === 0) {
-      console.error('❌ No matching temp orders found:', {
-        email,
-        amount,
-        search_timeframe: 'last 10 minutes',
-        webhook_transaction_id: transaction_id
+      tempOrder = foundOrder;
+      console.log('✅ Temp order found by direct reference:', {
+        id: tempOrder.id,
+        temp_order_ref: tempOrder.temp_order_ref,
+        user_id: tempOrder.user_id ? `${tempOrder.user_id.substring(0, 8)}...` : 'guest',
+        created_at: tempOrder.created_at,
+        method: 'DIRECT_REFERENCE'
       });
-      return NextResponse.json(
-        { error: 'Matching temporary order not found' },
-        { status: 404 }
-      );
-    }
 
-    // If multiple temp orders found, select the most recent one and warn
-    let tempOrder = tempOrders[0]; // Most recent
-    
-    if (tempOrders.length > 1) {
-      console.warn(`⚠️ Multiple temp orders found (${tempOrders.length}) for same email/amount:`, {
-        selected_order: {
-          id: tempOrder.id,
-          ref: tempOrder.temp_order_ref,
-          created_at: tempOrder.created_at
-        },
-        all_orders: tempOrders.map(order => ({
-          id: order.id,
-          ref: order.temp_order_ref,
-          created_at: order.created_at
-        })),
-        recommendation: 'Consider implementing more specific matching or cleaning up old temp orders'
+    } else {
+      // 🔄 FALLBACK: Old method using email/amount/time
+      console.log('🔍 Using fallback search by email/amount (less efficient)');
+      
+      const timeThreshold = new Date();
+      timeThreshold.setMinutes(timeThreshold.getMinutes() - 10);
+
+      const { data: foundOrders, error: tempOrderError } = await supabase
+        .from('temp_orders')
+        .select('*')
+        .eq('customer_email', email)
+        .eq('total_amount', amount)
+        .gte('created_at', timeThreshold.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (tempOrderError) {
+        console.error('❌ Error searching for temp orders:', tempOrderError);
+        return NextResponse.json(
+          { error: 'Database query failed' },
+          { status: 500 }
+        );
+      }
+
+      if (!foundOrders || foundOrders.length === 0) {
+        console.error('❌ No matching temp orders found:', {
+          email,
+          amount,
+          search_timeframe: 'last 10 minutes',
+          webhook_transaction_id: transaction_id
+        });
+        return NextResponse.json(
+          { error: 'Matching temporary order not found' },
+          { status: 404 }
+        );
+      }
+
+      tempOrders = foundOrders;
+      tempOrder = tempOrders[0]; // Most recent
+      
+      if (tempOrders.length > 1) {
+        console.warn(`⚠️ Multiple temp orders found (${tempOrders.length}) - recommend using temp_order_ref in future:`, {
+          selected_order: {
+            id: tempOrder.id,
+            ref: tempOrder.temp_order_ref,
+            created_at: tempOrder.created_at
+          },
+          method: 'FALLBACK_MATCHING'
+        });
+      }
+
+      console.log('✅ Temp order found by fallback method:', {
+        id: tempOrder.id,
+        temp_order_ref: tempOrder.temp_order_ref,
+        user_id: tempOrder.user_id ? `${tempOrder.user_id.substring(0, 8)}...` : 'guest',
+        created_at: tempOrder.created_at,
+        method: 'FALLBACK_EMAIL_AMOUNT'
       });
     }
-
-    console.log('✅ Temporary order found:', {
-      id: tempOrder.id,
-      temp_order_ref: tempOrder.temp_order_ref,
-      user_id: tempOrder.user_id ? `${tempOrder.user_id.substring(0, 8)}...` : 'null (guest)',
-      has_cart_data: !!tempOrder.cart_data,
-      has_shipping_address: !!tempOrder.shipping_address,
-      has_legacy_items: !!tempOrder.items,
-      has_legacy_shipping: !!tempOrder.shipping_info,
-      created_at: tempOrder.created_at,
-      matched_criteria: { email, amount }
-    });
 
     // Determine which data format to use (prefer new format)
     let cartData: any = null;
@@ -414,11 +456,10 @@ export async function POST(request: NextRequest) {
       console.log('Temporary order cleaned up successfully');
     }
 
-    // 🔧 ADDED: Clean up old temp orders for this user to prevent accumulation
-    if (tempOrders.length > 1) {
-      console.log('🧹 Cleaning up old temp orders to prevent future conflicts...');
+    // 🔧 IMPROVED: Only cleanup old orders if we used fallback method (multiple orders issue)
+    if (!tempOrderRef && tempOrders.length > 1) {
+      console.log('🧹 Cleaning up old temp orders (fallback method had multiple matches)...');
       
-      // Delete other temp orders for this email from the last day (excluding the one we just used)
       const oldOrderIds = tempOrders.slice(1).map(order => order.id); // Skip the first (used) order
       
       if (oldOrderIds.length > 0) {
@@ -433,6 +474,8 @@ export async function POST(request: NextRequest) {
           console.log(`✅ Cleaned up ${oldOrderIds.length} old temp orders`);
         }
       }
+    } else if (tempOrderRef) {
+      console.log('✅ Direct reference matching used - no additional cleanup needed');
     }
 
     console.log(`SUCCESS: Order ${order.id} (${order.order_number}) created successfully from temp order ${tempOrder.temp_order_ref} - Payment ID: ${transaction_id}`);
