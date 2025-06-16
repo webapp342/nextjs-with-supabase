@@ -60,26 +60,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 🔧 FIXED: Use service role client to bypass RLS policies
+    // 🔧 TEMPORARY: Use anon key for testing (will switch to service role later)
     const supabaseUrl = process.env['NEXT_PUBLIC_SUPABASE_URL']!;
-    const supabaseServiceKey = process.env['SUPABASE_SERVICE_ROLE_KEY']!;
+    const supabaseKey = process.env['NEXT_PUBLIC_SUPABASE_ANON_KEY']!;
     
-    if (!supabaseServiceKey) {
-      console.error('❌ Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
+    if (!supabaseKey || !supabaseUrl) {
+      console.error('❌ Missing Supabase environment variables:', {
+        has_url: !!supabaseUrl,
+        has_key: !!supabaseKey
+      });
       return NextResponse.json(
         { error: 'Server configuration error' },
         { status: 500 }
       );
     }
     
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    const supabase = createClient(supabaseUrl, supabaseKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false
       }
     });
 
-    console.log('✅ Using service role client to bypass RLS policies');
+    console.log('⚠️ TEMPORARY: Using anon key for webhook (will need service role for production)');
 
     console.log('🔍 Searching for temp order with criteria:', {
       email,
