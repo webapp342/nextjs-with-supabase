@@ -91,7 +91,8 @@ export function ProfessionalProductUploadForm() {
     isOnSale: false,
     isBestseller: false,
     isRecommended: false,
-    isNew: false
+    isNew: false,
+    stockTrackingLink: ''
   });
 
   // Data state
@@ -352,6 +353,7 @@ export function ProfessionalProductUploadForm() {
         is_bestseller: formData.isBestseller,
         is_recommended: formData.isRecommended,
         is_new: formData.isNew,
+        stock_tracking_link: formData.stockTrackingLink || null,
         user_id: user.id
       };
 
@@ -392,7 +394,7 @@ export function ProfessionalProductUploadForm() {
         newBrandName: '', newBrandSlug: '', showNewBrandForm: false,
         tags: [], newTag: '', seoTitle: '', seoDescription: '',
         isActive: true, isFeatured: false, isOnSale: false, isBestseller: false,
-        isRecommended: false, isNew: false
+        isRecommended: false, isNew: false, stockTrackingLink: ''
       });
       setImages([]);
       setImageUrls([]);
@@ -627,6 +629,20 @@ export function ProfessionalProductUploadForm() {
                     placeholder="1234567890123"
                   />
                 </div>
+              </div>
+
+              <div>
+                <Label htmlFor="stockTrackingLink">Stok Takip Linki</Label>
+                <Input
+                  id="stockTrackingLink"
+                  type="url"
+                  value={formData.stockTrackingLink}
+                  onChange={(e) => handleInputChange('stockTrackingLink', e.target.value)}
+                  placeholder="https://example.com/stock-tracking"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Stok durumunu takip edebileceğiniz harici link (isteğe bağlı)
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

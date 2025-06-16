@@ -341,7 +341,12 @@ export function ProductManagement() {
                           <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="h-8 w-8 p-0"
+                            onClick={() => window.location.href = `/protected/products/edit/${product.id}`}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button 
