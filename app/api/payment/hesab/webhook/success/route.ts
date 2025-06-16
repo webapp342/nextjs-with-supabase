@@ -21,8 +21,7 @@ export async function POST(request: NextRequest) {
       amount, 
       email, 
       items: webhookItems,
-      timestamp,
-      signature 
+      timestamp
     } = webhookData;
 
     console.log('🎯 HesabPay webhook data extracted:', {
