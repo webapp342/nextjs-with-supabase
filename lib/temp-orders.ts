@@ -22,11 +22,64 @@ export async function createTempOrder(orderData: TempOrderData): Promise<TempOrd
     
     // Try to get authenticated user, but don't fail if not available
     let userId: string | null = null;
+    let cartData: any = null;
+    let shippingAddress: any = null;
+    
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (!error && user) {
         userId = user.id;
         console.log('Authenticated user found:', user.id.substring(0, 8) + '...');
+        
+        // Fetch the full cart data with items and products
+        const { data: cart, error: cartError } = await supabase
+          .from('carts')
+          .select(`
+            *,
+            cart_items (
+              *,
+              product:products (
+                id,
+                name,
+                image_urls,
+                price,
+                compare_price,
+                brand,
+                category
+              )
+            )
+          `)
+          .eq('user_id', userId)
+          .single();
+
+        if (!cartError && cart) {
+          cartData = cart;
+          console.log('Cart data fetched successfully:', {
+            cart_id: cart.id,
+            items_count: cart.cart_items?.length || 0,
+            user_id: cart.user_id.substring(0, 8) + '...'
+          });
+        } else {
+          console.warn('Could not fetch cart data for user:', cartError?.message);
+        }
+        
+        // Convert shipping_info to shipping_address format to match what webhook expects
+        if (orderData.shipping_info) {
+          shippingAddress = {
+            full_name: orderData.shipping_info.full_name,
+            phone_number: orderData.shipping_info.phone_number,
+            address_line_1: orderData.shipping_info.address || '',
+            address_line_2: null,
+            city: orderData.shipping_info.city,
+            state: orderData.shipping_info.state,
+            zip_code: orderData.shipping_info.zip_code,
+            country: 'Afghanistan' // Default country
+          };
+          console.log('Shipping address prepared:', {
+            full_name: shippingAddress.full_name,
+            city: shippingAddress.city
+          });
+        }
       } else {
         console.log('No authenticated user, proceeding with guest checkout');
       }
@@ -37,10 +90,19 @@ export async function createTempOrder(orderData: TempOrderData): Promise<TempOrd
     const tempOrderRecord = {
       temp_order_ref: tempOrderRef,
       user_id: userId, // Will be null for guest checkout
-      items: orderData.items,
-      shipping_info: orderData.shipping_info,
+      
+      // NEW FORMAT: Store full cart data and structured shipping address (what webhook expects)
+      cart_data: cartData, // Full cart structure with cart_items and products
+      shipping_address: shippingAddress, // Structured address object
+      
+      // LEGACY FORMAT: Keep for backward compatibility
+      items: orderData.items, // Simplified items array
+      shipping_info: orderData.shipping_info, // Original shipping info
+      
+      // Common fields
       customer_email: orderData.customer_email,
       total_amount: orderData.total_amount,
+      customer_notes: '', // Default empty notes
       status: 'pending',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -51,7 +113,9 @@ export async function createTempOrder(orderData: TempOrderData): Promise<TempOrd
       customer_email: orderData.customer_email,
       user_id: userId ? `${userId.substring(0, 8)}...` : 'null (guest)',
       total_amount: orderData.total_amount,
-      items_count: orderData.items.length
+      items_count: orderData.items.length,
+      has_cart_data: !!cartData,
+      has_shipping_address: !!shippingAddress
     });
 
     const { data, error } = await supabase
@@ -72,7 +136,9 @@ export async function createTempOrder(orderData: TempOrderData): Promise<TempOrd
       id: data.id,
       temp_order_ref: data.temp_order_ref,
       customer_email: data.customer_email,
-      user_id: data.user_id ? `${data.user_id.substring(0, 8)}...` : 'null (guest)'
+      user_id: data.user_id ? `${data.user_id.substring(0, 8)}...` : 'null (guest)',
+      has_cart_data: !!data.cart_data,
+      has_shipping_address: !!data.shipping_address
     });
 
     return {
