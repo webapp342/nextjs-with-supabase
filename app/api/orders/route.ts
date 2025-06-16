@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { createOrderFromCart, getUserOrders } from '@/lib/orders';
+import { createOrderFromCart } from '@/lib/orders';
+import { getUserSimpleOrders } from '@/lib/simple-orders';
 
 // Create order from cart
 export async function POST(request: NextRequest) {
@@ -58,7 +59,7 @@ export async function GET() {
       );
     }
 
-    const orders = await getUserOrders(user.id);
+    const orders = await getUserSimpleOrders(user.id);
 
     return NextResponse.json({
       success: true,

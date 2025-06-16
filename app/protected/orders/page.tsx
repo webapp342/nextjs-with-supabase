@@ -1,4 +1,5 @@
-
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
 import { getAllSimpleOrders } from '@/lib/simple-orders';
 import { SimpleOrdersClient } from '@/components/admin/simple-orders-client';
 
@@ -10,12 +11,28 @@ interface ProtectedOrdersPageProps {
 }
 
 export default async function ProtectedOrdersPage({ searchParams }: ProtectedOrdersPageProps) {
+  const supabase = await createClient();
+
+  // Check authentication
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data?.user) {
+    redirect("/auth/login");
+  }
+
+  // Check if user is admin/seller
+  const userMetadata = data.user.user_metadata;
+  const isSellerOrAdmin = userMetadata?.['user_type'] && (userMetadata['user_type'] === 'seller' || userMetadata['user_type'] === 'admin');
+  if (!isSellerOrAdmin) {
+    redirect("/");
+  }
+
   const resolvedSearchParams = await searchParams;
   const page = parseInt(resolvedSearchParams.page || '1');
   const limit = parseInt(resolvedSearchParams.limit || '20');
 
   try {
     const ordersData = await getAllSimpleOrders(page, limit);
+    console.log(`Fetched ${ordersData.orders.length} orders for page ${page}`);
 
     return (
       <div className="space-y-6">

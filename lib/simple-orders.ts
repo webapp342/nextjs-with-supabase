@@ -215,8 +215,33 @@ export async function getSimpleOrderDetails(orderId: string, userId?: string) {
 export async function getAllSimpleOrders(page: number = 1, limit: number = 20) {
   const supabase = await createClient();
   
+  // Check user permissions - get user data first
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData?.user) {
+    throw new Error('Authentication required');
+  }
+
+  // Check if user is seller or admin from user_metadata
+  const userMetadata = userData.user.user_metadata;
+  const isSellerOrAdmin = userMetadata?.['user_type'] && 
+    (userMetadata['user_type'] === 'seller' || userMetadata['user_type'] === 'admin');
+
+  if (!isSellerOrAdmin) {
+    // Also check from users table as fallback
+    const { data: userTypeData } = await supabase
+      .from('users')
+      .select('user_type')
+      .eq('id', userData.user.id)
+      .single();
+    
+    if (!userTypeData || (userTypeData.user_type !== 'seller' && userTypeData.user_type !== 'admin')) {
+      throw new Error('Insufficient permissions - only sellers and admins can view all orders');
+    }
+  }
+  
   const offset = (page - 1) * limit;
   
+  // Use service role or bypass RLS for admin/seller access
   const { data: orders, error, count } = await supabase
     .from('simple_orders')
     .select(`

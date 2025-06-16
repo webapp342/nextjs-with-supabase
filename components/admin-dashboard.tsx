@@ -157,7 +157,7 @@ export function AdminDashboard() {
     {
       title: 'Sipariş Yönetimi',
       description: 'Siparişleri görüntüle ve yönet',
-      href: '/admin/orders',
+      href: '/protected/orders',
       icon: ShoppingCart,
       color: 'bg-blue-500'
     },

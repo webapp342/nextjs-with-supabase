@@ -108,7 +108,7 @@ export function SimpleOrdersClient({ orders, pagination }: SimpleOrdersClientPro
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     setUpdatingStatus(orderId);
     try {
-      const response = await fetch(`/api/admin/simple-orders/${orderId}`, {
+      const response = await fetch(`/api/protected/simple-orders/${orderId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

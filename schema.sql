@@ -61,8 +61,8 @@ CREATE TABLE public.cart_items (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT cart_items_pkey PRIMARY KEY (id),
-  CONSTRAINT cart_items_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id),
-  CONSTRAINT cart_items_cart_id_fkey FOREIGN KEY (cart_id) REFERENCES public.carts(id)
+  CONSTRAINT cart_items_cart_id_fkey FOREIGN KEY (cart_id) REFERENCES public.carts(id),
+  CONSTRAINT cart_items_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id)
 );
 CREATE TABLE public.carts (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -105,9 +105,9 @@ CREATE TABLE public.category_banners (
   link_url text,
   link_type text CHECK (link_type = ANY (ARRAY['category'::text, 'brand'::text, 'url'::text, 'tag'::text])),
   CONSTRAINT category_banners_pkey PRIMARY KEY (id),
-  CONSTRAINT category_banners_link_brand_id_fkey FOREIGN KEY (link_brand_id) REFERENCES public.brands(id),
+  CONSTRAINT category_banners_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories_new(id),
   CONSTRAINT category_banners_link_category_id_fkey FOREIGN KEY (link_category_id) REFERENCES public.categories_new(id),
-  CONSTRAINT category_banners_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories_new(id)
+  CONSTRAINT category_banners_link_brand_id_fkey FOREIGN KEY (link_brand_id) REFERENCES public.brands(id)
 );
 CREATE TABLE public.category_image_buttons (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -155,10 +155,10 @@ CREATE TABLE public.category_page_sections (
   created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
   updated_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
   CONSTRAINT category_page_sections_pkey PRIMARY KEY (id),
+  CONSTRAINT category_page_sections_filter_category_id_fkey FOREIGN KEY (filter_category_id) REFERENCES public.categories_new(id),
   CONSTRAINT category_page_sections_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories_new(id),
   CONSTRAINT category_page_sections_link_category_id_fkey FOREIGN KEY (link_category_id) REFERENCES public.categories_new(id),
   CONSTRAINT category_page_sections_link_brand_id_fkey FOREIGN KEY (link_brand_id) REFERENCES public.brands(id),
-  CONSTRAINT category_page_sections_filter_category_id_fkey FOREIGN KEY (filter_category_id) REFERENCES public.categories_new(id),
   CONSTRAINT category_page_sections_filter_brand_id_fkey FOREIGN KEY (filter_brand_id) REFERENCES public.brands(id)
 );
 CREATE TABLE public.category_section_products (
@@ -168,8 +168,8 @@ CREATE TABLE public.category_section_products (
   sort_order integer DEFAULT 0,
   created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
   CONSTRAINT category_section_products_pkey PRIMARY KEY (id),
-  CONSTRAINT category_section_products_section_id_fkey FOREIGN KEY (section_id) REFERENCES public.category_page_sections(id),
-  CONSTRAINT category_section_products_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id)
+  CONSTRAINT category_section_products_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id),
+  CONSTRAINT category_section_products_section_id_fkey FOREIGN KEY (section_id) REFERENCES public.category_page_sections(id)
 );
 CREATE TABLE public.grid_banners (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -222,8 +222,8 @@ CREATE TABLE public.order_items (
   total numeric NOT NULL CHECK (total >= 0::numeric),
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT order_items_pkey PRIMARY KEY (id),
-  CONSTRAINT order_items_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id),
-  CONSTRAINT order_items_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id)
+  CONSTRAINT order_items_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id),
+  CONSTRAINT order_items_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id)
 );
 CREATE TABLE public.orders (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -346,9 +346,9 @@ CREATE TABLE public.products (
   is_recommended boolean DEFAULT false,
   is_new boolean DEFAULT false,
   CONSTRAINT products_pkey PRIMARY KEY (id),
-  CONSTRAINT products_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories_new(id),
   CONSTRAINT products_product_type_id_fkey FOREIGN KEY (product_type_id) REFERENCES public.product_types(id),
-  CONSTRAINT products_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+  CONSTRAINT products_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT products_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories_new(id)
 );
 CREATE TABLE public.quick_access_buttons (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -389,8 +389,71 @@ CREATE TABLE public.secondary_hero_banners (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT secondary_hero_banners_pkey PRIMARY KEY (id),
-  CONSTRAINT secondary_hero_banners_link_category_id_fkey FOREIGN KEY (link_category_id) REFERENCES public.categories_new(id),
-  CONSTRAINT secondary_hero_banners_link_brand_id_fkey FOREIGN KEY (link_brand_id) REFERENCES public.brands(id)
+  CONSTRAINT secondary_hero_banners_link_brand_id_fkey FOREIGN KEY (link_brand_id) REFERENCES public.brands(id),
+  CONSTRAINT secondary_hero_banners_link_category_id_fkey FOREIGN KEY (link_category_id) REFERENCES public.categories_new(id)
+);
+CREATE TABLE public.simple_order_items (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  order_id uuid,
+  product_id uuid,
+  product_name character varying NOT NULL,
+  product_image_url text,
+  unit_price numeric NOT NULL,
+  quantity integer NOT NULL CHECK (quantity > 0),
+  total_price numeric NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT simple_order_items_pkey PRIMARY KEY (id),
+  CONSTRAINT simple_order_items_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id),
+  CONSTRAINT simple_order_items_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.simple_orders(id)
+);
+CREATE TABLE public.simple_order_status_history (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  order_id uuid,
+  old_status character varying,
+  new_status character varying NOT NULL,
+  changed_by uuid,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT simple_order_status_history_pkey PRIMARY KEY (id),
+  CONSTRAINT simple_order_status_history_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.simple_orders(id),
+  CONSTRAINT simple_order_status_history_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES auth.users(id)
+);
+CREATE TABLE public.simple_orders (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  order_number character varying NOT NULL UNIQUE,
+  user_id uuid NOT NULL,
+  status character varying DEFAULT 'pending'::character varying CHECK (status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character varying, 'shipped'::character varying, 'delivered'::character varying, 'cancelled'::character varying]::text[])),
+  subtotal numeric NOT NULL,
+  shipping_cost numeric DEFAULT 0,
+  tax_amount numeric DEFAULT 0,
+  total_amount numeric NOT NULL,
+  shipping_address jsonb NOT NULL,
+  payment_method character varying,
+  payment_status character varying DEFAULT 'pending'::character varying CHECK (payment_status::text = ANY (ARRAY['pending'::character varying, 'paid'::character varying, 'failed'::character varying, 'refunded'::character varying]::text[])),
+  customer_notes text,
+  admin_notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT simple_orders_pkey PRIMARY KEY (id),
+  CONSTRAINT simple_orders_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.temp_orders (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid,
+  temp_order_ref text NOT NULL UNIQUE,
+  cart_data jsonb,
+  shipping_address jsonb,
+  customer_notes text DEFAULT ''::text,
+  total_amount numeric NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  expires_at timestamp with time zone DEFAULT (now() + '02:00:00'::interval),
+  customer_email character varying NOT NULL,
+  items jsonb,
+  shipping_info jsonb,
+  status character varying DEFAULT 'pending'::character varying CHECK (status::text = ANY (ARRAY['pending'::character varying, 'processing'::character varying, 'completed'::character varying, 'failed'::character varying, 'expired'::character varying]::text[])),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT temp_orders_pkey PRIMARY KEY (id),
+  CONSTRAINT temp_orders_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
 CREATE TABLE public.top_brands (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -407,8 +470,8 @@ CREATE TABLE public.top_brands (
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT top_brands_pkey PRIMARY KEY (id),
   CONSTRAINT top_brands_link_brand_id_fkey FOREIGN KEY (link_brand_id) REFERENCES public.brands(id),
-  CONSTRAINT top_brands_brand_id_fkey FOREIGN KEY (brand_id) REFERENCES public.brands(id),
-  CONSTRAINT top_brands_link_category_id_fkey FOREIGN KEY (link_category_id) REFERENCES public.categories_new(id)
+  CONSTRAINT top_brands_link_category_id_fkey FOREIGN KEY (link_category_id) REFERENCES public.categories_new(id),
+  CONSTRAINT top_brands_brand_id_fkey FOREIGN KEY (brand_id) REFERENCES public.brands(id)
 );
 CREATE TABLE public.users (
   id uuid NOT NULL,

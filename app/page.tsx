@@ -9,10 +9,21 @@ import { PositionedBanners } from "@/components/positioned-banners";
 import SecondaryHeroBanners from "@/components/secondary-hero-banners";
 import GridBanners from "@/components/grid-banners";
 import { TopBrands } from "@/components/top-brands";
+import { Suspense } from 'react';
+import { AccessDeniedAlert } from "@/components/access-denied-alert";
 
-export default function Home() {
+interface HomeProps {
+  searchParams: Promise<{ error?: string }>;
+}
+
+export default function Home({ searchParams }: HomeProps) {
   return (
     <>
+      {/* Access Denied Alert */}
+      <Suspense fallback={null}>
+        <AccessDeniedAlert searchParams={searchParams} />
+      </Suspense>
+
       {/* 1. Quick Access Buttons Section */}
       <QuickAccessButtons />
 

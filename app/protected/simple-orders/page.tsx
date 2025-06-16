@@ -1,32 +1,50 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getAllSimpleOrders } from '@/lib/simple-orders';
+import { SimpleOrdersClient } from '@/components/admin/simple-orders-client';
 
-import { getAllOrders } from '@/lib/orders';
-import { AdminOrdersClient } from '@/components/admin/admin-orders-client';
-
-interface AdminOrdersPageProps {
+interface ProtectedSimpleOrdersPageProps {
   searchParams: Promise<{
     page?: string;
     limit?: string;
   }>;
 }
 
-export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageProps) {
+export default async function ProtectedSimpleOrdersPage({ searchParams }: ProtectedSimpleOrdersPageProps) {
+  const supabase = await createClient();
+
+  // Check authentication
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data?.user) {
+    redirect("/auth/login");
+  }
+
+  // Check if user is admin/seller
+  const userMetadata = data.user.user_metadata;
+  if (!userMetadata?.['user_type'] || (userMetadata['user_type'] !== 'seller' && userMetadata['user_type'] !== 'admin')) {
+    redirect("/");
+  }
+
   const resolvedSearchParams = await searchParams;
   const page = parseInt(resolvedSearchParams.page || '1');
   const limit = parseInt(resolvedSearchParams.limit || '20');
 
   try {
-    const ordersData = await getAllOrders(page, limit);
+    const ordersData = await getAllSimpleOrders(page, limit);
 
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold">Sipariş Yönetimi</h1>
+            <div>
+              <h1 className="text-3xl font-bold">Sipariş Yönetimi</h1>
+              <p className="text-gray-600 mt-2">Tüm siparişleri görüntüleyin ve yönetin</p>
+            </div>
             <div className="text-sm text-gray-600">
               Toplam: {ordersData.total} sipariş
             </div>
           </div>
-          <AdminOrdersClient 
+          <SimpleOrdersClient 
             orders={ordersData.orders} 
             pagination={{
               page: ordersData.page,
