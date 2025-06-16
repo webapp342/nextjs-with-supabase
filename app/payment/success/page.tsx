@@ -4,44 +4,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
 import { toPersianNumber } from '@/lib/utils';
-import { PaymentSuccessProcessor } from '@/components/payment/payment-success-processor';
 
 interface PaymentSuccessPageProps {
   searchParams: Promise<{
     order_id?: string;
     payment_id?: string;
-    data?: string;
   }>;
 }
 
 async function PaymentSuccessContent({ searchParams }: PaymentSuccessPageProps) {
   const resolvedSearchParams = await searchParams;
-  const { order_id, data } = resolvedSearchParams;
-
-  // Show loading while processing payment data
-  if (data && !order_id) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <PaymentSuccessProcessor data={data} orderId={order_id || undefined} />
-        
-        <Card className="w-full max-w-md">
-          <CardContent className="p-8 text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            </div>
-            
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              در حال پردازش...
-            </h1>
-            
-            <p className="text-gray-600 mb-6">
-              در حال ثبت سفارش شما. لطفاً صبر کنید...
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const { order_id } = resolvedSearchParams;
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
