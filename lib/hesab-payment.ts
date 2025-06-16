@@ -25,7 +25,7 @@ export interface HesabPaymentResponse {
   session_id?: string;
   message?: string;
   error?: string;
-  temp_order_id?: string; // ADD: To pass temp order reference back
+  temp_order_id?: string; // Made optional since it might be undefined
 }
 
 export interface HesabWebhookPayload {
@@ -106,7 +106,7 @@ export async function createHesabPayment(data: HesabPaymentRequest): Promise<Hes
         payment_url: result.url,
         session_id: result.session_id,
         message: 'Payment session created successfully',
-        temp_order_id: data.order_id // Return the temp order ID for reference
+        temp_order_id: data.order_id! // Non-null assertion since we know it exists when we pass it
       };
     } else {
       console.error('Unexpected Hesab API response format:', result);

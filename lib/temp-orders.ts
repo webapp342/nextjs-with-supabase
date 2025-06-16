@@ -20,9 +20,6 @@ export async function createTempOrder(orderData: TempOrderData): Promise<TempOrd
     // Create temporary order reference with better uniqueness
     const tempOrderRef = `TEMP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
-    // 🔧 FUTURE: Could add session_id for better webhook matching
-    const sessionId = `${Date.now()}-${orderData.user_id || 'guest'}-${Math.random().toString(36).substr(2, 5)}`;
-    
     // Try to get authenticated user, but don't fail if not available
     let userId: string | null = null;
     let cartData: any = null;
@@ -113,7 +110,6 @@ export async function createTempOrder(orderData: TempOrderData): Promise<TempOrd
 
     console.log('Creating temp order with improved tracking:', {
       temp_order_ref: tempOrderRef,
-      session_hint: sessionId, // Could be used for future matching improvements
       user_id: userId ? `${userId.substring(0, 8)}...` : 'guest'
     });
 
