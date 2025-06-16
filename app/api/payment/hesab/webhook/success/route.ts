@@ -60,20 +60,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 🔧 TEMPORARY: Use anon key for testing (will switch to service role later)
+    // 🔧 FIXED: Use service role client to bypass RLS policies
     const supabaseUrl = process.env['NEXT_PUBLIC_SUPABASE_URL']!;
-    const supabaseKey = process.env['NEXT_PUBLIC_SUPABASE_ANON_KEY']!;
+    const supabaseServiceKey = process.env['SUPABASE_SERVICE_ROLE_KEY'];
+    const supabaseAnonKey = process.env['NEXT_PUBLIC_SUPABASE_ANON_KEY']!;
     
-    if (!supabaseKey || !supabaseUrl) {
-      console.error('❌ Missing Supabase environment variables:', {
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('❌ Missing basic Supabase environment variables:', {
         has_url: !!supabaseUrl,
-        has_key: !!supabaseKey
+        has_anon_key: !!supabaseAnonKey
       });
       return NextResponse.json(
         { error: 'Server configuration error' },
         { status: 500 }
       );
     }
+    
+    // Use service role key if available, otherwise fallback to anon key
+    const supabaseKey = supabaseServiceKey || supabaseAnonKey;
+    const isUsingServiceRole = !!supabaseServiceKey;
     
     const supabase = createClient(supabaseUrl, supabaseKey, {
       auth: {
@@ -82,7 +87,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    console.log('⚠️ TEMPORARY: Using anon key for webhook (will need service role for production)');
+    console.log(`🔑 Using ${isUsingServiceRole ? 'SERVICE ROLE' : 'ANON'} key for webhook authentication`);
 
     console.log('🔍 Searching for temp order with criteria:', {
       email,
